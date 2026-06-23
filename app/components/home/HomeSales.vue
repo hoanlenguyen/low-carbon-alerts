@@ -38,7 +38,8 @@ const { data } = await useAsyncData('sales', async () => {
   return sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }, {
   watch: [() => props.period, () => props.range],
-  default: () => []
+  default: () => [],
+  server: false
 })
 
 const columns: TableColumn<Sale>[] = [
