@@ -1,4 +1,9 @@
 <script setup lang="ts">
+definePageMeta({
+  layout: 'admin',
+  middleware: 'auth'
+})
+
 const state = reactive<{ [key: string]: boolean }>({
   email: true,
   desktop: false,

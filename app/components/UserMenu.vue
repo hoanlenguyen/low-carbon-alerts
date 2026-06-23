@@ -7,17 +7,23 @@ defineProps<{
 
 const colorMode = useColorMode()
 const appConfig = useAppConfig()
+const { user: sessionUser, clear } = useUserSession()
 
 const colors = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose']
 const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
 
-const user = ref({
-  name: 'Benjamin Canac',
+const user = computed(() => ({
+  name: sessionUser.value?.name || sessionUser.value?.email || 'Account',
   avatar: {
-    src: 'https://github.com/benjamincanac.png',
-    alt: 'Benjamin Canac'
+    src: sessionUser.value?.avatarUrl || undefined,
+    alt: sessionUser.value?.name || sessionUser.value?.email || 'Account'
   }
-})
+}))
+
+async function logout() {
+  await clear()
+  await navigateTo('/login')
+}
 
 const items = computed<DropdownMenuItem[][]>(() => ([[{
   type: 'label',
@@ -32,7 +38,7 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
 }, {
   label: 'Settings',
   icon: 'i-lucide-settings',
-  to: '/settings'
+  to: '/admin/settings'
 }], [{
   label: 'Theme',
   icon: 'i-lucide-palette',
@@ -147,7 +153,8 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
   target: '_blank'
 }, {
   label: 'Log out',
-  icon: 'i-lucide-log-out'
+  icon: 'i-lucide-log-out',
+  onSelect: logout
 }]]))
 </script>
 

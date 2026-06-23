@@ -3,7 +3,8 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
-    '@vueuse/nuxt'
+    '@vueuse/nuxt',
+    'nuxt-auth-utils'
   ],
 
   devtools: {
@@ -11,6 +12,10 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css'],
+
+  runtimeConfig: {
+    setupToken: ''
+  },
 
   routeRules: {
     '/api/**': {

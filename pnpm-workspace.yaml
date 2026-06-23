@@ -3,5 +3,7 @@ allowBuilds:
   '@tailwindcss/oxide': false
   esbuild: false
   maplibre-gl: false
+  sharp: false
   unrs-resolver: false
   vue-demi: false
+  workerd: false

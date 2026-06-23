@@ -2,3 +2,9 @@ name = "low-carbon-alerts"
 pages_build_output_dir = "dist"
 compatibility_date = "2024-07-11"
 compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "low-carbon-alerts"
+database_id = "a38691b2-41c1-4d37-9a06-1a0f77c3d088"
+migrations_dir = "server/database/migrations"

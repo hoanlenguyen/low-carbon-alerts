@@ -1,23 +1,28 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
+definePageMeta({
+  layout: 'admin',
+  middleware: 'auth'
+})
+
 const links = [[{
   label: 'General',
   icon: 'i-lucide-user',
-  to: '/settings',
+  to: '/admin/settings',
   exact: true
 }, {
   label: 'Members',
   icon: 'i-lucide-users',
-  to: '/settings/members'
+  to: '/admin/settings/members'
 }, {
   label: 'Notifications',
   icon: 'i-lucide-bell',
-  to: '/settings/notifications'
+  to: '/admin/settings/notifications'
 }, {
   label: 'Security',
   icon: 'i-lucide-shield',
-  to: '/settings/security'
+  to: '/admin/settings/security'
 }], [{
   label: 'Documentation',
   icon: 'i-lucide-book-open',
