@@ -47,7 +47,7 @@ export default defineOAuthGoogleEventHandler({
       loggedInAt: Date.now()
     })
 
-    return sendRedirect(event, '/portal')
+    return sendRedirect(event, '/app')
   },
   onError(event, error) {
     console.error('Google OAuth error', error)

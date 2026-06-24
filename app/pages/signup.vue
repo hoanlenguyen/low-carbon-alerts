@@ -30,7 +30,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     await $fetch('/api/auth/signup', { method: 'POST', body: event.data })
     await refreshSession()
-    await navigateTo('/portal')
+    await navigateTo('/app')
   } catch (e) {
     const err = e as { data?: { statusMessage?: string } }
     error.value = err?.data?.statusMessage || 'Could not create account'
@@ -111,7 +111,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
       <p class="text-sm text-center text-muted">
         Already have an account?
-        <ULink to="/portal-login" class="text-primary">Log in</ULink>
+        <ULink to="/login" class="text-primary">Log in</ULink>
       </p>
     </div>
   </UCard>
