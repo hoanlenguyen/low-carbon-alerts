@@ -16,7 +16,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     setupToken: '',
-    fcmServerKey: '',
+    fcmServiceAccount: '',
+    fcmProjectId: '',
     public: {
       firebaseApiKey: '',
       firebaseAuthDomain: '',
