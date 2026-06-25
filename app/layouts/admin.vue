@@ -3,6 +3,12 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 
 const route = useRoute()
 const toast = useToast()
+const { clear } = useUserSession()
+
+async function logout() {
+  await clear()
+  await navigateTo('/admin-login')
+}
 
 const open = ref(false)
 
@@ -152,6 +158,19 @@ onMounted(async () => {
 
       <template #footer="{ collapsed }">
         <UserMenu :collapsed="collapsed" />
+        <UTooltip :text="collapsed ? 'Log out' : ''" :delay-duration="0">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            icon="i-lucide-log-out"
+            :label="collapsed ? undefined : 'Log out'"
+            :square="collapsed"
+            block
+            class="text-dimmed hover:text-highlighted"
+            aria-label="Log out"
+            @click="logout"
+          />
+        </UTooltip>
       </template>
     </UDashboardSidebar>
 

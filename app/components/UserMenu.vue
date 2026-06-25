@@ -22,7 +22,7 @@ const user = computed(() => ({
 
 async function logout() {
   await clear()
-  await navigateTo('/login')
+  await navigateTo('/admin-login')
 }
 
 const items = computed<DropdownMenuItem[][]>(() => ([[{
