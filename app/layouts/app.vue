@@ -1,10 +1,6 @@
 <script setup lang="ts">
-const { user, clear } = useUserSession()
-
-async function logout() {
-  await clear()
-  await navigateTo('/login')
-}
+const { user } = useUserSession()
+const { logout } = useLogout()
 </script>
 
 <template>

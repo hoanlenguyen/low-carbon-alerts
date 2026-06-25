@@ -7,7 +7,8 @@ defineProps<{
 
 const colorMode = useColorMode()
 const appConfig = useAppConfig()
-const { user: sessionUser, clear } = useUserSession()
+const { user: sessionUser } = useUserSession()
+const { logout } = useLogout()
 
 const colors = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose']
 const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
@@ -20,10 +21,6 @@ const user = computed(() => ({
   }
 }))
 
-async function logout() {
-  await clear()
-  await navigateTo('/admin-login')
-}
 
 const items = computed<DropdownMenuItem[][]>(() => ([[{
   type: 'label',

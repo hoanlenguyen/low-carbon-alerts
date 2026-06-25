@@ -3,12 +3,7 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 
 const route = useRoute()
 const toast = useToast()
-const { clear } = useUserSession()
-
-async function logout() {
-  await clear()
-  await navigateTo('/admin-login')
-}
+const { logout } = useLogout()
 
 const open = ref(false)
 
