@@ -37,6 +37,7 @@
     "@nuxt/eslint": "^1.16.0",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.5.0",
+    "nitro-cloudflare-dev": "^0.2.2",
     "typescript": "^6.0.3",
     "vue-tsc": "^3.3.5",
     "wrangler": "^4.103.0"
