@@ -26,9 +26,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   error.value = ''
   loading.value = true
   try {
-    await $fetch('/api/auth/login', { method: 'POST', body: event.data })
+    const res = await $fetch('/api/auth/login', { method: 'POST', body: event.data })
     await refreshSession()
-    await navigateTo('/app')
+    await navigateTo(res.role === 'admin' ? '/admin' : '/app')
   } catch {
     error.value = 'Invalid email or password'
   } finally {
@@ -44,7 +44,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         Welcome back
       </h1>
       <p class="text-sm text-muted">
-        Log in to your personal dashboard
+        Sign in to continue
       </p>
     </template>
 

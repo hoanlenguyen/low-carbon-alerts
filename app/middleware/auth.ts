@@ -3,7 +3,7 @@ export default defineNuxtRouteMiddleware((to) => {
 
   if (to.path === '/admin' || to.path.startsWith('/admin/')) {
     if (!loggedIn.value || user.value?.role !== 'admin') {
-      return navigateTo('/admin-login')
+      return navigateTo('/login')
     }
   }
 

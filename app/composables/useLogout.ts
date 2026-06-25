@@ -4,7 +4,7 @@ export function useLogout() {
   async function logout() {
     const role = user.value?.role
     await clear()
-    await navigateTo(role === 'admin' ? '/admin-login' : '/login')
+    await navigateTo('/login')
   }
 
   return { logout }
