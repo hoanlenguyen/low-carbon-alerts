@@ -36,6 +36,8 @@ export default defineOAuthGoogleEventHandler({
       throw createError({ statusCode: 403, statusMessage: 'Admin accounts cannot sign in with Google' })
     }
 
+    await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id))
+
     await setUserSession(event, {
       user: {
         id: user.id,

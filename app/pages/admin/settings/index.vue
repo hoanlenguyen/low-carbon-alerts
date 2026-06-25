@@ -79,43 +79,23 @@ function onFileClick() {
       <UFormField
         name="name"
         label="Name"
-        description="Will appear on receipts, invoices, and other communication."
+        description="Will appear on app"
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
-        <UInput
-          v-model="profile.name"
-          autocomplete="off"
-        />
+        <UInput v-model="profile.name" autocomplete="off" />
       </UFormField>
       <USeparator />
       <UFormField
         name="email"
         label="Email"
-        description="Used to sign in, for email receipts and product updates."
+        description="Used to sign in, for email receipts and notifications."
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
-        <UInput
-          v-model="profile.email"
-          type="email"
-          autocomplete="off"
-        />
+        <UInput v-model="profile.email" type="email" autocomplete="off" />
       </UFormField>
       <USeparator />
-      <UFormField
-        name="username"
-        label="Username"
-        description="Your unique username for logging in and your profile URL."
-        required
-        class="flex max-sm:flex-col justify-between items-start gap-4"
-      >
-        <UInput
-          v-model="profile.username"
-          type="username"
-          autocomplete="off"
-        />
-      </UFormField>
       <USeparator />
       <UFormField
         name="avatar"
@@ -124,16 +104,8 @@ function onFileClick() {
         class="flex max-sm:flex-col justify-between sm:items-center gap-4"
       >
         <div class="flex flex-wrap items-center gap-3">
-          <UAvatar
-            :src="profile.avatar"
-            :alt="profile.name"
-            size="lg"
-          />
-          <UButton
-            label="Choose"
-            color="neutral"
-            @click="onFileClick"
-          />
+          <UAvatar :src="profile.avatar" :alt="profile.name" size="lg" />
+          <UButton label="Choose" color="neutral" @click="onFileClick" />
           <input
             ref="fileRef"
             type="file"

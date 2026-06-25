@@ -24,6 +24,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Invalid credentials' })
   }
 
+  const now = new Date()
+  await db.update(schema.users).set({ lastLoginAt: now }).where(eq(schema.users.id, user.id))
+
   await setUserSession(event, {
     user: {
       id: user.id,
