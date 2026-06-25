@@ -1,8 +1,14 @@
 export function useLogout() {
-  const { clear, user } = useUserSession()
+  const { clear } = useUserSession()
+  const { fcmToken } = useNotifications()
 
   async function logout() {
-    const role = user.value?.role
+    if (fcmToken.value) {
+      await $fetch('/api/notifications/fcm-token', {
+        method: 'DELETE',
+        body: { token: fcmToken.value }
+      }).catch(() => {})
+    }
     await clear()
     await navigateTo('/login')
   }

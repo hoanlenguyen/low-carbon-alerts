@@ -15,7 +15,15 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
-    setupToken: ''
+    setupToken: '',
+    fcmServerKey: '',
+    public: {
+      firebaseApiKey: '',
+      firebaseAuthDomain: '',
+      firebaseMessagingSenderId: '',
+      firebaseAppId: '',
+      firebaseVapidKey: ''
+    }
   },
 
   routeRules: {

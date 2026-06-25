@@ -25,6 +25,13 @@ const links = [[{
 //   }
 // },
 {
+  label: 'Notifications',
+  icon: 'i-lucide-bell',
+  to: '/admin/notifications',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Customers',
   icon: 'i-lucide-users',
   to: '/admin/customers',

@@ -1,0 +1,96 @@
+import { eq, inArray } from 'drizzle-orm'
+import type { H3Event } from 'h3'
+import { useDrizzle, schema } from '../database'
+import { sseClients } from './sseClients'
+
+interface SendOptions {
+  subject: string
+  body: string
+  type: 'broadcast' | 'targeted'
+  sentById: string
+  targetUserIds?: string[]
+}
+
+export async function sendNotification(event: H3Event, opts: SendOptions) {
+  const db = useDrizzle(event)
+  const now = new Date()
+
+  // 1. Insert canonical message
+  const messageId = crypto.randomUUID()
+  await db.insert(schema.messages).values({
+    id: messageId,
+    subject: opts.subject,
+    body: opts.body,
+    type: opts.type,
+    sentById: opts.sentById,
+    sentAt: now,
+    createdAt: now
+  })
+
+  // 2. Resolve recipients
+  let recipientIds: string[]
+  if (opts.type === 'broadcast') {
+    const allUsers = await db.query.users.findMany({
+      where: eq(schema.users.role, 'user'),
+      columns: { id: true }
+    })
+    recipientIds = allUsers.map(u => u.id)
+  } else {
+    recipientIds = opts.targetUserIds ?? []
+  }
+
+  if (recipientIds.length === 0) return { messageId, recipients: 0 }
+
+  // 3. Insert user_messages inbox rows
+  await db.insert(schema.userMessages).values(
+    recipientIds.map(userId => ({
+      id: crypto.randomUUID(),
+      userId,
+      messageId,
+      read: false,
+      createdAt: now
+    }))
+  )
+
+  // 4. Push SSE event to connected recipients
+  const payload = JSON.stringify({
+    id: messageId,
+    subject: opts.subject,
+    body: opts.body,
+    createdAt: now.toISOString(),
+    read: false
+  })
+  for (const userId of recipientIds) {
+    const clients = sseClients.get(userId)
+    if (clients) {
+      for (const send of clients) {
+        try { send(payload) } catch {}
+      }
+    }
+  }
+
+  // 5. Send FCM push to device tokens
+  const config = useRuntimeConfig()
+  if (config.fcmServerKey) {
+    const tokens = await db.query.fcmTokens.findMany({
+      where: inArray(schema.fcmTokens.userId, recipientIds),
+      columns: { token: true }
+    })
+    if (tokens.length > 0) {
+      await fetch('https://fcm.googleapis.com/fcm/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `key=${config.fcmServerKey}`
+        },
+        body: JSON.stringify({
+          registration_ids: tokens.map(t => t.token),
+          notification: { title: opts.subject, body: opts.body },
+          data: { messageId }
+        })
+      })
+    }
+  }
+
+  return { messageId, recipients: recipientIds.length }
+}
