@@ -1,5 +1,5 @@
 import { eq, lte, and } from 'drizzle-orm'
-import { parseExpression } from 'cron-parser'
+import parseExpression from 'cron-parser'
 import { useDrizzle, schema } from '../database'
 import { sendNotification } from '../utils/sendNotification'
 

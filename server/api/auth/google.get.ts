@@ -22,7 +22,9 @@ export default defineOAuthGoogleEventHandler({
         role: 'user' as const,
         googleId: googleUser.sub,
         avatarUrl: googleUser.picture ?? null,
-        createdAt: new Date()
+        status: 'active' as const,
+        createdAt: new Date(),
+        lastLoginAt: null
       }
       await db.insert(schema.users).values(newUser)
       user = newUser

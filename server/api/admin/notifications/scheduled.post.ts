@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { parseExpression } from 'cron-parser'
+import parseExpression from 'cron-parser'
 import { useDrizzle, schema } from '../../../database'
 
 const bodySchema = z.object({
