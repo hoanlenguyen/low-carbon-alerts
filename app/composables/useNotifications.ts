@@ -51,6 +51,7 @@ export function useNotifications() {
           config: {
             apiKey: config.public.firebaseApiKey,
             authDomain: config.public.firebaseAuthDomain,
+            projectId: config.public.firebaseProjectId,
             messagingSenderId: config.public.firebaseMessagingSenderId,
             appId: config.public.firebaseAppId
           }
