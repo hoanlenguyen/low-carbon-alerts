@@ -10,7 +10,7 @@ interface InboxMessage {
 }
 
 export function useNotifications() {
-  const { $firebaseMessaging } = useNuxtApp()
+  const nuxtApp = useNuxtApp()
   const { user } = useUserSession()
   const config = useRuntimeConfig()
 
@@ -39,6 +39,8 @@ export function useNotifications() {
   }
 
   async function registerFCM() {
+    if (!import.meta.client) return
+    const $firebaseMessaging = nuxtApp.$firebaseMessaging as ReturnType<typeof import('firebase/messaging').getMessaging> | undefined
     if (!$firebaseMessaging || !config.public.firebaseVapidKey) return
     try {
       const permission = await Notification.requestPermission()
