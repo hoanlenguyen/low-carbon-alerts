@@ -142,9 +142,9 @@ function formatDate(val: string | null) {
 }
 
 const tabs = [
-  { label: 'Send', value: 'send', icon: 'i-lucide-send' },
-  { label: 'Templates', value: 'templates', icon: 'i-lucide-file-text' },
-  { label: 'Scheduled', value: 'scheduled', icon: 'i-lucide-clock' }
+  { label: 'Send', value: 'send', slot: 'send' as const, icon: 'i-lucide-send' },
+  { label: 'Templates', value: 'templates', slot: 'templates' as const, icon: 'i-lucide-file-text' },
+  { label: 'Scheduled', value: 'scheduled', slot: 'scheduled' as const, icon: 'i-lucide-clock' }
 ]
 </script>
 
@@ -203,6 +203,7 @@ const tabs = [
                 <USelectMenu
                   v-model="sendState.targetUserIds"
                   :items="(users ?? []).map(u => ({ label: u.name || u.email, value: u.id }))"
+                  value-key="value"
                   multiple
                   class="w-full"
                 />
@@ -305,6 +306,7 @@ const tabs = [
                 <USelectMenu
                   v-model="jobState.targetUserIds"
                   :items="(users ?? []).map(u => ({ label: u.name || u.email, value: u.id }))"
+                  value-key="value"
                   multiple
                   class="w-full"
                 />
