@@ -1,4 +1,4 @@
-import { useDrizzle, schema } from '../../../database'
+import { useDrizzle } from '../../../database'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)

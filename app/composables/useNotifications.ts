@@ -29,7 +29,7 @@ export function useNotifications() {
       try {
         const msg = JSON.parse(event.data) as InboxMessage
         messages.value.unshift(msg)
-      } catch {}
+      } catch { /* ignore malformed SSE data */ }
     }
     es.onerror = () => {
       es.close()
@@ -67,7 +67,7 @@ export function useNotifications() {
         fcmToken.value = token
         await $fetch('/api/notifications/fcm-token', { method: 'POST', body: { token } })
       }
-    } catch {}
+    } catch { /* FCM registration failure is non-fatal */ }
   }
 
   async function markAsRead(id: string) {

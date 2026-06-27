@@ -24,7 +24,12 @@ onMounted(init)
             aria-label="Notifications"
           >
             <template v-if="unreadCount > 0" #trailing>
-              <UBadge :label="String(unreadCount)" color="error" size="xs" class="-mr-1" />
+              <UBadge
+                :label="String(unreadCount)"
+                color="error"
+                size="xs"
+                class="-mr-1"
+              />
             </template>
           </UButton>
 
@@ -43,7 +48,9 @@ onMounted(init)
                 <p class="text-sm font-medium" :class="{ 'text-highlighted': !msg.read }">
                   {{ msg.subject }}
                 </p>
-                <p class="text-xs text-muted line-clamp-2 mt-0.5">{{ msg.body }}</p>
+                <p class="text-xs text-muted line-clamp-2 mt-0.5">
+                  {{ msg.body }}
+                </p>
                 <p class="text-xs text-muted mt-1">
                   {{ new Date(msg.createdAt).toLocaleString() }}
                 </p>

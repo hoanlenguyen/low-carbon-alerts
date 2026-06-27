@@ -60,7 +60,7 @@ export async function getFcmAccessToken(serviceAccountJson: string): Promise<str
     })
   })
 
-  const data = await res.json() as { access_token: string; expires_in: number }
+  const data = await res.json() as { access_token: string, expires_in: number }
   cachedToken = data.access_token
   tokenExpiresAt = now + (data.expires_in ?? 3600)
   return cachedToken

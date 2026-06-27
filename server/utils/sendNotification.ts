@@ -62,7 +62,9 @@ export async function sendNotification(event: H3Event, opts: SendOptions) {
     const clients = sseClients.get(userId)
     if (clients) {
       for (const send of clients) {
-        try { send(payload) } catch {}
+        try {
+          send(payload)
+        } catch { /* non-fatal */ }
       }
     }
   }
@@ -96,7 +98,7 @@ export async function sendNotification(event: H3Event, opts: SendOptions) {
             })
           )
         )
-      } catch {}
+      } catch { /* non-fatal */ }
     }
   }
 

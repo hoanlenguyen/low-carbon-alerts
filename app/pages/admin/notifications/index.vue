@@ -177,7 +177,12 @@ const tabs = [
               </UButton>
             </div>
 
-            <UForm :schema="sendSchema" :state="sendState" class="space-y-4" @submit="onSend">
+            <UForm
+              :schema="sendSchema"
+              :state="sendState"
+              class="space-y-4"
+              @submit="onSend"
+            >
               <UFormField label="Subject" name="subject">
                 <UInput v-model="sendState.subject" class="w-full" />
               </UFormField>
@@ -213,7 +218,12 @@ const tabs = [
         <!-- ── Templates ── -->
         <template #templates>
           <div class="max-w-2xl space-y-6 pt-4">
-            <UForm :schema="templateSchema" :state="templateState" class="space-y-4" @submit="onCreateTemplate">
+            <UForm
+              :schema="templateSchema"
+              :state="templateState"
+              class="space-y-4"
+              @submit="onCreateTemplate"
+            >
               <div class="grid sm:grid-cols-2 gap-4">
                 <UFormField label="Template name" name="name">
                   <UInput v-model="templateState.name" class="w-full" />
@@ -239,12 +249,24 @@ const tabs = [
                 class="flex items-center justify-between rounded-lg border border-default px-4 py-3"
               >
                 <div>
-                  <p class="font-medium text-sm">{{ t.name }}</p>
-                  <p class="text-xs text-muted">{{ t.subject }}</p>
+                  <p class="font-medium text-sm">
+                    {{ t.name }}
+                  </p>
+                  <p class="text-xs text-muted">
+                    {{ t.subject }}
+                  </p>
                 </div>
-                <UButton icon="i-lucide-trash" color="error" variant="ghost" size="xs" @click="deleteTemplate(t.id)" />
+                <UButton
+                  icon="i-lucide-trash"
+                  color="error"
+                  variant="ghost"
+                  size="xs"
+                  @click="deleteTemplate(t.id)"
+                />
               </div>
-              <p v-if="!templates?.length" class="text-sm text-muted">No templates yet.</p>
+              <p v-if="!templates?.length" class="text-sm text-muted">
+                No templates yet.
+              </p>
             </div>
           </div>
         </template>
@@ -252,7 +274,12 @@ const tabs = [
         <!-- ── Scheduled ── -->
         <template #scheduled>
           <div class="max-w-2xl space-y-6 pt-4">
-            <UForm :schema="jobSchema" :state="jobState" class="space-y-4" @submit="onCreateJob">
+            <UForm
+              :schema="jobSchema"
+              :state="jobState"
+              class="space-y-4"
+              @submit="onCreateJob"
+            >
               <div class="grid sm:grid-cols-2 gap-4">
                 <UFormField label="Job name" name="name">
                   <UInput v-model="jobState.name" class="w-full" />
@@ -296,19 +323,31 @@ const tabs = [
                 class="rounded-lg border border-default px-4 py-3 space-y-1"
               >
                 <div class="flex items-center justify-between">
-                  <p class="font-medium text-sm">{{ job.name }}</p>
+                  <p class="font-medium text-sm">
+                    {{ job.name }}
+                  </p>
                   <div class="flex items-center gap-2">
                     <UToggle :model-value="job.enabled" @update:model-value="toggleJob(job.id, $event)" />
-                    <UButton icon="i-lucide-trash" color="error" variant="ghost" size="xs" @click="deleteJob(job.id)" />
+                    <UButton
+                      icon="i-lucide-trash"
+                      color="error"
+                      variant="ghost"
+                      size="xs"
+                      @click="deleteJob(job.id)"
+                    />
                   </div>
                 </div>
-                <p class="text-xs text-muted font-mono">{{ job.cronExpression }}</p>
+                <p class="text-xs text-muted font-mono">
+                  {{ job.cronExpression }}
+                </p>
                 <div class="flex gap-4 text-xs text-muted">
                   <span>Next: {{ formatDate(job.nextRunAt) }}</span>
                   <span>Last: {{ formatDate(job.lastRunAt) }}</span>
                 </div>
               </div>
-              <p v-if="!jobs?.length" class="text-sm text-muted">No scheduled jobs yet.</p>
+              <p v-if="!jobs?.length" class="text-sm text-muted">
+                No scheduled jobs yet.
+              </p>
             </div>
           </div>
         </template>

@@ -22,7 +22,9 @@ export default defineEventHandler(async (event) => {
 
   // Heartbeat every 30s to keep connection alive
   const heartbeat = setInterval(() => {
-    try { event.node.res.write(': ping\n\n') } catch { clearInterval(heartbeat) }
+    try {
+      event.node.res.write(': ping\n\n')
+    } catch { clearInterval(heartbeat) }
   }, 30000)
 
   event.node.req.on('close', () => {

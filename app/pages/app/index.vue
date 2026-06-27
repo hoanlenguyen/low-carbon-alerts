@@ -43,7 +43,13 @@ const { messages, unreadCount, markAsRead } = useNotifications()
     <UPageCard icon="i-lucide-bell">
       <template #title>
         Messages
-        <UBadge v-if="unreadCount > 0" :label="String(unreadCount)" color="error" size="xs" class="ml-2" />
+        <UBadge
+          v-if="unreadCount > 0"
+          :label="String(unreadCount)"
+          color="error"
+          size="xs"
+          class="ml-2"
+        />
       </template>
 
       <div v-if="messages.length === 0" class="text-sm text-muted py-4 text-center">
@@ -65,7 +71,9 @@ const { messages, unreadCount, markAsRead } = useNotifications()
             <p class="text-sm font-medium" :class="{ 'text-highlighted': !msg.read }">
               {{ msg.subject }}
             </p>
-            <p class="text-sm text-muted mt-0.5">{{ msg.body }}</p>
+            <p class="text-sm text-muted mt-0.5">
+              {{ msg.body }}
+            </p>
             <p class="text-xs text-muted mt-1">
               {{ new Date(msg.createdAt).toLocaleString() }}
             </p>

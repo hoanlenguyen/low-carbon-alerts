@@ -21,7 +21,6 @@ const user = computed(() => ({
   }
 }))
 
-
 const items = computed<DropdownMenuItem[][]>(() => ([[{
   type: 'label',
   label: user.value.name,
