@@ -5,6 +5,13 @@
 let cachedToken: string | null = null
 let tokenExpiresAt = 0
 
+function toBase64Url(input: string | Uint8Array): string {
+  const bytes = typeof input === 'string' ? new TextEncoder().encode(input) : input
+  let binary = ''
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
 export async function getFcmAccessToken(serviceAccountJson: string): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
   if (cachedToken && now < tokenExpiresAt - 60) return cachedToken
@@ -14,20 +21,17 @@ export async function getFcmAccessToken(serviceAccountJson: string): Promise<str
     private_key: string
   }
 
-  const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
-  const payload = btoa(
-    JSON.stringify({
-      iss: sa.client_email,
-      scope: 'https://www.googleapis.com/auth/firebase.messaging',
-      aud: 'https://oauth2.googleapis.com/token',
-      iat: now,
-      exp: now + 3600
-    })
-  )
+  const header = toBase64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
+  const payload = toBase64Url(JSON.stringify({
+    iss: sa.client_email,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600
+  }))
 
   const signingInput = `${header}.${payload}`
 
-  // Import the PEM private key into Web Crypto
   const pemBody = sa.private_key
     .replace(/-----BEGIN PRIVATE KEY-----/, '')
     .replace(/-----END PRIVATE KEY-----/, '')
@@ -48,7 +52,7 @@ export async function getFcmAccessToken(serviceAccountJson: string): Promise<str
     new TextEncoder().encode(signingInput)
   )
 
-  const signature = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)))
+  const signature = toBase64Url(new Uint8Array(signatureBuffer))
   const jwt = `${signingInput}.${signature}`
 
   const res = await fetch('https://oauth2.googleapis.com/token', {
