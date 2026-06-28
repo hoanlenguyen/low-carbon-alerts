@@ -47,18 +47,6 @@ export function useNotifications() {
       if (permission !== 'granted') return
 
       const sw = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
-      navigator.serviceWorker.ready.then((reg) => {
-        reg.active?.postMessage({
-          type: 'FIREBASE_CONFIG',
-          config: {
-            apiKey: config.public.firebaseApiKey,
-            authDomain: config.public.firebaseAuthDomain,
-            projectId: config.public.firebaseProjectId,
-            messagingSenderId: config.public.firebaseMessagingSenderId,
-            appId: config.public.firebaseAppId
-          }
-        })
-      })
 
       const token = await getToken($firebaseMessaging, {
         vapidKey: config.public.firebaseVapidKey,
