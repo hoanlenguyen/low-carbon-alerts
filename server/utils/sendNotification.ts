@@ -1,7 +1,6 @@
 import { eq, inArray } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDrizzle, schema } from '../database'
-import { sseClients } from './sseClients'
 import { getFcmAccessToken } from './getFcmAccessToken'
 
 interface SendOptions {
@@ -50,26 +49,7 @@ export async function sendNotification(event: H3Event, opts: SendOptions) {
     }))
   )
 
-  // SSE push to connected recipients
-  const payload = JSON.stringify({
-    id: messageId,
-    subject: opts.subject,
-    body: opts.body,
-    createdAt: now.toISOString(),
-    read: false
-  })
-  for (const userId of recipientIds) {
-    const clients = sseClients.get(userId)
-    if (clients) {
-      for (const send of clients) {
-        try {
-          send(payload)
-        } catch { /* non-fatal */ }
-      }
-    }
-  }
-
-  // FCM HTTP v1 push
+  // FCM HTTP v1 push for background notifications
   const config = useRuntimeConfig()
   if (config.fcmServiceAccount && config.fcmProjectId) {
     const tokens = await db.query.fcmTokens.findMany({

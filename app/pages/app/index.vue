@@ -5,7 +5,9 @@ definePageMeta({
 })
 
 const { user } = useUserSession()
-const { messages, unreadCount, markAsRead } = useNotifications()
+const { messages, unreadCount, markAsRead, init } = useNotifications()
+
+onMounted(init)
 </script>
 
 <template>
