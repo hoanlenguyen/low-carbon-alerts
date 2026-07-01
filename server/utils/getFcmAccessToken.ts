@@ -12,11 +12,11 @@ function toBase64Url(input: string | Uint8Array): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
-export async function getFcmAccessToken(serviceAccountJson: string): Promise<string> {
+export async function getFcmAccessToken(serviceAccountJson: string | object): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
   if (cachedToken && now < tokenExpiresAt - 60) return cachedToken
 
-  const sa = JSON.parse(serviceAccountJson) as {
+  const sa = (typeof serviceAccountJson === 'string' ? JSON.parse(serviceAccountJson) : serviceAccountJson) as {
     client_email: string
     private_key: string
   }

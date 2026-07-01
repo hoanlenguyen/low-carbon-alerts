@@ -58,7 +58,7 @@ export async function sendNotification(event: H3Event, opts: SendOptions) {
     })
     if (tokens.length > 0) {
       try {
-        const accessToken = await getFcmAccessToken(config.fcmServiceAccount)
+        const accessToken = await getFcmAccessToken(config.fcmServiceAccount as string | object)
         const url = `https://fcm.googleapis.com/v1/projects/${config.fcmProjectId}/messages:send`
         await Promise.all(
           tokens.map(({ token }) =>
