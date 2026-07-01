@@ -1,4 +1,4 @@
-import { getToken } from 'firebase/messaging'
+import { getToken, onMessage } from 'firebase/messaging'
 
 interface InboxMessage {
   id: string
@@ -11,7 +11,6 @@ interface InboxMessage {
 
 // Shared state across all composable calls via useState
 const useMessages = () => useState<InboxMessage[]>('notifications-messages', () => [])
-const usePollingStarted = () => useState('notifications-polling', () => false)
 
 export function useNotifications() {
   const nuxtApp = useNuxtApp()
@@ -19,7 +18,6 @@ export function useNotifications() {
   const config = useRuntimeConfig()
 
   const messages = useMessages()
-  const pollingStarted = usePollingStarted()
   const unreadCount = computed(() => messages.value.filter(m => !m.read).length)
   const fcmToken = ref<string | null>(null)
 
@@ -27,35 +25,6 @@ export function useNotifications() {
     if (!user.value) return
     const data = await $fetch<InboxMessage[]>('/api/notifications/inbox')
     messages.value = data
-  }
-
-  function startPolling() {
-    if (!import.meta.client || pollingStarted.value) return
-    pollingStarted.value = true
-
-    const interval = setInterval(async () => {
-      if (!user.value) {
-        clearInterval(interval)
-        pollingStarted.value = false
-        return
-      }
-      try {
-        const data = await $fetch<InboxMessage[]>('/api/notifications/inbox')
-        // Merge new messages without losing read state already in memory
-        const existing = new Map(messages.value.map(m => [m.id, m]))
-        for (const msg of data) {
-          if (!existing.has(msg.id)) existing.set(msg.id, msg)
-        }
-        messages.value = Array.from(existing.values()).sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-      } catch { /* non-fatal */ }
-    }, 10000)
-
-    onUnmounted(() => {
-      clearInterval(interval)
-      pollingStarted.value = false
-    })
   }
 
   async function registerFCM() {
@@ -77,6 +46,22 @@ export function useNotifications() {
         fcmToken.value = token
         await $fetch('/api/notifications/fcm-token', { method: 'POST', body: { token } })
       }
+
+      // Foreground message handler — fires when tab is open
+      onMessage($firebaseMessaging, (payload) => {
+        const msg: InboxMessage = {
+          id: payload.data?.messageId ?? crypto.randomUUID(),
+          messageId: payload.data?.messageId ?? '',
+          subject: payload.notification?.title ?? '',
+          body: payload.notification?.body ?? '',
+          read: false,
+          createdAt: new Date().toISOString()
+        }
+        // Prepend if not already in list
+        if (!messages.value.find(m => m.id === msg.id)) {
+          messages.value = [msg, ...messages.value]
+        }
+      })
     } catch { /* FCM registration failure is non-fatal */ }
   }
 
@@ -89,7 +74,6 @@ export function useNotifications() {
   async function init() {
     if (!user.value) return
     await loadInbox()
-    startPolling()
     await registerFCM()
   }
 
