@@ -7,48 +7,47 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const fileRef = ref<HTMLInputElement>()
+const { user } = useUserSession()
+const toast = useToast()
 
 const profileSchema = z.object({
-  name: z.string().min(2, 'Too short'),
-  email: z.string().email('Invalid email'),
-  username: z.string().min(2, 'Too short'),
-  avatar: z.string().optional(),
-  bio: z.string().optional()
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email')
 })
 
 type ProfileSchema = z.output<typeof profileSchema>
 
-const profile = reactive<Partial<ProfileSchema>>({
-  name: 'Benjamin Canac',
-  email: 'ben@nuxtlabs.com',
-  username: 'benjamincanac',
-  avatar: undefined,
-  bio: undefined
+const profile = reactive<ProfileSchema>({
+  name: user.value?.name ?? '',
+  email: user.value?.email ?? ''
 })
-const toast = useToast()
+
+const loading = ref(false)
+
 async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
-  toast.add({
-    title: 'Success',
-    description: 'Your settings have been updated.',
-    icon: 'i-lucide-check',
-    color: 'success'
-  })
-  console.log(event.data)
-}
-
-function onFileChange(e: Event) {
-  const input = e.target as HTMLInputElement
-
-  if (!input.files?.length) {
-    return
+  loading.value = true
+  try {
+    await $fetch('/api/auth/profile', {
+      method: 'PATCH',
+      body: event.data
+    })
+    toast.add({
+      title: 'Profile updated',
+      description: 'Your name and email have been saved.',
+      color: 'success'
+    })
+  } catch (e: unknown) {
+    const err = e as { data?: { statusMessage?: string } }
+    const msg = err?.data?.statusMessage ?? 'Failed to save'
+    const isConflict = msg === 'Email already in use'
+    toast.add({
+      title: isConflict ? 'Email already in use' : 'Error',
+      description: isConflict ? 'That email belongs to another account. Choose a different one.' : msg,
+      color: 'error'
+    })
+  } finally {
+    loading.value = false
   }
-
-  profile.avatar = URL.createObjectURL(input.files[0]!)
-}
-
-function onFileClick() {
-  fileRef.value?.click()
 }
 </script>
 
@@ -61,7 +60,7 @@ function onFileClick() {
   >
     <UPageCard
       title="Profile"
-      description="These informations will be displayed publicly."
+      description="Update your name and email address."
       variant="naked"
       orientation="horizontal"
       class="mb-4"
@@ -71,6 +70,7 @@ function onFileClick() {
         label="Save changes"
         color="neutral"
         type="submit"
+        :loading="loading"
         class="w-fit lg:ms-auto"
       />
     </UPageCard>
@@ -79,56 +79,23 @@ function onFileClick() {
       <UFormField
         name="name"
         label="Name"
-        description="Will appear on app"
+        description="Will appear on your profile."
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput v-model="profile.name" autocomplete="off" />
       </UFormField>
+
       <USeparator />
+
       <UFormField
         name="email"
         label="Email"
-        description="Used to sign in, for email receipts and notifications."
+        description="Used to sign in and for notifications."
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput v-model="profile.email" type="email" autocomplete="off" />
-      </UFormField>
-      <USeparator />
-      <USeparator />
-      <UFormField
-        name="avatar"
-        label="Avatar"
-        description="JPG, GIF or PNG. 1MB Max."
-        class="flex max-sm:flex-col justify-between sm:items-center gap-4"
-      >
-        <div class="flex flex-wrap items-center gap-3">
-          <UAvatar :src="profile.avatar" :alt="profile.name" size="lg" />
-          <UButton label="Choose" color="neutral" @click="onFileClick" />
-          <input
-            ref="fileRef"
-            type="file"
-            class="hidden"
-            accept=".jpg, .jpeg, .png, .gif"
-            @change="onFileChange"
-          >
-        </div>
-      </UFormField>
-      <USeparator />
-      <UFormField
-        name="bio"
-        label="Bio"
-        description="Brief description for your profile. URLs are hyperlinked."
-        class="flex max-sm:flex-col justify-between items-start gap-4"
-        :ui="{ container: 'w-full' }"
-      >
-        <UTextarea
-          v-model="profile.bio"
-          :rows="5"
-          autoresize
-          class="w-full"
-        />
       </UFormField>
     </UPageCard>
   </UForm>
