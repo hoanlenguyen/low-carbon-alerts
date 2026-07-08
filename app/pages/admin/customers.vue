@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import { upperFirst } from 'scule'
-import { getPaginationRowModel } from '@tanstack/table-core'
-import type { Row } from '@tanstack/table-core'
 
 definePageMeta({
   layout: 'admin',
@@ -19,78 +16,82 @@ type Customer = {
   lastLoginAt: string | null
 }
 
-const UAvatar = resolveComponent('UAvatar')
-const UButton = resolveComponent('UButton')
-const UBadge = resolveComponent('UBadge')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
-const UCheckbox = resolveComponent('UCheckbox')
-
 const toast = useToast()
-const table = useTemplateRef('table')
-
-const columnFilters = ref([{ id: 'email', value: '' }])
-const columnVisibility = ref()
-const rowSelection = ref({})
 
 const { data, status: fetchStatus } = await useFetch<Customer[]>(
   '/api/admin/users',
   { lazy: true }
 )
 
+// ── Filters ──
+const emailFilter = ref('')
+const statusFilter = ref('all')
+
+// ── Sort ──
+const sortKey = ref<keyof Customer | null>(null)
+const sortDir = ref<'asc' | 'desc'>('asc')
+
+function toggleSort(key: keyof Customer) {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortDir.value = 'asc'
+  }
+}
+
+// ── Pagination ──
+const pageSize = 10
+const pageIndex = ref(0)
+
+const filtered = computed(() => {
+  let rows = data.value ?? []
+  if (emailFilter.value) {
+    const q = emailFilter.value.toLowerCase()
+    rows = rows.filter(r => r.email.toLowerCase().includes(q))
+  }
+  if (statusFilter.value !== 'all') {
+    rows = rows.filter(r => r.status === statusFilter.value)
+  }
+  if (sortKey.value) {
+    const key = sortKey.value
+    const dir = sortDir.value === 'asc' ? 1 : -1
+    rows = [...rows].sort((a, b) => {
+      const av = a[key] ?? ''
+      const bv = b[key] ?? ''
+      return av < bv ? -dir : av > bv ? dir : 0
+    })
+  }
+  return rows
+})
+
+watch(
+  [emailFilter, statusFilter],
+  () => {
+    pageIndex.value = 0
+  }
+)
+
+const paginated = computed(() =>
+  filtered.value.slice(pageIndex.value * pageSize, (pageIndex.value + 1) * pageSize)
+)
+
+// ── Formatters ──
 function formatDate(val: string | null) {
   if (!val) return '—'
   return new Date(val).toLocaleString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
   })
 }
 
-function getRowItems(row: Row<Customer>) {
-  return [
-    { type: 'label', label: 'Actions' },
-    {
-      label: 'Copy ID',
-      icon: 'i-lucide-copy',
-      onSelect() {
-        navigator.clipboard.writeText(row.original.id)
-        toast.add({ title: 'Copied to clipboard', description: 'User ID copied' })
-      }
-    },
-    { type: 'separator' },
-    {
-      label: 'Copy email',
-      icon: 'i-lucide-mail',
-      onSelect() {
-        navigator.clipboard.writeText(row.original.email)
-        toast.add({ title: 'Copied to clipboard', description: 'Email copied' })
-      }
-    }
-  ]
+function copyToClipboard(text: string, description: string) {
+  navigator.clipboard.writeText(text)
+  toast.add({ title: 'Copied to clipboard', description })
 }
 
+// ── Columns ──
 const columns: TableColumn<Customer>[] = [
-  {
-    id: 'select',
-    header: ({ table }) =>
-      h(UCheckbox, {
-        'modelValue': table.getIsSomePageRowsSelected()
-          ? 'indeterminate'
-          : table.getIsAllPageRowsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
-          table.toggleAllPageRowsSelected(!!value),
-        'ariaLabel': 'Select all'
-      }),
-    cell: ({ row }) =>
-      h(UCheckbox, {
-        'modelValue': row.getIsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
-          row.toggleSelected(!!value),
-        'ariaLabel': 'Select row'
-      })
-  },
   {
     accessorKey: 'id',
     header: 'ID',
@@ -102,7 +103,7 @@ const columns: TableColumn<Customer>[] = [
     header: 'Name',
     cell: ({ row }) =>
       h('div', { class: 'flex items-center gap-3' }, [
-        h(UAvatar, {
+        h(resolveComponent('UAvatar'), {
           src: row.original.avatarUrl ?? undefined,
           alt: row.original.name ?? row.original.email,
           size: 'sm'
@@ -112,21 +113,7 @@ const columns: TableColumn<Customer>[] = [
   },
   {
     accessorKey: 'email',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Email',
-        icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    }
+    header: 'Email'
   },
   {
     accessorKey: 'createdAt',
@@ -141,10 +128,9 @@ const columns: TableColumn<Customer>[] = [
   {
     accessorKey: 'status',
     header: 'Status',
-    filterFn: 'equals',
     cell: ({ row }) => {
       const color = row.original.status === 'active' ? ('success' as const) : ('error' as const)
-      return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () => row.original.status)
+      return h(resolveComponent('UBadge'), { class: 'capitalize', variant: 'subtle', color }, () => row.original.status)
     }
   },
   {
@@ -154,29 +140,21 @@ const columns: TableColumn<Customer>[] = [
         'div',
         { class: 'text-right' },
         h(
-          UDropdownMenu,
-          { content: { align: 'end' }, items: getRowItems(row) },
-          () => h(UButton, { icon: 'i-lucide-ellipsis-vertical', color: 'neutral', variant: 'ghost', class: 'ml-auto' })
+          resolveComponent('UDropdownMenu'),
+          {
+            content: { align: 'end' },
+            items: [
+              { type: 'label', label: 'Actions' },
+              { label: 'Copy ID', icon: 'i-lucide-copy', onSelect: () => copyToClipboard(row.original.id, 'User ID copied') },
+              { type: 'separator' },
+              { label: 'Copy email', icon: 'i-lucide-mail', onSelect: () => copyToClipboard(row.original.email, 'Email copied') }
+            ]
+          },
+          () => h(resolveComponent('UButton'), { icon: 'i-lucide-ellipsis-vertical', color: 'neutral', variant: 'ghost', class: 'ml-auto' })
         )
       )
   }
 ]
-
-const statusFilter = ref('all')
-
-watch(statusFilter, (newVal) => {
-  if (!table?.value?.tableApi) return
-  const col = table.value.tableApi.getColumn('status')
-  if (!col) return
-  col.setFilterValue(newVal === 'all' ? undefined : newVal)
-})
-
-const email = computed({
-  get: (): string => (table.value?.tableApi?.getColumn('email')?.getFilterValue() as string) || '',
-  set: (value: string) => table.value?.tableApi?.getColumn('email')?.setFilterValue(value || undefined)
-})
-
-const pagination = ref({ pageIndex: 0, pageSize: 10 })
 </script>
 
 <template>
@@ -190,9 +168,9 @@ const pagination = ref({ pageIndex: 0, pageSize: 10 })
     </template>
 
     <template #body>
-      <div class="flex flex-wrap items-center justify-between gap-1.5">
+      <div class="flex flex-wrap items-center justify-between gap-1.5 mb-4">
         <UInput
-          v-model="email"
+          v-model="emailFilter"
           class="max-w-sm"
           icon="i-lucide-search"
           placeholder="Filter emails..."
@@ -206,49 +184,23 @@ const pagination = ref({ pageIndex: 0, pageSize: 10 })
               { label: 'Active', value: 'active' },
               { label: 'Inactive', value: 'inactive' }
             ]"
-            :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
             placeholder="Filter status"
             class="min-w-28"
           />
 
-          <UDropdownMenu
-            :items="
-              table?.tableApi
-                ?.getAllColumns()
-                .filter((column: any) => column.getCanHide())
-                .map((column: any) => ({
-                  label: upperFirst(column.id),
-                  type: 'checkbox' as const,
-                  checked: column.getIsVisible(),
-                  onUpdateChecked(checked: boolean) {
-                    table?.tableApi?.getColumn(column.id)?.toggleVisibility(!!checked)
-                  },
-                  onSelect(e?: Event) {
-                    e?.preventDefault()
-                  }
-                }))
-            "
-            :content="{ align: 'end' }"
-          >
-            <UButton
-              label="Display"
-              color="neutral"
-              variant="outline"
-              trailing-icon="i-lucide-settings-2"
-            />
-          </UDropdownMenu>
+          <UButton
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-arrow-up-down"
+            :label="sortKey ? `${sortKey} ${sortDir === 'asc' ? '↑' : '↓'}` : 'Sort'"
+            @click="toggleSort('email')"
+          />
         </div>
       </div>
 
       <UTable
-        ref="table"
-        v-model:column-filters="columnFilters"
-        v-model:column-visibility="columnVisibility"
-        v-model:row-selection="rowSelection"
-        v-model:pagination="pagination"
-        :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
         class="shrink-0"
-        :data="data ?? []"
+        :data="paginated"
         :columns="columns"
         :loading="fetchStatus === 'pending'"
         :ui="{
@@ -263,15 +215,14 @@ const pagination = ref({ pageIndex: 0, pageSize: 10 })
 
       <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
         <div class="text-sm text-muted">
-          {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} of
-          {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} row(s) selected.
+          {{ filtered.length }} row(s)
         </div>
 
         <UPagination
-          :default-page="(table?.tableApi?.getState().pagination.pageIndex || 0) + 1"
-          :items-per-page="table?.tableApi?.getState().pagination.pageSize"
-          :total="table?.tableApi?.getFilteredRowModel().rows.length"
-          @update:page="(p: number) => table?.tableApi?.setPageIndex(p - 1)"
+          :page="pageIndex + 1"
+          :items-per-page="pageSize"
+          :total="filtered.length"
+          @update:page="(p: number) => { pageIndex = p - 1 }"
         />
       </div>
     </template>
