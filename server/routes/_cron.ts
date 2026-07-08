@@ -1,5 +1,5 @@
 import { eq, lte, and } from 'drizzle-orm'
-import parseExpression from 'cron-parser'
+import { CronExpressionParser } from 'cron-parser'
 import { useDrizzle, schema } from '../database'
 import { sendNotification } from '../utils/sendNotification'
 
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
       targetUserIds
     })
 
-    const nextRunAt = parseExpression(job.cronExpression).next().toDate()
+    const nextRunAt = CronExpressionParser.parse(job.cronExpression).next().toDate()
     await db.update(schema.scheduledJobs)
       .set({ lastRunAt: now, nextRunAt })
       .where(eq(schema.scheduledJobs.id, job.id))

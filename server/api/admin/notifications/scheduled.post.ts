@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import parseExpression from 'cron-parser'
+import { CronExpressionParser } from 'cron-parser'
 import { useDrizzle, schema } from '../../../database'
 
 const bodySchema = z.object({
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   let nextRunAt: Date
   try {
-    nextRunAt = parseExpression(data.cronExpression).next().toDate()
+    nextRunAt = CronExpressionParser.parse(data.cronExpression).next().toDate()
   } catch {
     throw createError({ statusCode: 400, statusMessage: 'Invalid cron expression' })
   }
