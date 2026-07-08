@@ -329,7 +329,7 @@ const tabs = [
                     {{ job.name }}
                   </p>
                   <div class="flex items-center gap-2">
-                    <UToggle :model-value="job.enabled" @update:model-value="toggleJob(job.id, $event)" />
+                    <USwitch :model-value="job.enabled" @update:model-value="toggleJob(job.id, $event)" />
                     <UButton
                       icon="i-lucide-trash"
                       color="error"
