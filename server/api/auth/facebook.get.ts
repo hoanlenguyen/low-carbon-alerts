@@ -21,6 +21,7 @@ export default defineOAuthFacebookEventHandler({
         name: (fbUser.name as string) ?? null,
         passwordHash: null,
         role: 'user' as const,
+        googleId: null,
         facebookId: fbUser.id as string,
         avatarUrl: fbUser.picture?.data?.url ?? null,
         status: 'active' as const,
@@ -28,11 +29,17 @@ export default defineOAuthFacebookEventHandler({
         lastLoginAt: null
       }
       await db.insert(schema.users).values(newUser)
-      user = newUser
+      user = await db.query.users.findFirst({
+        where: eq(schema.users.id, newUser.id)
+      })
     } else if (!user.facebookId) {
       await db.update(schema.users)
         .set({ facebookId: fbUser.id as string })
         .where(eq(schema.users.id, user.id))
+    }
+
+    if (!user) {
+      throw createError({ statusCode: 500, statusMessage: 'Failed to create user' })
     }
 
     if (user.role !== 'user') {

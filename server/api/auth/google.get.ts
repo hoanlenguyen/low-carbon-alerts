@@ -21,17 +21,24 @@ export default defineOAuthGoogleEventHandler({
         passwordHash: null,
         role: 'user' as const,
         googleId: googleUser.sub,
+        facebookId: null,
         avatarUrl: googleUser.picture ?? null,
         status: 'active' as const,
         createdAt: new Date(),
         lastLoginAt: null
       }
       await db.insert(schema.users).values(newUser)
-      user = newUser
+      user = await db.query.users.findFirst({
+        where: eq(schema.users.id, newUser.id)
+      })
     } else if (!user.googleId) {
       await db.update(schema.users)
         .set({ googleId: googleUser.sub, avatarUrl: googleUser.picture ?? user.avatarUrl })
         .where(eq(schema.users.id, user.id))
+    }
+
+    if (!user) {
+      throw createError({ statusCode: 500, statusMessage: 'Failed to create user' })
     }
 
     if (user.role !== 'user') {
