@@ -1,3 +1,4 @@
+<!-- eslint-disable @stylistic/indent -->
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
@@ -70,15 +71,18 @@ const links = [[{
       open.value = false
     }
   }]
-}], [{
-  label: 'Feedback',
-  icon: 'i-lucide-message-circle',
-  to: 'https://github.com/nuxt-ui-templates/dashboard',
-  target: '_blank'
-}, {
+}], [
+//   {
+//   label: 'Feedback',
+//   icon: 'i-lucide-message-circle',
+//   to: 'https://github.com/nuxt-ui-templates/dashboard',
+//   target: '_blank'
+// eslint-disable-next-line @stylistic/no-trailing-spaces
+// }, 
+{
   label: 'Help & Support',
   icon: 'i-lucide-info',
-  to: 'https://github.com/nuxt-ui-templates/dashboard',
+  to: 'https://hoanlenguyen.github.io/my-profile/',
   target: '_blank'
 }]] satisfies NavigationMenuItem[][]
 
