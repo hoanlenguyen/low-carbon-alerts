@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../database'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async () => {
   const db = useDrizzle()
   const users = await db.query.users.findMany({
     where: eq(schema.users.role, 'user'),
