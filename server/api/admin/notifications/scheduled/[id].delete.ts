@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
   const id = getRouterParam(event, 'id')!
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   await db.delete(schema.scheduledJobs).where(eq(schema.scheduledJobs.id, id))
   return { ok: true }
 })

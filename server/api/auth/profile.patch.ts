@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const data = await readValidatedBody(event, bodySchema.parse)
-  const db = useDrizzle(event)
+  const db = useDrizzle()
 
   if (data.email !== session.user.email) {
     const existing = await db.query.users.findFirst({

@@ -60,6 +60,17 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         Continue with Google
       </UButton>
 
+      <UButton
+        to="/api/auth/facebook"
+        external
+        block
+        color="neutral"
+        variant="subtle"
+        icon="i-simple-icons-facebook"
+      >
+        Continue with Facebook
+      </UButton>
+
       <div class="flex items-center gap-2 text-xs text-muted">
         <USeparator />
         <span>or</span>

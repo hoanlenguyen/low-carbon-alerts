@@ -12,7 +12,7 @@ interface SendOptions {
 }
 
 export async function sendNotification(event: H3Event, opts: SendOptions) {
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   const now = new Date()
 
   const messageId = crypto.randomUUID()

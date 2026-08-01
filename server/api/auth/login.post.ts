@@ -10,7 +10,7 @@ const bodySchema = z.object({
 export default defineEventHandler(async (event) => {
   const { email, password } = await readValidatedBody(event, bodySchema.parse)
 
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   const user = await db.query.users.findFirst({
     where: eq(schema.users.email, email.toLowerCase())
   })

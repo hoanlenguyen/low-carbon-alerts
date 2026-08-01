@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   }
   const id = getRouterParam(event, 'id')!
   const data = await readValidatedBody(event, bodySchema.parse)
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   await db.update(schema.scheduledJobs).set(data).where(eq(schema.scheduledJobs.id, id))
   return { ok: true }
 })

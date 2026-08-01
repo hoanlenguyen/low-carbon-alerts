@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const { email, password, name } = await readValidatedBody(event, bodySchema.parse)
   const normalizedEmail = email.toLowerCase()
 
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   const existing = await db.query.users.findFirst({
     where: eq(schema.users.email, normalizedEmail)
   })

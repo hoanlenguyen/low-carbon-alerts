@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
   const data = await readValidatedBody(event, bodySchema.parse)
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   const id = crypto.randomUUID()
   await db.insert(schema.messageTemplates).values({ id, ...data, createdAt: new Date() })
   return { id }

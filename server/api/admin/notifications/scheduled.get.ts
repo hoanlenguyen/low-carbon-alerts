@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   if (!session.user || session.user.role !== 'admin') {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   return db.query.scheduledJobs.findMany({
     orderBy: (j, { desc }) => [desc(j.createdAt)]
   })

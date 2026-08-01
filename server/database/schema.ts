@@ -7,6 +7,7 @@ export const users = sqliteTable('users', {
   passwordHash: text('password_hash'),
   role: text('role', { enum: ['admin', 'user'] }).notNull().default('user'),
   googleId: text('google_id').unique(),
+  facebookId: text('facebook_id').unique(),
   avatarUrl: text('avatar_url'),
   status: text('status', { enum: ['active', 'inactive'] }).notNull().default('active'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),

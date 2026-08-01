@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!session.user) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
 
   const { token } = await readValidatedBody(event, bodySchema.parse)
-  const db = useDrizzle(event)
+  const db = useDrizzle()
 
   const existing = await db.query.fcmTokens.findFirst({
     where: eq(schema.fcmTokens.token, token)

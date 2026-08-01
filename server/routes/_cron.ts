@@ -5,7 +5,7 @@ import { sendNotification } from '../utils/sendNotification'
 
 export default defineEventHandler(async (event) => {
   // Cloudflare Cron Triggers call this route via scheduled handler
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   const now = new Date()
 
   const dueJobs = await db.query.scheduledJobs.findMany({

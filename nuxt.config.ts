@@ -1,7 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
-    'nitro-cloudflare-dev',
     '@nuxt/eslint',
     '@nuxt/ui',
     '@vueuse/nuxt',
@@ -18,6 +17,8 @@ export default defineNuxtConfig({
     setupToken: '',
     fcmServiceAccount: '',
     fcmProjectId: '',
+    tursoUrl: '',
+    tursoAuthToken: '',
     public: {
       firebaseApiKey: '',
       firebaseAuthDomain: '',
@@ -37,7 +38,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-07-11',
 
   nitro: {
-    preset: 'cloudflare-pages'
+    preset: 'vercel'
   },
 
   eslint: {
