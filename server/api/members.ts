@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   const users = await db.query.users.findMany({
     columns: { id: true, name: true, email: true, role: true, avatarUrl: true },
     where: eq(schema.users.role, 'admin')

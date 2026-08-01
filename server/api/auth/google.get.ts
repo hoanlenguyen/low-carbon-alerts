@@ -6,7 +6,7 @@ export default defineOAuthGoogleEventHandler({
     scope: ['email', 'profile']
   },
   async onSuccess(event, { user: googleUser }) {
-    const db = useDrizzle(event)
+    const db = useDrizzle()
     const email = googleUser.email.toLowerCase()
 
     let user = await db.query.users.findFirst({

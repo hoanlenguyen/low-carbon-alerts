@@ -10,13 +10,14 @@
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 migrations apply low-carbon-alerts --local",
-    "db:migrate:remote": "wrangler d1 migrations apply low-carbon-alerts --remote"
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.112",
     "@iconify-json/simple-icons": "^1.2.86",
     "@internationalized/date": "^3.12.2",
+    "@libsql/client": "^0.17.4",
     "@nuxt/ui": "^4.8.2",
     "@tanstack/table-core": "^8.21.3",
     "@unovis/ts": "^1.6.5",
@@ -49,6 +50,9 @@
   },
   "packageManager": "pnpm@11.6.0",
   "pnpm": {
-    "onlyBuiltDependencies": ["@firebase/util", "protobufjs"]
+    "onlyBuiltDependencies": [
+      "@firebase/util",
+      "protobufjs"
+    ]
   }
 }

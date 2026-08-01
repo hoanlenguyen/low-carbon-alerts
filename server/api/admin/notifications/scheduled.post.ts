@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid cron expression' })
   }
 
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   const id = crypto.randomUUID()
   await db.insert(schema.scheduledJobs).values({
     id,

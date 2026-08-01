@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   if (!session.user) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
 
   const id = getRouterParam(event, 'id')!
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   await db.update(schema.userMessages)
     .set({ read: true, readAt: new Date() })
     .where(and(

@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 
-  const db = useDrizzle(event)
+  const db = useDrizzle()
   const normalizedEmail = email.toLowerCase()
   const existing = await db.query.users.findFirst({
     where: eq(schema.users.email, normalizedEmail)
