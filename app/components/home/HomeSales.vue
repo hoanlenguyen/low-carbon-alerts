@@ -1,58 +1,55 @@
 <script setup lang="ts">
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import type { Period, Range, Sale } from '~/types'
+import type { Period, Range } from '~/types'
 
 const props = defineProps<{
   period: Period
   range: Range
 }>()
 
+type RecentMessage = {
+  id: string
+  subject: string
+  type: 'broadcast' | 'targeted'
+  sentAt: string | null
+  createdAt: string
+  recipients: number
+}
+
 const UBadge = resolveComponent('UBadge')
 
-const sampleEmails = [
-  'james.anderson@example.com',
-  'mia.white@example.com',
-  'william.brown@example.com',
-  'emma.davis@example.com',
-  'ethan.harris@example.com'
-]
+const { data, refresh } = await useFetch<RecentMessage[]>('/api/admin/recent-messages')
 
-const { data } = await useAsyncData('sales', async () => {
-  const sales: Sale[] = []
-  const currentDate = new Date()
+watch([() => props.period, () => props.range], refresh)
 
-  for (let i = 0; i < 5; i++) {
-    const hoursAgo = randomInt(0, 48)
-    const date = new Date(currentDate.getTime() - hoursAgo * 3600000)
-
-    sales.push({
-      id: (4600 - i).toString(),
-      date: date.toISOString(),
-      status: randomFrom(['paid', 'failed', 'refunded']),
-      email: randomFrom(sampleEmails),
-      amount: randomInt(100, 1000)
-    })
-  }
-
-  return sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-}, {
-  watch: [() => props.period, () => props.range],
-  default: () => [],
-  server: false
-})
-
-const columns: TableColumn<Sale>[] = [
+const columns: TableColumn<RecentMessage>[] = [
   {
-    accessorKey: 'id',
-    header: 'ID',
-    cell: ({ row }) => `#${row.getValue('id')}`
+    accessorKey: 'subject',
+    header: 'Subject',
+    cell: ({ row }) => h('span', { class: 'font-medium truncate max-w-xs block' }, row.getValue('subject'))
   },
   {
-    accessorKey: 'date',
-    header: 'Date',
+    accessorKey: 'type',
+    header: 'Type',
+    cell: ({ row }) => h(UBadge, {
+      variant: 'subtle',
+      color: row.getValue('type') === 'broadcast' ? 'primary' : 'neutral',
+      class: 'capitalize'
+    }, () => row.getValue('type'))
+  },
+  {
+    accessorKey: 'recipients',
+    header: 'Recipients',
+    cell: ({ row }) => h('span', { class: 'tabular-nums' }, (row.getValue('recipients') as number).toLocaleString())
+  },
+  {
+    accessorKey: 'sentAt',
+    header: 'Sent',
     cell: ({ row }) => {
-      return new Date(row.getValue('date')).toLocaleString('en-US', {
+      const val = row.getValue('sentAt') as string | null
+      if (!val) return h('span', { class: 'text-dimmed' }, '—')
+      return new Date(val).toLocaleString('en-US', {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
@@ -60,54 +57,36 @@ const columns: TableColumn<Sale>[] = [
         hour12: false
       })
     }
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => {
-      const color = {
-        paid: 'success' as const,
-        failed: 'error' as const,
-        refunded: 'neutral' as const
-      }[row.getValue('status') as string]
-
-      return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () =>
-        row.getValue('status')
-      )
-    }
-  },
-  {
-    accessorKey: 'email',
-    header: 'Email'
-  },
-  {
-    accessorKey: 'amount',
-    header: () => h('div', { class: 'text-right' }, 'Amount'),
-    cell: ({ row }) => {
-      const amount = Number.parseFloat(row.getValue('amount'))
-
-      const formatted = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'EUR'
-      }).format(amount)
-
-      return h('div', { class: 'text-right font-medium' }, formatted)
-    }
   }
 ]
 </script>
 
 <template>
-  <UTable
-    :data="data"
-    :columns="columns"
-    class="shrink-0"
-    :ui="{
-      base: 'table-fixed border-separate border-spacing-0',
-      thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-      tbody: '[&>tr]:last:[&>td]:border-b-0',
-      th: 'first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-      td: 'border-b border-default'
-    }"
-  />
+  <div class="shrink-0">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+        Recent Messages
+      </p>
+      <UButton to="/admin/notifications" variant="ghost" color="neutral" size="xs" trailing-icon="i-lucide-arrow-right">
+        View all
+      </UButton>
+    </div>
+
+    <div v-if="!data?.length" class="text-sm text-muted text-center py-8 border border-dashed border-default rounded-lg">
+      No messages sent yet.
+    </div>
+
+    <UTable
+      v-else
+      :data="data"
+      :columns="columns"
+      :ui="{
+        base: 'table-fixed border-separate border-spacing-0',
+        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+        tbody: '[&>tr]:last:[&>td]:border-b-0',
+        th: 'first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+        td: 'border-b border-default'
+      }"
+    />
+  </div>
 </template>

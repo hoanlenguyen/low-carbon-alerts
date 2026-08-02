@@ -12,7 +12,7 @@ const props = defineProps<{
 
 type DataRecord = {
   date: Date
-  amount: number
+  count: number
 }
 
 const { width } = useElementSize(cardRef)
@@ -26,18 +26,18 @@ watch([() => props.period, () => props.range], () => {
     monthly: eachMonthOfInterval
   } as Record<Period, typeof eachDayOfInterval>)[props.period](props.range)
 
-  const min = 1000
-  const max = 10000
+  const min = 0
+  const max = 80
 
-  data.value = dates.map(date => ({ date, amount: Math.floor(Math.random() * (max - min + 1)) + min }))
+  data.value = dates.map(date => ({ date, count: Math.floor(Math.random() * (max - min + 1)) + min }))
 }, { immediate: true })
 
 const x = (_: DataRecord, i: number) => i
-const y = (d: DataRecord) => d.amount
+const y = (d: DataRecord) => d.count
 
-const total = computed(() => data.value.reduce((acc: number, { amount }) => acc + amount, 0))
+const total = computed(() => data.value.reduce((acc: number, { count }) => acc + count, 0))
 
-const formatNumber = new Intl.NumberFormat('en', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format
+const formatNumber = (n: number) => n.toLocaleString()
 
 const formatDate = (date: Date): string => {
   return ({
@@ -62,10 +62,10 @@ const template = (d: DataRecord) => `${formatDate(d.date)}: ${formatNumber(d.amo
   <UCard ref="cardRef" :ui="{ root: 'overflow-visible', body: 'px-0! pt-0! pb-3!' }">
     <template #header>
       <div>
-        <p class="text-xs text-muted uppercase mb-1.5">
-          Revenue
+        <p class="text-xs text-muted uppercase mb-1.5 tracking-wide">
+          Messages Sent
         </p>
-        <p class="text-3xl text-highlighted font-semibold">
+        <p class="text-3xl text-highlighted font-semibold tabular-nums">
           {{ formatNumber(total) }}
         </p>
       </div>
