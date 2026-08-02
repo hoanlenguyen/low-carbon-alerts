@@ -73,6 +73,14 @@ onMounted(init)
         </UPopover>
 
         <UButton
+          to="/app/settings"
+          color="neutral"
+          variant="ghost"
+          icon="i-lucide-settings"
+          aria-label="Settings"
+        />
+
+        <UButton
           color="neutral"
           variant="ghost"
           icon="i-lucide-log-out"
