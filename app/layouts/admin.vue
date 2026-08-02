@@ -3,7 +3,6 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 
 const route = useRoute()
 const toast = useToast()
-const { logout } = useLogout()
 
 const open = ref(false)
 
@@ -73,12 +72,12 @@ const links = [[{
 }], [{
   label: 'Feedback',
   icon: 'i-lucide-message-circle',
-  to: 'https://github.com/nuxt-ui-templates/dashboard',
+  to: 'https://hoanlenguyen.github.io/my-profile',
   target: '_blank'
 }, {
   label: 'Help & Support',
   icon: 'i-lucide-info',
-  to: 'https://github.com/nuxt-ui-templates/dashboard',
+  to: 'https://github.com/hoanlenguyen',
   target: '_blank'
 }]] satisfies NavigationMenuItem[][]
 
@@ -160,7 +159,7 @@ onMounted(async () => {
 
       <template #footer="{ collapsed }">
         <UserMenu :collapsed="collapsed" />
-        <UTooltip :text="collapsed ? 'Log out' : ''" :delay-duration="0">
+        <!-- <UTooltip :text="collapsed ? 'Log out' : ''" :delay-duration="0">
           <UButton
             color="neutral"
             variant="ghost"
@@ -172,7 +171,7 @@ onMounted(async () => {
             aria-label="Log out"
             @click="logout"
           />
-        </UTooltip>
+        </UTooltip> -->
       </template>
     </UDashboardSidebar>
 
