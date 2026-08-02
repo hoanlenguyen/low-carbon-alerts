@@ -8,6 +8,17 @@ const { user } = useUserSession()
 const { messages, unreadCount, markAsRead, init } = useNotifications()
 
 onMounted(init)
+
+const pageSize = 5
+const page = ref(1)
+
+const pagedMessages = computed(() =>
+  messages.value.slice((page.value - 1) * pageSize, page.value * pageSize)
+)
+
+const totalPages = computed(() => Math.ceil(messages.value.length / pageSize))
+
+watch(() => messages.value.length, () => { page.value = 1 })
 </script>
 
 <template>
@@ -58,30 +69,39 @@ onMounted(init)
         No messages yet
       </div>
 
-      <ul v-else class="divide-y divide-default">
-        <li
-          v-for="msg in messages"
-          :key="msg.id"
-          class="py-3 flex items-start gap-3 cursor-pointer hover:bg-elevated/30 rounded px-2 transition-colors"
-          @click="markAsRead(msg.id)"
-        >
-          <span
-            class="mt-1.5 shrink-0 size-2 rounded-full"
-            :class="msg.read ? 'bg-transparent' : 'bg-primary'"
-          />
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium" :class="{ 'text-highlighted': !msg.read }">
-              {{ msg.subject }}
-            </p>
-            <p class="text-sm text-muted mt-0.5">
-              {{ msg.body }}
-            </p>
-            <p class="text-xs text-muted mt-1">
-              {{ new Date(msg.createdAt).toLocaleString() }}
-            </p>
-          </div>
-        </li>
-      </ul>
+      <template v-else>
+        <ul class="divide-y divide-default">
+          <li
+            v-for="msg in pagedMessages"
+            :key="msg.id"
+            class="py-3 flex items-start gap-3 cursor-pointer hover:bg-elevated/30 rounded px-2 transition-colors"
+            @click="markAsRead(msg.id)"
+          >
+            <span
+              class="mt-1.5 shrink-0 size-2 rounded-full"
+              :class="msg.read ? 'bg-transparent' : 'bg-primary'"
+            />
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium" :class="{ 'text-highlighted': !msg.read }">
+                {{ msg.subject }}
+              </p>
+              <p class="text-sm text-muted mt-0.5">
+                {{ msg.body }}
+              </p>
+              <p class="text-xs text-muted mt-1">
+                {{ new Date(msg.createdAt).toLocaleString() }}
+              </p>
+            </div>
+          </li>
+        </ul>
+
+        <div v-if="totalPages > 1" class="flex items-center justify-between pt-4 border-t border-default mt-2">
+          <p class="text-xs text-muted">
+            {{ (page - 1) * pageSize + 1 }}–{{ Math.min(page * pageSize, messages.length) }} of {{ messages.length }}
+          </p>
+          <UPagination v-model:page="page" :total="messages.length" :items-per-page="pageSize" size="xs" />
+        </div>
+      </template>
     </UPageCard>
   </div>
 </template>
