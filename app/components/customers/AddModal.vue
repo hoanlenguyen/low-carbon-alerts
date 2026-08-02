@@ -2,6 +2,8 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
+const emit = defineEmits<{ created: [] }>()
+
 const schema = z.object({
   name: z.string().min(2, 'Too short'),
   email: z.string().email('Invalid email')
@@ -17,14 +19,15 @@ const state = reactive<Partial<Schema>>({
 
 const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  toast.add({ title: 'Success', description: `New customer ${event.data.name} added`, color: 'success' })
+  toast.add({ title: 'Customer added', description: event.data.name, color: 'success' })
   open.value = false
+  emit('created')
 }
 </script>
 
 <template>
   <UModal v-model:open="open" title="New customer" description="Add a new customer to the database">
-    <UButton label="New customer" icon="i-lucide-plus" />
+    <UButton label="Add customer" icon="i-lucide-user-plus" color="primary" />
 
     <template #body>
       <UForm
@@ -33,25 +36,15 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         class="space-y-4"
         @submit="onSubmit"
       >
-        <UFormField label="Name" placeholder="John Doe" name="name">
-          <UInput v-model="state.name" class="w-full" />
+        <UFormField label="Name" name="name">
+          <UInput v-model="state.name" placeholder="Jane Smith" class="w-full" />
         </UFormField>
-        <UFormField label="Email" placeholder="john.doe@example.com" name="email">
-          <UInput v-model="state.email" class="w-full" />
+        <UFormField label="Email" name="email">
+          <UInput v-model="state.email" placeholder="jane@example.com" class="w-full" />
         </UFormField>
         <div class="flex justify-end gap-2">
-          <UButton
-            label="Cancel"
-            color="neutral"
-            variant="subtle"
-            @click="open = false"
-          />
-          <UButton
-            label="Create"
-            color="primary"
-            variant="solid"
-            type="submit"
-          />
+          <UButton label="Cancel" color="neutral" variant="subtle" @click="open = false" />
+          <UButton label="Create" color="primary" type="submit" />
         </div>
       </UForm>
     </template>
