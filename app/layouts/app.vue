@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { user } = useUserSession()
 const { logout } = useLogout()
-const { messages, unreadCount, markAsRead, init } = useNotifications()
+const { messages, unreadCount, markAsRead, markAllAsRead, init } = useNotifications()
 
 const showInbox = ref(false)
 
@@ -34,27 +34,40 @@ onMounted(init)
           </UButton>
 
           <template #content>
-            <div class="w-80 max-h-96 overflow-y-auto p-2 space-y-1">
-              <p v-if="messages.length === 0" class="text-sm text-muted text-center py-4">
-                No messages
-              </p>
-              <button
-                v-for="msg in messages.slice(0, 10)"
-                :key="msg.id"
-                class="w-full text-left rounded-lg px-3 py-2 hover:bg-elevated transition-colors"
-                :class="{ 'bg-elevated/60': !msg.read }"
-                @click="markAsRead(msg.id)"
-              >
-                <p class="text-sm font-medium" :class="{ 'text-highlighted': !msg.read }">
-                  {{ msg.subject }}
+            <div class="w-80">
+              <div class="flex items-center justify-between px-3 pt-3 pb-2 border-b border-default">
+                <span class="text-xs font-semibold uppercase tracking-wide text-dimmed">Notifications</span>
+                <UButton v-if="unreadCount > 0" size="xs" color="neutral" variant="ghost" @click="markAllAsRead">
+                  Mark all read
+                </UButton>
+              </div>
+              <div class="max-h-80 overflow-y-auto p-1.5 space-y-0.5">
+                <p v-if="messages.length === 0" class="text-sm text-muted text-center py-6">
+                  No messages yet
                 </p>
-                <p class="text-xs text-muted line-clamp-2 mt-0.5">
-                  {{ msg.body }}
-                </p>
-                <p class="text-xs text-muted mt-1">
-                  {{ new Date(msg.createdAt).toLocaleString() }}
-                </p>
-              </button>
+                <button
+                  v-for="msg in messages.slice(0, 10)"
+                  :key="msg.id"
+                  class="w-full text-left rounded-lg px-3 py-2.5 transition-colors"
+                  :class="msg.read ? 'hover:bg-elevated/60' : 'bg-primary/5 hover:bg-primary/10'"
+                  @click="markAsRead(msg.id); showInbox = false"
+                >
+                  <div class="flex items-baseline justify-between gap-2">
+                    <p class="text-sm truncate" :class="msg.read ? 'text-muted' : 'font-semibold text-highlighted'">
+                      {{ msg.subject }}
+                    </p>
+                    <span v-if="!msg.read" class="size-1.5 rounded-full bg-primary shrink-0 mt-1" />
+                  </div>
+                  <p class="text-xs text-muted line-clamp-2 mt-0.5 leading-relaxed">
+                    {{ msg.body }}
+                  </p>
+                </button>
+              </div>
+              <div class="border-t border-default px-3 py-2">
+                <NuxtLink to="/app" class="text-xs text-primary hover:underline" @click="showInbox = false">
+                  View all messages →
+                </NuxtLink>
+              </div>
             </div>
           </template>
         </UPopover>
