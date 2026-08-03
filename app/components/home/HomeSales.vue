@@ -49,12 +49,13 @@ const columns: TableColumn<RecentMessage>[] = [
     cell: ({ row }) => {
       const val = row.getValue('sentAt') as string | null
       if (!val) return h('span', { class: 'text-dimmed' }, '—')
-      return new Date(val).toLocaleString('en-US', {
+      return new Date(val).toLocaleString('en-GB', {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: false
+        hour12: false,
+        timeZone: 'Europe/Helsinki'
       })
     }
   }

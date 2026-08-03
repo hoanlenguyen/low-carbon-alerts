@@ -67,6 +67,7 @@ const period = ref<Period>('daily')
       <HomeStats :period="period" :range="range" />
       <HomeChart :period="period" :range="range" />
       <HomeSales :period="period" :range="range" />
+      <CarbonIntensityCard class="mt-4" />
     </template>
   </UDashboardPanel>
 </template>

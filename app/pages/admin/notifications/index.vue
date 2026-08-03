@@ -144,7 +144,7 @@ async function deleteJob(id: string) {
 function formatRunDate(val: string | null) {
   if (!val) return '—'
   return new Date(val).toLocaleString('en-GB', {
-    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Helsinki'
   })
 }
 

@@ -82,7 +82,7 @@ function recencyLabel(val: string | null): { label: string; cls: string } {
 }
 
 function formatJoined(val: string) {
-  return new Date(val).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(val).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Europe/Helsinki' })
 }
 
 function copyToClipboard(text: string, description: string) {

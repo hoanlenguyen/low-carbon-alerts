@@ -17,15 +17,17 @@ const allData = computed(() => [...props.points].sort((a, b) => a.time - b.time)
 const x = (d: CarbonPoint) => d.time
 const y = (d: CarbonPoint) => d.value
 
+const TZ = 'Europe/Helsinki'
+
 const xTicks = (t: number) => {
   const d = new Date(t)
-  const h = d.getHours()
+  const h = Number(d.toLocaleString('en-GB', { hour: 'numeric', timeZone: TZ }))
   if (h % 6 !== 0) return ''
-  return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
 }
 
 const tooltip = (d: CarbonPoint) => {
-  const time = new Date(d.time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', weekday: 'short' })
+  const time = new Date(d.time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', weekday: 'short', timeZone: TZ })
   return `${time} · ${d.value.toFixed(1)} gCO₂/kWh${d.isForecast ? ' (forecast)' : ''}`
 }
 
