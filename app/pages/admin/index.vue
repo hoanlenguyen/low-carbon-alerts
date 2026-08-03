@@ -43,9 +43,7 @@ const period = ref<Period>('daily')
               square
               @click="isNotificationsSlideoverOpen = true"
             >
-              <UChip color="error" inset>
-                <UIcon name="i-lucide-bell" class="size-5 shrink-0" />
-              </UChip>
+              <UIcon name="i-lucide-bell" class="size-5 shrink-0" />
             </UButton>
           </UTooltip>
 
