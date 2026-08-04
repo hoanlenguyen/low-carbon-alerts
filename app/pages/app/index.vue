@@ -45,9 +45,18 @@ function timeLabel(val: string) {
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-bell" class="size-4 text-primary shrink-0" />
             <span class="font-semibold text-sm text-highlighted">Recent Alerts</span>
-            <UBadge v-if="unreadCount > 0" :label="String(unreadCount)" color="error" size="xs" />
+            <UBadge
+              v-if="unreadCount > 0"
+              :label="String(unreadCount)"
+              color="error"
+              size="xs" />
           </div>
-          <UButton to="/app/alerts" size="xs" color="neutral" variant="ghost" trailing-icon="i-lucide-arrow-right">
+          <UButton
+            to="/app/alerts"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            trailing-icon="i-lucide-arrow-right">
             View all
           </UButton>
         </div>
@@ -79,13 +88,21 @@ function timeLabel(val: string) {
               </p>
               <span class="text-xs text-dimmed tabular-nums shrink-0">{{ timeLabel(msg.createdAt) }}</span>
             </div>
-            <p class="text-sm text-muted mt-0.5 leading-relaxed line-clamp-2">{{ msg.body }}</p>
+            <p class="text-sm text-muted mt-0.5 leading-relaxed line-clamp-2">
+              {{ msg.body }}
+            </p>
           </div>
         </li>
       </ul>
 
       <template v-if="messages.length > 3" #footer>
-        <UButton to="/app/alerts" variant="ghost" color="neutral" size="sm" block trailing-icon="i-lucide-arrow-right">
+        <UButton
+          to="/app/alerts"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          block
+          trailing-icon="i-lucide-arrow-right">
           View all {{ messages.length }} alerts
         </UButton>
       </template>

@@ -68,7 +68,12 @@ const columns: TableColumn<RecentMessage>[] = [
       <p class="text-xs font-semibold uppercase tracking-wide text-muted">
         Recent Messages
       </p>
-      <UButton to="/admin/notifications" variant="ghost" color="neutral" size="xs" trailing-icon="i-lucide-arrow-right">
+      <UButton
+        to="/admin/notifications"
+        variant="ghost"
+        color="neutral"
+        size="xs"
+        trailing-icon="i-lucide-arrow-right">
         View all
       </UButton>
     </div>
