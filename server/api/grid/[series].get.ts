@@ -40,12 +40,13 @@ export default defineCachedEventHandler(async (event): Promise<GridSeriesData> =
   }
 
   const raw = await $fetch<FlipResponse>('https://flipapi.net/forecast/latest', {
-    params: { series_key: series, history_len: '24H', tz: 'Europe/Helsinki' }
+    params: { series_key: series, history_len: '1d', tz: 'Europe/Helsinki' }
   })
 
   const historyEntries = Object.entries(raw.data.history).sort(([a], [b]) => a.localeCompare(b))
   const forecastEntries = Object.entries(raw.data.forecast).sort(([a], [b]) => a.localeCompare(b))
-  const currentValue = historyEntries[historyEntries.length - 1]?.[1] ?? 0
+  // forecast_start is the current time slot; first forecast entry is the live value
+  const currentValue = forecastEntries[0]?.[1] ?? historyEntries[historyEntries.length - 1]?.[1] ?? 0
 
   const points: GridPoint[] = [
     ...historyEntries.map(([t, v]) => ({ time: new Date(t).getTime(), value: Math.round(v * 10) / 10, isForecast: false })),

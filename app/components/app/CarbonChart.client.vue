@@ -26,10 +26,33 @@ const tooltipFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', hour: '2
 
 const xTicks = (t: number) => tickFmt.format(new Date(t))
 
+// Generate tick positions at clean 6-hour boundaries in Helsinki time
+const xTickValues = computed<number[]>(() => {
+  if (!allData.value.length) return []
+  const HOUR_MS = 3_600_000
+  const INTERVAL = 6 * HOUR_MS
+  const start = allData.value[0].time
+  const end = allData.value[allData.value.length - 1].time
+
+  // Derive Helsinki UTC offset at the start of the data
+  const d = new Date(start)
+  const helsinkiHour = parseInt(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: TZ }).format(d))
+  let offsetH = (helsinkiHour - d.getUTCHours() + 24) % 24
+  if (offsetH > 12) offsetH -= 24
+  const offsetMs = offsetH * HOUR_MS
+
+  // Round up to the next 6-hour boundary in Helsinki, then convert back to UTC ms
+  const firstTick = Math.ceil((start + offsetMs) / INTERVAL) * INTERVAL - offsetMs
+
+  const ticks: number[] = []
+  for (let t = firstTick; t <= end; t += INTERVAL) ticks.push(t)
+  return ticks
+})
+
 const tooltipTriggers = computed(() => ({
   [Line.selectors.line]: (d: CarbonPoint) => {
     const time = tooltipFmt.format(new Date(d.time))
-    return `<span style="white-space:nowrap">${time} · <b>${d.value.toFixed(1)}</b> ${props.unit ?? 'gCO₂/kWh'}${d.isForecast ? ' · forecast' : ''}</span>`
+    return `<span style="white-space:nowrap">${time} · <b>${d.value.toFixed(2)}</b> ${props.unit ?? 'gCO₂/kWh'}${d.isForecast ? ' · forecast' : ''}</span>`
   }
 }))
 
@@ -105,7 +128,7 @@ const nowX = Date.now()
         type="x"
         :x="x"
         :tick-format="xTicks"
-        :num-ticks="6"
+        :tick-values="xTickValues"
       />
 
       <VisAxis

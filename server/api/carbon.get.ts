@@ -78,7 +78,7 @@ export default defineCachedEventHandler(async (): Promise<CarbonData> => {
   const historyEntries = Object.entries(raw.data.history).sort(([a], [b]) => a.localeCompare(b))
   const forecastEntries = Object.entries(raw.data.forecast).sort(([a], [b]) => a.localeCompare(b))
 
-  const currentValue = historyEntries[historyEntries.length - 1]?.[1] ?? 0
+  const currentValue = forecastEntries[0]?.[1] ?? historyEntries[historyEntries.length - 1]?.[1] ?? 0
   const currentStatus = getStatus(currentValue)
 
   const points: CarbonPoint[] = [
