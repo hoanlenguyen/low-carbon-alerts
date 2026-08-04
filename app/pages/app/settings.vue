@@ -49,6 +49,36 @@ async function onSaveProfile(event: FormSubmitEvent<ProfileSchema>) {
   }
 }
 
+// ── Change password ──
+const isGoogleUser = computed(() => !user.value?.email || user.value?.avatarUrl?.includes('googleusercontent'))
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, 'Required'),
+  newPassword: z.string().min(6, 'At least 6 characters'),
+  confirmPassword: z.string().min(1, 'Required')
+}).refine(d => d.newPassword === d.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword']
+})
+type PasswordSchema = z.output<typeof passwordSchema>
+
+const passwordState = reactive({ currentPassword: '', newPassword: '', confirmPassword: '' })
+const passwordLoading = ref(false)
+
+async function onChangePassword(event: FormSubmitEvent<PasswordSchema>) {
+  passwordLoading.value = true
+  try {
+    await $fetch('/api/auth/change-password', { method: 'PATCH', body: { currentPassword: event.data.currentPassword, newPassword: event.data.newPassword } })
+    toast.add({ title: 'Password updated', color: 'success' })
+    Object.assign(passwordState, { currentPassword: '', newPassword: '', confirmPassword: '' })
+  } catch (e: unknown) {
+    const msg = (e as { data?: { statusMessage?: string } })?.data?.statusMessage ?? 'Failed to update password'
+    toast.add({ title: 'Error', description: msg, color: 'error' })
+  } finally {
+    passwordLoading.value = false
+  }
+}
+
 // ── Push notifications ──
 const pushPermission = ref<NotificationPermission>('default')
 const pushLoading = ref(false)
@@ -174,6 +204,70 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
             {{ opt.label }}
           </button>
         </div>
+      </UPageCard>
+    </section>
+
+    <!-- Change password -->
+    <section>
+      <div class="mb-4">
+        <h2 class="text-sm font-semibold text-highlighted">
+          Password
+        </h2>
+        <p class="text-sm text-muted">
+          Update your account password.
+        </p>
+      </div>
+
+      <UPageCard variant="subtle">
+        <div v-if="isGoogleUser" class="flex items-center gap-3 text-sm text-muted">
+          <UIcon name="i-lucide-info" class="size-4 shrink-0" />
+          This account uses Google sign-in — no password to change.
+        </div>
+
+        <UForm
+          v-else
+          id="password-form"
+          :schema="passwordSchema"
+          :state="passwordState"
+          class="space-y-4"
+          @submit="onChangePassword"
+        >
+          <UFormField name="currentPassword" label="Current password">
+            <UInput
+              v-model="passwordState.currentPassword"
+              type="password"
+              placeholder="Current password"
+              class="w-full"
+              autocomplete="current-password"
+            />
+          </UFormField>
+
+          <UFormField name="newPassword" label="New password">
+            <UInput
+              v-model="passwordState.newPassword"
+              type="password"
+              placeholder="At least 8 characters"
+              class="w-full"
+              autocomplete="new-password"
+            />
+          </UFormField>
+
+          <UFormField name="confirmPassword" label="Confirm new password">
+            <UInput
+              v-model="passwordState.confirmPassword"
+              type="password"
+              placeholder="Repeat new password"
+              class="w-full"
+              autocomplete="new-password"
+            />
+          </UFormField>
+
+          <div class="flex justify-end">
+            <UButton type="submit" :loading="passwordLoading">
+              Update password
+            </UButton>
+          </div>
+        </UForm>
       </UPageCard>
     </section>
 
