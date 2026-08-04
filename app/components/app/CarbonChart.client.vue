@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { VisXYContainer, VisLine, VisArea, VisAxis, VisCrosshair, VisTooltip, VisPlotline, VisPlotband } from '@unovis/vue'
+import { Line } from '@unovis/ts'
+import { VisXYContainer, VisLine, VisArea, VisAxis, VisTooltip, VisPlotline, VisPlotband } from '@unovis/vue'
 import type { CarbonPoint } from '~/server/api/carbon.get'
 
 const props = defineProps<{
   points: CarbonPoint[]
   forecastStartMs: number
+  unit?: string
 }>()
 
 const cardRef = useTemplateRef<HTMLElement | null>('cardRef')
@@ -19,17 +21,17 @@ const y = (d: CarbonPoint) => d.value
 
 const TZ = 'Europe/Helsinki'
 
-const xTicks = (t: number) => {
-  const d = new Date(t)
-  const h = Number(d.toLocaleString('en-GB', { hour: 'numeric', timeZone: TZ }))
-  if (h % 6 !== 0) return ''
-  return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
-}
+const tickFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: TZ })
+const tooltipFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: TZ })
 
-const tooltip = (d: CarbonPoint) => {
-  const time = new Date(d.time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', weekday: 'short', timeZone: TZ })
-  return `${time} · ${d.value.toFixed(1)} gCO₂/kWh${d.isForecast ? ' (forecast)' : ''}`
-}
+const xTicks = (t: number) => tickFmt.format(new Date(t))
+
+const tooltipTriggers = computed(() => ({
+  [Line.selectors.line]: (d: CarbonPoint) => {
+    const time = tooltipFmt.format(new Date(d.time))
+    return `<span style="white-space:nowrap">${time} · <b>${d.value.toFixed(1)}</b> ${props.unit ?? 'gCO₂/kWh'}${d.isForecast ? ' · forecast' : ''}</span>`
+  }
+}))
 
 const nowX = Date.now()
 </script>
@@ -38,6 +40,9 @@ const nowX = Date.now()
   <div ref="cardRef" class="w-full">
     <VisXYContainer
       :data="allData"
+      :x="x"
+      :y="y"
+      :y-domain="[0, undefined]"
       :padding="{ top: 16, bottom: 4 }"
       class="h-52"
       :width="width"
@@ -103,21 +108,19 @@ const nowX = Date.now()
         :num-ticks="6"
       />
 
-      <VisCrosshair
-        color="var(--ui-primary)"
-        :template="tooltip"
+      <VisAxis
+        type="y"
+        :tick-format="(v: number) => `${v}`"
+        :num-ticks="4"
       />
 
-      <VisTooltip />
+      <VisTooltip :triggers="tooltipTriggers" />
     </VisXYContainer>
   </div>
 </template>
 
 <style scoped>
 .unovis-xy-container {
-  --vis-crosshair-line-stroke-color: var(--ui-primary);
-  --vis-crosshair-circle-stroke-color: var(--ui-bg);
-
   --vis-axis-grid-color: var(--ui-border);
   --vis-axis-tick-color: var(--ui-border);
   --vis-axis-tick-label-color: var(--ui-text-dimmed);

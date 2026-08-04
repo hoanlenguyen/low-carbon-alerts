@@ -95,7 +95,7 @@ const confirmDelete = ref(false)
     </div>
 
     <!-- Danger zone -->
-    <div>
+    <!-- <div>
       <UPageCard
         title="Danger zone"
         description="Permanent and irreversible actions."
@@ -123,7 +123,7 @@ const confirmDelete = ref(false)
           </UButton>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Confirm delete modal -->
     <UModal

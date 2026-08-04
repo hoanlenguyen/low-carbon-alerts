@@ -2,7 +2,7 @@
 import type { NavigationMenuItem } from '@nuxt/ui'
 
 const route = useRoute()
-const toast = useToast()
+// const toast = useToast()
 
 const open = ref(false)
 
@@ -27,6 +27,13 @@ const links = [[{
   label: 'Notifications',
   icon: 'i-lucide-bell',
   to: '/admin/notifications',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Grid Forecast',
+  icon: 'i-lucide-activity',
+  to: '/admin/forecast',
   onSelect: () => {
     open.value = false
   }
@@ -103,23 +110,23 @@ onMounted(async () => {
     return
   }
 
-  toast.add({
-    title: 'We use first-party cookies to enhance your experience on our website.',
-    duration: 0,
-    close: false,
-    actions: [{
-      label: 'Accept',
-      color: 'neutral',
-      variant: 'outline',
-      onClick: () => {
-        cookie.value = 'accepted'
-      }
-    }, {
-      label: 'Opt out',
-      color: 'neutral',
-      variant: 'ghost'
-    }]
-  })
+  // toast.add({
+  //   title: 'We use first-party cookies to enhance your experience on our website.',
+  //   duration: 0,
+  //   close: false,
+  //   actions: [{
+  //     label: 'Accept',
+  //     color: 'neutral',
+  //     variant: 'outline',
+  //     onClick: () => {
+  //       cookie.value = 'accepted'
+  //     }
+  //   }, {
+  //     label: 'Opt out',
+  //     color: 'neutral',
+  //     variant: 'ghost'
+  //   }]
+  // })
 })
 </script>
 
