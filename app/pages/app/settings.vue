@@ -10,6 +10,13 @@ definePageMeta({
 const { user } = useUserSession()
 const { fcmToken, enablePush, disablePush } = useNotifications()
 const toast = useToast()
+const colorMode = useColorMode()
+
+const appearances = [
+  { value: 'light', label: 'Light', icon: 'i-lucide-sun' },
+  { value: 'dark', label: 'Dark', icon: 'i-lucide-moon' },
+  { value: 'system', label: 'System', icon: 'i-lucide-monitor' },
+] as const
 
 // ── Profile ──
 const profileSchema = z.object({
@@ -138,6 +145,35 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
             </UButton>
           </div>
         </UForm>
+      </UPageCard>
+    </section>
+
+    <!-- Appearance -->
+    <section>
+      <div class="mb-4">
+        <h2 class="text-sm font-semibold text-highlighted">
+          Appearance
+        </h2>
+        <p class="text-sm text-muted">
+          Choose your preferred color theme.
+        </p>
+      </div>
+
+      <UPageCard variant="subtle">
+        <div class="flex gap-3">
+          <button
+            v-for="opt in appearances"
+            :key="opt.value"
+            class="flex flex-1 flex-col items-center gap-2 rounded-lg border px-4 py-3 text-xs font-medium transition-all"
+            :class="colorMode.preference === opt.value
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-default bg-elevated text-muted hover:text-highlighted hover:border-muted'"
+            @click="colorMode.preference = opt.value"
+          >
+            <UIcon :name="opt.icon" class="size-5" />
+            {{ opt.label }}
+          </button>
+        </div>
       </UPageCard>
     </section>
 
