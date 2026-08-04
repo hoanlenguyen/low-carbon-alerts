@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
-const route = useRoute()
+// const route = useRoute()
 // const toast = useToast()
 
 const open = ref(false)
@@ -99,7 +99,7 @@ const groups = computed(() => [{
     id: 'source',
     label: 'View page source',
     icon: 'i-simple-icons-github',
-    to: `https://github.com/nuxt-ui-templates/dashboard/blob/main/app/pages${route.path === '/admin' ? '/admin/index' : route.path}.vue`,
+    to: `https://github.com/hoanlenguyen/low-carbon-alerts`,
     target: '_blank'
   }]
 }])
