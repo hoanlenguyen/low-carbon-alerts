@@ -1,64 +1,91 @@
-# Nuxt Dashboard Template
+# Low Carbon Alerts
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+A full-stack web app that tracks Finland's real-time electricity grid carbon intensity and notifies users when clean energy windows open. Built to help households and businesses shift flexible loads — EV charging, dishwashers, laundry — to times when the grid is greenest.
 
-Get started with the Nuxt dashboard template with multiple pages, collapsible sidebar, keyboard shortcuts, light & dark mode, command palette and more, powered by [Nuxt UI](https://ui.nuxt.com).
+---
 
-- [Live demo](https://dashboard-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+## Features
 
-<a href="https://dashboard-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/dashboard-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png">
-    <img alt="Nuxt Dashboard Template" src="https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png">
-  </picture>
-</a>
+- **Live grid data** — carbon intensity, renewable share, and domestic production share, sourced from Fingrid via the Sähköjälki / Flip API
+- **48-hour forecast chart** — interactive chart showing history and forecast in Helsinki time, with series switching between CO₂ intensity, renewable share, and domestic production share
+- **Push notifications** — browser push alerts when low-carbon windows are detected
+- **End-user app** — Home, Alerts, Forecast, and Settings pages for registered users
+- **Admin dashboard** — notification management, customer list, and grid forecast view
+- **Google OAuth login** — sign in with Google; always prompts account selection
+- **Light / Dark / System theme** — per-user appearance preference persisted in the browser
 
-> The dashboard template for Vue is on https://github.com/nuxt-ui-templates/dashboard-vue.
+---
 
-## Quick Start
+## Tech Stack
 
-```bash [Terminal]
-npm create nuxt@latest -- -t ui/dashboard
-```
+| Concern | Choice |
+|---|---|
+| Framework | Nuxt 4 |
+| UI | Nuxt UI v3 |
+| Database | Cloudflare D1 (SQLite) via Drizzle ORM |
+| Auth | `nuxt-auth-utils` + Google OAuth |
+| Push | Firebase Cloud Messaging (FCM) |
+| Chart | Unovis |
+| Data source | [Flip API / Sähköjälki](https://flipapi.net) (Fingrid) |
+| Deployment | Cloudflare Pages |
 
-## Deploy your own
+---
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=dashboard&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fdashboard&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fdashboard-dark.png&demo-url=https%3A%2F%2Fdashboard-template.nuxt.dev%2F&demo-title=Nuxt%20Dashboard%20Template&demo-description=A%20dashboard%20template%20with%20multi-column%20layout%20for%20building%20sophisticated%20admin%20interfaces.)
+## Data Sources
 
-## Setup
+Grid data is fetched from `https://flipapi.net/forecast/latest` with the following series keys:
 
-Make sure to install the dependencies:
+| Key | Unit | Interpretation |
+|---|---|---|
+| `consumption_emissions` | gCO₂/kWh | Lower is better |
+| `renew_production_share` | % | Higher is better |
+| `domestic_production_share` | % | Higher is better |
+
+All timestamps are displayed in **Helsinki time** (`Europe/Helsinki`).
+
+---
+
+## Getting Started
 
 ```bash
+# Install dependencies
 pnpm install
-```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
+# Start the dev server
 pnpm dev
 ```
 
-## Production
+Set up your `.env` with:
 
-Build the application for production:
-
-```bash
-pnpm build
+```env
+NUXT_OAUTH_GOOGLE_CLIENT_ID=
+NUXT_OAUTH_GOOGLE_CLIENT_SECRET=
+NUXT_SESSION_PASSWORD=
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
 ```
 
-Locally preview production build:
+---
 
-```bash
-pnpm preview
+## Project Structure
+
+```
+app/
+├── layouts/          # app (end-user) and admin layouts
+├── pages/
+│   ├── app/          # Home, Alerts, Forecast, Settings
+│   └── admin/        # Dashboard, Notifications, Customers, Grid Forecast
+├── components/       # Shared UI components (GridForecastCard, CarbonChart, …)
+server/
+├── api/
+│   ├── grid/         # [series].get.ts — cached Flip API proxy
+│   ├── auth/         # Google OAuth, profile, session
+│   └── notifications/ # FCM token registration, send
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+---
 
-## Renovate integration
+## Author
 
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
+**Le Nguyen Han Hoan** — [github.com/hoanlenguyen](https://github.com/hoanlenguyen)
