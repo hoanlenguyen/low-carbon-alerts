@@ -1,35 +1,50 @@
 <script setup lang="ts">
+const route = useRoute()
 const { user } = useUserSession()
 const { logout } = useLogout()
 const { messages, unreadCount, markAsRead, markAllAsRead, init } = useNotifications()
-
 const showInbox = ref(false)
 
 onMounted(init)
+
+const navItems = [
+  { label: 'Home', icon: 'i-lucide-zap', to: '/app' },
+  { label: 'Alerts', icon: 'i-lucide-bell', to: '/app/alerts' },
+  { label: 'Forecast', icon: 'i-lucide-trending-up', to: '/app/forecast' },
+  { label: 'Settings', icon: 'i-lucide-settings', to: '/app/settings' }
+]
+
+function isActive(to: string) {
+  if (to === '/app') return route.path === '/app'
+  return route.path.startsWith(to)
+}
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col bg-default">
-    <header class="border-b border-default px-4 sm:px-6 h-16 flex items-center justify-between">
-      <span class="font-semibold">Low Carbon Alerts</span>
+    <!-- Header -->
+    <header class="border-b border-default px-4 sm:px-6 h-14 flex items-center justify-between shrink-0">
+      <NuxtLink to="/app" class="font-semibold text-highlighted hover:text-primary transition-colors">
+        Low Carbon Alerts
+      </NuxtLink>
 
-      <div class="flex items-center gap-3">
-        <span class="text-sm text-muted">{{ user?.name || user?.email }}</span>
+      <div class="flex items-center gap-2">
+        <span class="hidden sm:block text-sm text-muted">{{ user?.name || user?.email }}</span>
 
+        <!-- Bell popover -->
         <UPopover v-model:open="showInbox">
           <UButton
             color="neutral"
             variant="ghost"
             icon="i-lucide-bell"
             aria-label="Notifications"
-          >
+            size="sm">
             <template v-if="unreadCount > 0" #trailing>
               <UBadge
                 :label="String(unreadCount)"
                 color="error"
                 size="xs"
-                class="-mr-1"
-              />
+                class="-mr-1" />
             </template>
           </UButton>
 
@@ -37,7 +52,12 @@ onMounted(init)
             <div class="w-80">
               <div class="flex items-center justify-between px-3 pt-3 pb-2 border-b border-default">
                 <span class="text-xs font-semibold uppercase tracking-wide text-dimmed">Notifications</span>
-                <UButton v-if="unreadCount > 0" size="xs" color="neutral" variant="ghost" @click="markAllAsRead">
+                <UButton
+                  v-if="unreadCount > 0"
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  @click="markAllAsRead">
                   Mark all read
                 </UButton>
               </div>
@@ -64,8 +84,8 @@ onMounted(init)
                 </button>
               </div>
               <div class="border-t border-default px-3 py-2">
-                <NuxtLink to="/app" class="text-xs text-primary hover:underline" @click="showInbox = false">
-                  View all messages →
+                <NuxtLink to="/app/alerts" class="text-xs text-primary hover:underline" @click="showInbox = false">
+                  View all alerts →
                 </NuxtLink>
               </div>
             </div>
@@ -73,27 +93,59 @@ onMounted(init)
         </UPopover>
 
         <UButton
-          to="/app/settings"
-          color="neutral"
-          variant="ghost"
-          icon="i-lucide-settings"
-          aria-label="Settings"
-        />
-
-        <UButton
           color="neutral"
           variant="ghost"
           icon="i-lucide-log-out"
+          size="sm"
           aria-label="Log out"
-          @click="logout"
-        >
-          Log out
-        </UButton>
+          @click="logout" />
       </div>
     </header>
 
-    <main class="flex-1 px-4 sm:px-6 py-8 max-w-3xl w-full mx-auto">
+    <!-- Desktop pill nav -->
+    <nav class="hidden sm:flex items-center gap-1 px-4 sm:px-6 py-2 border-b border-default overflow-x-auto shrink-0">
+      <button
+        v-for="item in navItems"
+        :key="item.to"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap"
+        :class="isActive(item.to)
+          ? 'bg-primary text-white'
+          : 'text-muted hover:text-highlighted hover:bg-elevated'"
+        @click="navigateTo(item.to)"
+      >
+        <UIcon :name="item.icon" class="size-3.5 shrink-0" />
+        {{ item.label }}
+        <UBadge
+          v-if="item.label === 'Alerts' && unreadCount > 0"
+          :label="String(unreadCount)"
+          color="error"
+          size="xs"
+          class="-my-0.5"
+        />
+      </button>
+    </nav>
+
+    <!-- Main content -->
+    <main class="flex-1 px-4 sm:px-6 py-6 max-w-3xl w-full mx-auto pb-24 sm:pb-8">
       <slot />
     </main>
+
+    <!-- Mobile bottom bar -->
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 bg-default/95 backdrop-blur border-t border-default flex z-50 pb-safe">
+      <button
+        v-for="item in navItems"
+        :key="item.to"
+        class="flex-1 flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors relative"
+        :class="isActive(item.to) ? 'text-primary' : 'text-muted'"
+        @click="navigateTo(item.to)"
+      >
+        <UIcon :name="item.icon" class="size-5" />
+        {{ item.label }}
+        <span
+          v-if="item.label === 'Alerts' && unreadCount > 0"
+          class="absolute top-2 right-1/4 size-1.5 rounded-full bg-error"
+        />
+      </button>
+    </nav>
   </div>
 </template>

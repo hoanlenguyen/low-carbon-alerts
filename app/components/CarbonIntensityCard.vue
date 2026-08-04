@@ -7,9 +7,9 @@ const { data: carbon, error: carbonError } = await useFetch<CarbonData>('/api/ca
 
 const statusConfig = {
   excellent: { color: 'success' as const, icon: 'i-lucide-leaf', bg: 'bg-success/10', text: 'text-success' },
-  good:      { color: 'primary' as const, icon: 'i-lucide-zap',  bg: 'bg-primary/10',  text: 'text-primary' },
-  moderate:  { color: 'warning' as const, icon: 'i-lucide-cloud', bg: 'bg-warning/10', text: 'text-warning' },
-  high:      { color: 'error' as const,   icon: 'i-lucide-flame', bg: 'bg-error/10',   text: 'text-error' },
+  good: { color: 'primary' as const, icon: 'i-lucide-zap', bg: 'bg-primary/10', text: 'text-primary' },
+  moderate: { color: 'warning' as const, icon: 'i-lucide-cloud', bg: 'bg-warning/10', text: 'text-warning' },
+  high: { color: 'error' as const, icon: 'i-lucide-flame', bg: 'bg-error/10', text: 'text-error' }
 }
 
 const statusCfg = computed(() =>
@@ -37,7 +37,7 @@ function timeAgo(val: string): string {
 </script>
 
 <template>
-  <UPageCard variant="subtle" :ui="{ root: 'overflow-hidden' }">
+  <UPageCard variant="subtle">
     <template #header>
       <div class="flex items-center gap-2">
         <UIcon name="i-lucide-activity" class="size-4 text-primary shrink-0" />
@@ -72,16 +72,28 @@ function timeAgo(val: string): string {
             {{ carbon.current.label }}
           </p>
           <div class="flex flex-wrap items-center gap-2 mt-2">
-            <UBadge :color="statusCfg.color" variant="subtle" size="sm" class="capitalize">
+            <UBadge
+              :color="statusCfg.color"
+              variant="subtle"
+              size="sm"
+              class="capitalize">
               {{ carbon.current.status }}
             </UBadge>
             <template v-if="carbon.current.status === 'excellent'">
-              <UBadge color="success" variant="outline" size="sm" icon="i-lucide-check">
+              <UBadge
+                color="success"
+                variant="outline"
+                size="sm"
+                icon="i-lucide-check">
                 Good time to run appliances
               </UBadge>
             </template>
             <template v-else-if="carbon.nextLowWindow">
-              <UBadge color="neutral" variant="subtle" size="sm" icon="i-lucide-clock">
+              <UBadge
+                color="neutral"
+                variant="subtle"
+                size="sm"
+                icon="i-lucide-clock">
                 Next low window: {{ nextWindowLabel(carbon.nextLowWindow) }}
               </UBadge>
             </template>

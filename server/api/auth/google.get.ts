@@ -3,7 +3,10 @@ import { useDrizzle, schema } from '../../database'
 
 export default defineOAuthGoogleEventHandler({
   config: {
-    scope: ['email', 'profile']
+    scope: ['email', 'profile'],
+    authorizationParams: {
+      prompt: 'select_account'
+    }
   },
   async onSuccess(event, { user: googleUser }) {
     const db = useDrizzle(event)
