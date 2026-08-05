@@ -18,6 +18,7 @@ export default defineNuxtConfig({
     setupToken: '',
     fcmServiceAccount: '',
     fcmProjectId: '',
+    openaiApiKey: '',
     public: {
       firebaseApiKey: '',
       firebaseAuthDomain: '',

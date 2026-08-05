@@ -54,7 +54,7 @@ const isGoogleUser = computed(() => !user.value?.email || user.value?.avatarUrl?
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, 'Required'),
-  newPassword: z.string().min(6, 'At least 6 characters'),
+  newPassword: z.string().min(8, 'At least 8 characters'),
   confirmPassword: z.string().min(1, 'Required')
 }).refine(d => d.newPassword === d.confirmPassword, {
   message: 'Passwords do not match',
