@@ -86,7 +86,7 @@ export async function sendNotification(event: H3Event, opts: SendOptions) {
   const { sseClients } = await import('./sseClients')
   const ssePayload = JSON.stringify({ id: messageId, subject: opts.subject, body: opts.body, createdAt: now.toISOString() })
   for (const userId of recipientIds) {
-    sseClients.get(userId)?.forEach(send => {
+    sseClients.get(userId)?.forEach((send) => {
       try { send(ssePayload) } catch { /* client disconnected */ }
     })
   }

@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
       // Fetch live grid data
       const gridData = await $fetch<{
         current: number
-        points: Array<{ time: number; value: number; isForecast: boolean }>
+        points: Array<{ time: number, value: number, isForecast: boolean }>
         forecastStartMs: number
       }>('/api/grid/consumption_emissions', { baseURL: getRequestURL(event).origin })
 

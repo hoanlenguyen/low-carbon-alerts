@@ -47,7 +47,11 @@ const unreadCount = computed(() => events.value?.filter(e => e.unread).length ??
     <template #title>
       <div class="flex items-center gap-2">
         <span>Activity</span>
-        <UBadge v-if="unreadCount > 0" :label="String(unreadCount)" color="error" size="xs" />
+        <UBadge
+          v-if="unreadCount > 0"
+          :label="String(unreadCount)"
+          color="error"
+          size="xs" />
       </div>
     </template>
 

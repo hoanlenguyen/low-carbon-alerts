@@ -43,7 +43,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           <UInput v-model="state.email" placeholder="jane@example.com" class="w-full" />
         </UFormField>
         <div class="flex justify-end gap-2">
-          <UButton label="Cancel" color="neutral" variant="subtle" @click="open = false" />
+          <UButton
+            label="Cancel"
+            color="neutral"
+            variant="subtle"
+            @click="open = false" />
           <UButton label="Create" color="primary" type="submit" />
         </div>
       </UForm>

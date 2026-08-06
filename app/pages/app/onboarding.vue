@@ -35,7 +35,7 @@ const contractOptions = [
   { value: 'spot', label: 'Spot price' },
   { value: 'fixed', label: 'Fixed price' },
   { value: 'hybrid', label: 'Hybrid' },
-  { value: 'unknown', label: "Don't know" }
+  { value: 'unknown', label: 'Don\'t know' }
 ]
 
 const heatingOptions = [

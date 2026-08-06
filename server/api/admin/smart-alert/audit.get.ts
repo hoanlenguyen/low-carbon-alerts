@@ -21,11 +21,11 @@ export default defineEventHandler(async (event) => {
       where: eq(schema.auditLogs.action, 'smart_alert.settings.update'),
       orderBy: desc(schema.auditLogs.createdAt),
       limit,
-      offset,
+      offset
     }),
     db.select({ total: count() })
       .from(schema.auditLogs)
-      .where(eq(schema.auditLogs.action, 'smart_alert.settings.update')),
+      .where(eq(schema.auditLogs.action, 'smart_alert.settings.update'))
   ])
 
   return {
@@ -34,11 +34,11 @@ export default defineEventHandler(async (event) => {
       userEmail: l.userEmail,
       before: l.before ? JSON.parse(l.before) : null,
       after: l.after ? JSON.parse(l.after) : null,
-      createdAt: l.createdAt,
+      createdAt: l.createdAt
     })),
     total,
     page,
     pageSize: limit,
-    pageCount: Math.ceil(total / limit),
+    pageCount: Math.ceil(total / limit)
   }
 })

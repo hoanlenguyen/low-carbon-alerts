@@ -20,8 +20,8 @@ export type CarbonPoint = {
 }
 
 export type CarbonData = {
-  current: { value: number; status: CarbonStatus; label: string }
-  nextLowWindow: { time: string; hoursFromNow: number } | null
+  current: { value: number, status: CarbonStatus, label: string }
+  nextLowWindow: { time: string, hoursFromNow: number } | null
   forecastStartMs: number
   points: CarbonPoint[]
   generatedAt: string

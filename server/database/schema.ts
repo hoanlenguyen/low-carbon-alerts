@@ -76,9 +76,9 @@ export const auditLogs = sqliteTable('audit_logs', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull(),
   userEmail: text('user_email').notNull(),
-  action: text('action').notNull(),       // e.g. 'smart_alert.settings.update'
-  before: text('before'),                 // JSON snapshot
-  after: text('after'),                   // JSON snapshot
+  action: text('action').notNull(), // e.g. 'smart_alert.settings.update'
+  before: text('before'), // JSON snapshot
+  after: text('after'), // JSON snapshot
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
 
@@ -88,11 +88,11 @@ export const userProfiles = sqliteTable('user_profiles', {
   householdSize: integer('household_size').notNull(),
   contractType: text('contract_type').notNull(),
   primaryHeating: text('primary_heating').notNull(),
-  appliances: text('appliances').notNull(),       // JSON string[]
+  appliances: text('appliances').notNull(), // JSON string[]
   activeHoursStart: text('active_hours_start').notNull(),
   activeHoursEnd: text('active_hours_end').notNull(),
-  peakTimes: text('peak_times').notNull(),         // JSON string[]
-  notifTimes: text('notif_times').notNull(),        // JSON string[]
+  peakTimes: text('peak_times').notNull(), // JSON string[]
+  notifTimes: text('notif_times').notNull(), // JSON string[]
   energyGoal: text('energy_goal').notNull(),
   notifStyle: text('notif_style', { enum: ['detailed', 'simple'] }).notNull(),
   followsPrices: text('follows_prices').notNull(),

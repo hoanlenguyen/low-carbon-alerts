@@ -49,8 +49,8 @@ const filtered = computed(() => {
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     rows = rows.filter(r =>
-      r.email.toLowerCase().includes(q) ||
-      (r.name ?? '').toLowerCase().includes(q)
+      r.email.toLowerCase().includes(q)
+      || (r.name ?? '').toLowerCase().includes(q)
     )
   }
   if (statusFilter.value !== 'all') {
@@ -70,7 +70,7 @@ const paginated = computed(() =>
 )
 
 // ── Recency ──
-function recencyLabel(val: string | null): { label: string; cls: string } {
+function recencyLabel(val: string | null): { label: string, cls: string } {
   if (!val) return { label: 'Never', cls: 'text-dimmed' }
   const diff = Date.now() - new Date(val).getTime()
   const days = Math.floor(diff / 86_400_000)

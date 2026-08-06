@@ -61,7 +61,7 @@ const contractOptions = [
   { value: 'spot', label: 'Spot price' },
   { value: 'fixed', label: 'Fixed price' },
   { value: 'hybrid', label: 'Hybrid' },
-  { value: 'unknown', label: "Don't know" }
+  { value: 'unknown', label: 'Don\'t know' }
 ]
 const heatingOptions = [
   { value: 'electric', label: 'Electric', icon: 'i-lucide-zap' },
@@ -82,7 +82,7 @@ const peakTimeOptions = [
 ]
 const notifTimeOptions = ['07:00', '12:00', '18:00', '21:00']
 const goalOptions = [
-  { value: 'reduce_carbon', label: 'Reduce carbon', desc: "Use electricity when it's cleanest", icon: 'i-lucide-leaf' },
+  { value: 'reduce_carbon', label: 'Reduce carbon', desc: 'Use electricity when it\'s cleanest', icon: 'i-lucide-leaf' },
   { value: 'save_bills', label: 'Save on bills', desc: 'Shift loads to cheaper hours', icon: 'i-lucide-piggy-bank' },
   { value: 'understand_usage', label: 'Understand usage', desc: 'Learn my electricity footprint', icon: 'i-lucide-bar-chart-2' },
   { value: 'all', label: 'All of the above', desc: 'Optimise across every dimension', icon: 'i-lucide-sparkles' }
@@ -158,8 +158,12 @@ async function save() {
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-xl font-semibold text-highlighted">Energy Consumption</h1>
-      <p class="text-sm text-muted mt-0.5">Your household profile used to personalise carbon recommendations.</p>
+      <h1 class="text-xl font-semibold text-highlighted">
+        Energy Consumption
+      </h1>
+      <p class="text-sm text-muted mt-0.5">
+        Your household profile used to personalise carbon recommendations.
+      </p>
     </div>
 
     <div v-if="status === 'pending'" class="flex justify-center py-20">
@@ -177,12 +181,18 @@ async function save() {
         <!-- Step 1: Your Home -->
         <div v-if="currentStep === 0" class="flex flex-col gap-5">
           <div>
-            <p class="text-base font-semibold text-highlighted">Your home</p>
-            <p class="text-sm text-muted mt-0.5">Helps us tailor recommendations to your setup</p>
+            <p class="text-base font-semibold text-highlighted">
+              Your home
+            </p>
+            <p class="text-sm text-muted mt-0.5">
+              Helps us tailor recommendations to your setup
+            </p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Housing type</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+              Housing type
+            </p>
             <div class="grid grid-cols-4 gap-2">
               <button
                 v-for="opt in housingOptions"
@@ -201,7 +211,9 @@ async function save() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Household size</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+              Household size
+            </p>
             <div class="flex items-center gap-3 w-fit bg-elevated rounded-lg border border-default px-4 py-2">
               <button
                 type="button"
@@ -223,7 +235,9 @@ async function save() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Electricity contract</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+              Electricity contract
+            </p>
             <div class="flex flex-wrap gap-2">
               <button
                 v-for="opt in contractOptions"
@@ -241,7 +255,9 @@ async function save() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Primary heating</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+              Primary heating
+            </p>
             <div class="grid grid-cols-5 gap-2">
               <button
                 v-for="opt in heatingOptions"
@@ -263,8 +279,12 @@ async function save() {
         <!-- Step 2: Your Habits -->
         <div v-else-if="currentStep === 1" class="flex flex-col gap-5">
           <div>
-            <p class="text-base font-semibold text-highlighted">Your habits & appliances</p>
-            <p class="text-sm text-muted mt-0.5">We use this to find flexible loads and ideal alert windows</p>
+            <p class="text-base font-semibold text-highlighted">
+              Your habits & appliances
+            </p>
+            <p class="text-sm text-muted mt-0.5">
+              We use this to find flexible loads and ideal alert windows
+            </p>
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -289,21 +309,25 @@ async function save() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Active hours at home</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+              Active hours at home
+            </p>
             <div class="flex items-center gap-3">
               <input
                 v-model="activeHoursStart"
                 type="time"
                 class="bg-elevated border border-default rounded-lg px-3 py-2 text-sm font-mono font-semibold text-highlighted focus:outline-none focus:border-primary"
-              />
+              >
               <span class="text-xs text-muted">to</span>
               <input
                 v-model="activeHoursEnd"
                 type="time"
                 class="bg-elevated border border-default rounded-lg px-3 py-2 text-sm font-mono font-semibold text-highlighted focus:outline-none focus:border-primary"
-              />
+              >
             </div>
-            <p class="text-xs text-muted">When you're usually home and using electricity</p>
+            <p class="text-xs text-muted">
+              When you're usually home and using electricity
+            </p>
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -328,7 +352,9 @@ async function save() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Preferred alert times</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+              Preferred alert times
+            </p>
             <div class="flex flex-wrap gap-2">
               <button
                 v-for="t in notifTimeOptions"
@@ -343,19 +369,27 @@ async function save() {
                 {{ t }}
               </button>
             </div>
-            <p class="text-xs text-muted">We'll check the carbon forecast around these times</p>
+            <p class="text-xs text-muted">
+              We'll check the carbon forecast around these times
+            </p>
           </div>
         </div>
 
         <!-- Step 3: Your Goals -->
         <div v-else class="flex flex-col gap-5">
           <div>
-            <p class="text-base font-semibold text-highlighted">What do you want to achieve?</p>
-            <p class="text-sm text-muted mt-0.5">Shapes the tone and focus of your recommendations</p>
+            <p class="text-base font-semibold text-highlighted">
+              What do you want to achieve?
+            </p>
+            <p class="text-sm text-muted mt-0.5">
+              Shapes the tone and focus of your recommendations
+            </p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Primary goal</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+              Primary goal
+            </p>
             <div class="grid grid-cols-2 gap-2">
               <button
                 v-for="opt in goalOptions"
@@ -368,14 +402,20 @@ async function save() {
                 @click="energyGoal = opt.value"
               >
                 <UIcon :name="opt.icon" class="size-4 mb-1.5" :class="energyGoal === opt.value ? 'text-green-400' : 'text-muted'" />
-                <p class="text-xs font-semibold text-highlighted">{{ opt.label }}</p>
-                <p class="text-[11px] text-muted leading-snug mt-0.5">{{ opt.desc }}</p>
+                <p class="text-xs font-semibold text-highlighted">
+                  {{ opt.label }}
+                </p>
+                <p class="text-[11px] text-muted leading-snug mt-0.5">
+                  {{ opt.desc }}
+                </p>
               </button>
             </div>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Notification style</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+              Notification style
+            </p>
             <div class="flex flex-col gap-2">
               <button
                 type="button"
@@ -387,7 +427,9 @@ async function save() {
                   <div class="size-2 rounded-full border" :class="notifStyle === 'detailed' ? 'bg-primary border-primary' : 'border-muted'" />
                   <span class="text-xs font-semibold text-highlighted">Data-rich</span>
                 </div>
-                <p class="text-[11px] text-muted italic pl-4">"Next 24h avg: 23 gCO₂/kWh. Run dishwasher before 14:00."</p>
+                <p class="text-[11px] text-muted italic pl-4">
+                  "Next 24h avg: 23 gCO₂/kWh. Run dishwasher before 14:00."
+                </p>
               </button>
               <button
                 type="button"
@@ -399,13 +441,17 @@ async function save() {
                   <div class="size-2 rounded-full border" :class="notifStyle === 'simple' ? 'bg-primary border-primary' : 'border-muted'" />
                   <span class="text-xs font-semibold text-highlighted">Simple & plain</span>
                 </div>
-                <p class="text-[11px] text-muted italic pl-4">"Electricity is clean this afternoon — good time for a load."</p>
+                <p class="text-[11px] text-muted italic pl-4">
+                  "Electricity is clean this afternoon — good time for a load."
+                </p>
               </button>
             </div>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Do you follow electricity prices?</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+              Do you follow electricity prices?
+            </p>
             <div class="flex flex-wrap gap-2">
               <button
                 v-for="opt in followsPricesOptions"

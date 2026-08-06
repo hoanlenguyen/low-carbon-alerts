@@ -15,7 +15,7 @@ const colorMode = useColorMode()
 const appearances = [
   { value: 'light', label: 'Light', icon: 'i-lucide-sun' },
   { value: 'dark', label: 'Dark', icon: 'i-lucide-moon' },
-  { value: 'system', label: 'System', icon: 'i-lucide-monitor' },
+  { value: 'system', label: 'System', icon: 'i-lucide-monitor' }
 ] as const
 
 // ── Profile ──
@@ -120,7 +120,6 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
 
 <template>
   <div class="space-y-8">
-
     <!-- Page title -->
     <div>
       <h1 class="text-xl font-semibold text-highlighted">
@@ -130,7 +129,6 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
         Manage your profile and notification preferences.
       </p>
     </div>
-
 
     <!-- Profile -->
     <section>
@@ -346,6 +344,5 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
         </div>
       </UPageCard>
     </section>
-
   </div>
 </template>
