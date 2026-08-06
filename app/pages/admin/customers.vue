@@ -94,7 +94,7 @@ function copyToClipboard(text: string, description: string) {
 <template>
   <UDashboardPanel id="customers">
     <template #header>
-      <UDashboardNavbar title="Customers">
+      <UDashboardNavbar title="Energy consumers">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>

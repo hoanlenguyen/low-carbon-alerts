@@ -7,26 +7,55 @@ definePageMeta({ layout: 'admin', middleware: 'auth' })
 const toast = useToast()
 const TZ = 'Europe/Helsinki'
 
-// ── Settings ────────────────────────────────────────────────────────────────
+// ── Settings ─────────────────────────────────────────────────────────────────
 const settingsSchema = z.object({
-  enabled: z.boolean(),
   threshold: z.number().int().min(1).max(200),
   debounceHours: z.number().int().min(1).max(24)
 })
 type SettingsSchema = z.output<typeof settingsSchema>
 
-const { data: settings, refresh: refreshSettings } = await useFetch('/api/admin/smart-alert/settings')
+const { data: settings, refresh: refreshSettings } = useFetch('/api/admin/smart-alert/settings', { server: false })
+
+const enabled = ref(true)
+const togglingEnabled = ref(false)
+
 const form = reactive<SettingsSchema>({
-  enabled: settings.value?.enabled ?? true,
-  threshold: settings.value?.threshold ?? 20,
-  debounceHours: settings.value?.debounceHours ?? 3
+  threshold: 20,
+  debounceHours: 3
 })
+
+watch(settings, (s) => {
+  if (!s) return
+  enabled.value = s.enabled
+  form.threshold = s.threshold
+  form.debounceHours = s.debounceHours
+}, { immediate: true })
+
+async function onToggleEnabled() {
+  togglingEnabled.value = true
+  try {
+    await $fetch('/api/admin/smart-alert/settings', {
+      method: 'PATCH',
+      body: { enabled: enabled.value, threshold: form.threshold, debounceHours: form.debounceHours }
+    })
+    await Promise.all([refreshSettings(), refreshAudit()])
+  } catch {
+    enabled.value = !enabled.value
+    toast.add({ title: 'Failed to update', color: 'error' })
+  } finally {
+    togglingEnabled.value = false
+  }
+}
+
 const saving = ref(false)
 
 async function onSave(event: FormSubmitEvent<SettingsSchema>) {
   saving.value = true
   try {
-    await $fetch('/api/admin/smart-alert/settings', { method: 'PATCH', body: event.data })
+    await $fetch('/api/admin/smart-alert/settings', {
+      method: 'PATCH',
+      body: { enabled: enabled.value, ...event.data }
+    })
     toast.add({ title: 'Settings saved', color: 'success' })
     await Promise.all([refreshSettings(), refreshAudit()])
   } catch {
@@ -36,24 +65,44 @@ async function onSave(event: FormSubmitEvent<SettingsSchema>) {
   }
 }
 
-// ── Alert history ────────────────────────────────────────────────────────────
-const { data: history, refresh: refreshHistory } = await useFetch('/api/admin/smart-alert/history')
+// ── Alert history ─────────────────────────────────────────────────────────────
+const { data: history, refresh: refreshHistory } = useFetch('/api/admin/smart-alert/history', { server: false })
 
-// ── Audit log ────────────────────────────────────────────────────────────────
-const { data: auditLogs, refresh: refreshAudit } = await useFetch('/api/admin/smart-alert/audit')
+// ── Audit log ─────────────────────────────────────────────────────────────────
+const auditPage = ref(1)
+const { data: auditResponse, refresh: refreshAudit } = useFetch('/api/admin/smart-alert/audit', {
+  server: false,
+  query: { page: auditPage }
+})
+const auditLogs = computed(() => auditResponse.value?.data ?? null)
+const auditPageCount = computed(() => auditResponse.value?.pageCount ?? 1)
+const auditTotal = computed(() => auditResponse.value?.total ?? 0)
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const timeFmt = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit', month: 'short', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', timeZone: TZ
+})
 
 function fmtTime(val: string | Date | null | undefined) {
   if (!val) return '—'
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', timeZone: TZ
-  }).format(new Date(val as string))
+  return timeFmt.format(new Date(val as string))
 }
 
-function diffBadge(before: Record<string, unknown> | null, after: Record<string, unknown> | null, key: string) {
+function diffBadge(
+  before: Record<string, unknown> | null,
+  after: Record<string, unknown> | null,
+  key: string
+) {
   if (!before || !after) return null
   if (before[key] === after[key]) return null
   return { from: before[key], to: after[key] }
+}
+
+const keyLabel: Record<string, string> = {
+  enabled: 'Enabled',
+  threshold: 'Threshold',
+  debounceHours: 'Debounce'
 }
 </script>
 
@@ -80,8 +129,7 @@ function diffBadge(before: Record<string, unknown> | null, after: Record<string,
 
     <template #body>
       <div class="max-w-3xl mx-auto space-y-8 p-4 sm:p-6">
-
-        <!-- Settings -->
+        <!-- Configuration -->
         <section>
           <div class="mb-4">
             <h2 class="text-sm font-semibold text-highlighted">
@@ -92,6 +140,38 @@ function diffBadge(before: Record<string, unknown> | null, after: Record<string,
             </p>
           </div>
 
+          <!-- Toggle card — saves instantly on change -->
+          <UPageCard variant="subtle" class="mb-3">
+            <div class="flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div
+                  class="size-8 rounded-full flex items-center justify-center shrink-0 transition-colors"
+                  :class="enabled ? 'bg-primary/10' : 'bg-elevated'"
+                >
+                  <UIcon
+                    name="i-lucide-zap"
+                    class="size-4 transition-colors"
+                    :class="enabled ? 'text-primary' : 'text-dimmed'"
+                  />
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-highlighted">
+                    Smart alerts on forecast
+                  </p>
+                  <p class="text-xs text-muted mt-0.5">
+                    AI alert generation runs each time the forecast API is called.
+                  </p>
+                </div>
+              </div>
+              <USwitch
+                v-model="enabled"
+                :loading="togglingEnabled"
+                @update:model-value="onToggleEnabled"
+              />
+            </div>
+          </UPageCard>
+
+          <!-- Threshold + debounce form -->
           <UPageCard variant="subtle">
             <UForm
               :schema="settingsSchema"
@@ -99,22 +179,6 @@ function diffBadge(before: Record<string, unknown> | null, after: Record<string,
               class="space-y-5"
               @submit="onSave"
             >
-              <!-- Enable toggle -->
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm font-medium text-highlighted">
-                    Enable smart alerts
-                  </p>
-                  <p class="text-xs text-muted mt-0.5">
-                    When off, the cron job skips AI alert generation entirely.
-                  </p>
-                </div>
-                <UToggle v-model="form.enabled" />
-              </div>
-
-              <USeparator />
-
-              <!-- Threshold -->
               <UFormField
                 name="threshold"
                 label="Carbon threshold (gCO₂/kWh)"
@@ -132,7 +196,6 @@ function diffBadge(before: Record<string, unknown> | null, after: Record<string,
                 </div>
               </UFormField>
 
-              <!-- Debounce -->
               <UFormField
                 name="debounceHours"
                 label="Debounce window (hours)"
@@ -159,7 +222,7 @@ function diffBadge(before: Record<string, unknown> | null, after: Record<string,
           </UPageCard>
         </section>
 
-        <!-- Alert history -->
+        <!-- Sent alerts -->
         <section>
           <div class="mb-4">
             <h2 class="text-sm font-semibold text-highlighted">
@@ -171,22 +234,23 @@ function diffBadge(before: Record<string, unknown> | null, after: Record<string,
           </div>
 
           <UPageCard variant="subtle" :ui="{ body: 'p-0' }">
-            <div v-if="!history?.length" class="py-10 text-center text-sm text-muted">
+            <div v-if="!history" class="py-10 flex justify-center">
+              <UIcon name="i-lucide-loader-circle" class="size-5 text-muted animate-spin" />
+            </div>
+            <div v-else-if="!history.length" class="py-10 text-center text-sm text-muted">
               No smart alerts sent yet.
             </div>
             <ul v-else class="divide-y divide-default">
               <li
                 v-for="alert in history"
                 :key="alert.id"
-                class="px-4 sm:px-6 py-3 space-y-0.5"
+                class="px-4 sm:px-6 py-3 space-y-1"
               >
                 <div class="flex items-start justify-between gap-4">
                   <p class="text-sm font-medium text-highlighted leading-snug">
                     {{ alert.subject }}
                   </p>
-                  <span class="text-xs text-dimmed shrink-0 tabular-nums">
-                    {{ fmtTime(alert.sentAt) }}
-                  </span>
+                  <span class="text-xs text-dimmed shrink-0 tabular-nums">{{ fmtTime(alert.sentAt) }}</span>
                 </div>
                 <p class="text-xs text-muted leading-relaxed">
                   {{ alert.body }}
@@ -208,42 +272,55 @@ function diffBadge(before: Record<string, unknown> | null, after: Record<string,
           </div>
 
           <UPageCard variant="subtle" :ui="{ body: 'p-0' }">
-            <div v-if="!auditLogs?.length" class="py-10 text-center text-sm text-muted">
+            <div v-if="!auditLogs" class="py-10 flex justify-center">
+              <UIcon name="i-lucide-loader-circle" class="size-5 text-muted animate-spin" />
+            </div>
+            <div v-else-if="!auditLogs.length" class="py-10 text-center text-sm text-muted">
               No changes recorded yet.
             </div>
-            <ul v-else class="divide-y divide-default">
-              <li
-                v-for="log in auditLogs"
-                :key="log.id"
-                class="px-4 sm:px-6 py-4 space-y-2"
-              >
-                <div class="flex items-center justify-between gap-4">
-                  <div class="flex items-center gap-2">
-                    <UIcon name="i-lucide-user" class="size-3.5 text-dimmed shrink-0" />
-                    <span class="text-sm font-medium text-highlighted">{{ log.userEmail }}</span>
-                  </div>
-                  <span class="text-xs text-dimmed tabular-nums shrink-0">{{ fmtTime(log.createdAt) }}</span>
-                </div>
-
-                <!-- Show only fields that changed -->
-                <div class="flex flex-wrap gap-2">
-                  <template v-for="key in ['enabled', 'threshold', 'debounceHours']" :key="key">
-                    <div
-                      v-if="diffBadge(log.before, log.after, key)"
-                      class="flex items-center gap-1.5 rounded-md bg-elevated px-2.5 py-1 text-xs"
-                    >
-                      <span class="text-muted capitalize">{{ key }}:</span>
-                      <span class="line-through text-error">{{ String(diffBadge(log.before, log.after, key)!.from) }}</span>
-                      <UIcon name="i-lucide-arrow-right" class="size-3 text-dimmed" />
-                      <span class="text-success font-medium">{{ String(diffBadge(log.before, log.after, key)!.to) }}</span>
+            <template v-else>
+              <ul class="divide-y divide-default">
+                <li
+                  v-for="log in auditLogs"
+                  :key="log.id"
+                  class="px-4 sm:px-6 py-4 space-y-2"
+                >
+                  <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                      <UIcon name="i-lucide-user" class="size-3.5 text-dimmed shrink-0" />
+                      <span class="text-sm font-medium text-highlighted">{{ log.userEmail }}</span>
                     </div>
-                  </template>
-                </div>
-              </li>
-            </ul>
+                    <span class="text-xs text-dimmed tabular-nums shrink-0">{{ fmtTime(log.createdAt) }}</span>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <template
+                      v-for="key in ['enabled', 'threshold', 'debounceHours']"
+                      :key="key"
+                    >
+                      <div
+                        v-if="diffBadge(log.before as Record<string, unknown> | null, log.after as Record<string, unknown> | null, key)"
+                        class="flex items-center gap-1.5 rounded-md bg-elevated px-2.5 py-1 text-xs"
+                      >
+                        <span class="text-muted">{{ keyLabel[key] }}:</span>
+                        <span class="line-through text-error">{{ String(diffBadge(log.before as Record<string, unknown> | null, log.after as Record<string, unknown> | null, key)!.from) }}</span>
+                        <UIcon name="i-lucide-arrow-right" class="size-3 text-dimmed" />
+                        <span class="text-success font-medium">{{ String(diffBadge(log.before as Record<string, unknown> | null, log.after as Record<string, unknown> | null, key)!.to) }}</span>
+                      </div>
+                    </template>
+                  </div>
+                </li>
+              </ul>
+              <div v-if="auditPageCount > 1" class="flex items-center justify-between gap-4 px-4 sm:px-6 py-3 border-t border-default">
+                <span class="text-xs text-muted tabular-nums">{{ auditTotal }} total</span>
+                <UPagination
+                  v-model:page="auditPage"
+                  :total="auditTotal"
+                  :page-size="10"
+                  size="xs" />
+              </div>
+            </template>
           </UPageCard>
         </section>
-
       </div>
     </template>
   </UDashboardPanel>
