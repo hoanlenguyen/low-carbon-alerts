@@ -29,6 +29,8 @@ jobs:
         run: pnpm install
 
       - name: Build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
         run: pnpm run build
 
       - name: Deploy to Cloudflare Pages
