@@ -1,4 +1,4 @@
-CREATE TABLE `smart_alert_settings` (
+CREATE TABLE IF NOT EXISTS `smart_alert_settings` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`enabled` integer DEFAULT true NOT NULL,
 	`threshold` integer DEFAULT 20 NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE `smart_alert_settings` (
 	`updated_by_id` text NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE `audit_logs` (
+CREATE TABLE IF NOT EXISTS `audit_logs` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
 	`user_email` text NOT NULL,
@@ -17,5 +17,5 @@ CREATE TABLE `audit_logs` (
 	`created_at` integer NOT NULL
 );
 --> statement-breakpoint
-INSERT INTO `smart_alert_settings` (`id`, `enabled`, `threshold`, `debounce_hours`, `updated_at`, `updated_by_id`)
+INSERT OR IGNORE INTO `smart_alert_settings` (`id`, `enabled`, `threshold`, `debounce_hours`, `updated_at`, `updated_by_id`)
 VALUES (1, 1, 20, 3, unixepoch(), 'system');
