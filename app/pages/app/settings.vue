@@ -131,6 +131,7 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
       </p>
     </div>
 
+
     <!-- Profile -->
     <section>
       <div class="mb-4">

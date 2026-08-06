@@ -12,14 +12,21 @@ const TZ = 'Europe/Helsinki'
 
 const recentMessages = computed(() => messages.value.slice(0, 3))
 
+const timeFmt = new Intl.DateTimeFormat('en-GB', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+  timeZone: TZ
+})
+const dateFmt = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  timeZone: TZ
+})
+
 function timeLabel(val: string) {
-  const diff = Date.now() - new Date(val).getTime()
-  const mins = Math.floor(diff / 60_000)
-  if (mins < 1) return 'Just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  return new Date(val).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: TZ })
+  const d = new Date(val)
+  return `${timeFmt.format(d)} · ${dateFmt.format(d)}`
 }
 </script>
 

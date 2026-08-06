@@ -19,6 +19,8 @@ export default defineNuxtConfig({
     fcmServiceAccount: '',
     fcmProjectId: '',
     openaiApiKey: '',
+    openaiBaseUrl: 'https://api.openai.com/v1',
+    openaiLlmModel: 'gpt-4o-mini',
     public: {
       firebaseApiKey: '',
       firebaseAuthDomain: '',

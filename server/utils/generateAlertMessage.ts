@@ -10,7 +10,12 @@ interface AlertMessage {
   body: string
 }
 
-export async function generateAlertMessage(ctx: GridContext, apiKey: string): Promise<AlertMessage> {
+export async function generateAlertMessage(
+  ctx: GridContext,
+  apiKey: string,
+  baseUrl = 'https://api.openai.com/v1',
+  model = 'gpt-4o-mini'
+): Promise<AlertMessage> {
   const prompt = `You are writing a short push notification for a Finnish electricity grid carbon alert app called "Low Carbon Alerts".
 
 Grid context right now (Helsinki time):
@@ -26,14 +31,14 @@ Write a push notification with:
 Respond with a JSON object only, no markdown, no explanation. Example format:
 {"subject":"Clean energy window open now","body":"Carbon intensity is at ${ctx.current} gCO₂/kWh — well below average. A great time to run your dishwasher or charge your EV."}`
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model,
       temperature: 0.7,
       max_tokens: 150,
       messages: [{ role: 'user', content: prompt }]

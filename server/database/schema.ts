@@ -10,7 +10,8 @@ export const users = sqliteTable('users', {
   avatarUrl: text('avatar_url'),
   status: text('status', { enum: ['active', 'inactive'] }).notNull().default('active'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  lastLoginAt: integer('last_login_at', { mode: 'timestamp' })
+  lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
+  onboardingCompletedAt: integer('onboarding_completed_at', { mode: 'timestamp' })
 })
 
 export const messageTemplates = sqliteTable('message_templates', {
@@ -62,6 +63,42 @@ export const scheduledJobs = sqliteTable('scheduled_jobs', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
 
+export const smartAlertSettings = sqliteTable('smart_alert_settings', {
+  id: integer('id').primaryKey(), // always 1 (singleton)
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+  threshold: integer('threshold').notNull().default(20), // gCO₂/kWh
+  debounceHours: integer('debounce_hours').notNull().default(3),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  updatedById: text('updated_by_id').notNull()
+})
+
+export const auditLogs = sqliteTable('audit_logs', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  userEmail: text('user_email').notNull(),
+  action: text('action').notNull(),       // e.g. 'smart_alert.settings.update'
+  before: text('before'),                 // JSON snapshot
+  after: text('after'),                   // JSON snapshot
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+})
+
+export const userProfiles = sqliteTable('user_profiles', {
+  userId: text('user_id').primaryKey(),
+  housingType: text('housing_type').notNull(),
+  householdSize: integer('household_size').notNull(),
+  contractType: text('contract_type').notNull(),
+  primaryHeating: text('primary_heating').notNull(),
+  appliances: text('appliances').notNull(),       // JSON string[]
+  activeHoursStart: text('active_hours_start').notNull(),
+  activeHoursEnd: text('active_hours_end').notNull(),
+  peakTimes: text('peak_times').notNull(),         // JSON string[]
+  notifTimes: text('notif_times').notNull(),        // JSON string[]
+  energyGoal: text('energy_goal').notNull(),
+  notifStyle: text('notif_style', { enum: ['detailed', 'simple'] }).notNull(),
+  followsPrices: text('follows_prices').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+})
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type MessageTemplate = typeof messageTemplates.$inferSelect
@@ -69,3 +106,4 @@ export type Message = typeof messages.$inferSelect
 export type UserMessage = typeof userMessages.$inferSelect
 export type FcmToken = typeof fcmTokens.$inferSelect
 export type ScheduledJob = typeof scheduledJobs.$inferSelect
+export type UserProfile = typeof userProfiles.$inferSelect

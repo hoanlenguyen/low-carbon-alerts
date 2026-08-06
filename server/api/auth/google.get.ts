@@ -49,7 +49,8 @@ export default defineOAuthGoogleEventHandler({
         email: user.email,
         name: user.name,
         role: user.role,
-        avatarUrl: user.avatarUrl
+        avatarUrl: user.avatarUrl,
+        onboardingCompletedAt: user.onboardingCompletedAt?.getTime() ?? null
       },
       loggedInAt: Date.now()
     })

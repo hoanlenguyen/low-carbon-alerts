@@ -38,6 +38,13 @@ const links = [[{
     open.value = false
   }
 }, {
+  label: 'Smart Alert',
+  icon: 'i-lucide-bot',
+  to: '/admin/smart-alert',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Customers',
   icon: 'i-lucide-users',
   to: '/admin/customers',
