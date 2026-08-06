@@ -1,6 +1,6 @@
-ALTER TABLE `users` ADD `onboarding_completed_at` integer;
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `onboarding_completed_at` integer;
 --> statement-breakpoint
-CREATE TABLE `user_profiles` (
+CREATE TABLE IF NOT EXISTS `user_profiles` (
 	`user_id` text PRIMARY KEY NOT NULL,
 	`housing_type` text NOT NULL,
 	`household_size` integer NOT NULL,
