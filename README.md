@@ -86,6 +86,3 @@ server/
 
 ---
 
-## Author
-
-**Le Nguyen Han Hoan** — [github.com/hoanlenguyen](https://github.com/hoanlenguyen)
