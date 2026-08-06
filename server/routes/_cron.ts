@@ -81,7 +81,7 @@ export default defineEventHandler(async (event) => {
             .sort((a, b) => a.time - b.time)
           let consecutiveLowHours = 0
           for (const p of forecastPoints) {
-            if (p.value < LOW_CARBON_THRESHOLD) consecutiveLowHours++
+            if (p.value < threshold) consecutiveLowHours++
             else break
           }
 

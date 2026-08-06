@@ -16,17 +16,20 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle(event)
 
-  const [logs, [{ total }]] = await Promise.all([
+  const [logs, totalResult] = await Promise.all([
     db.query.auditLogs.findMany({
       where: eq(schema.auditLogs.action, 'smart_alert.settings.update'),
       orderBy: desc(schema.auditLogs.createdAt),
       limit,
       offset
     }),
-    db.select({ total: count() })
+    db
+      .select({ total: count() })
       .from(schema.auditLogs)
       .where(eq(schema.auditLogs.action, 'smart_alert.settings.update'))
   ])
+
+  const total = totalResult[0]?.total ?? 0
 
   return {
     data: logs.map(l => ({
