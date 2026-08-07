@@ -21,6 +21,7 @@ export default defineNuxtConfig({
     openaiApiKey: '',
     openaiBaseUrl: 'https://api.openai.com/v1',
     openaiLlmModel: 'gpt-4o-mini',
+    openaiEmbedModel: 'text-embedding-3-small',
     public: {
       firebaseApiKey: '',
       firebaseAuthDomain: '',

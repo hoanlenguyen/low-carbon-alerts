@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../database'
+import { generateRecommendation } from '../../utils/generateRecommendation'
 
 const bodySchema = z.object({
   housingType: z.string().min(1),
@@ -65,6 +66,22 @@ export default defineEventHandler(async (event) => {
   await db.update(schema.users)
     .set({ onboardingCompletedAt: now })
     .where(eq(schema.users.id, session.user.id))
+
+  // Generate the user's first (cold-start) recommendation from the live forecast,
+  // grounded in retrieved knowledge-base tips (RAG). Non-fatal: onboarding must
+  // still succeed if the grid API, retrieval, or LLM is unavailable.
+  // See prompts/02_cold_start.md and server/utils/generateRecommendation.ts.
+  try {
+    await generateRecommendation(event, {
+      userId: session.user.id,
+      name: session.user.name ?? null,
+      appliances: data.appliances,
+      activeHoursStart: data.activeHoursStart,
+      activeHoursEnd: data.activeHoursEnd,
+      householdSize: data.householdSize,
+      energyGoal: data.energyGoal
+    })
+  } catch { /* non-fatal — first recommendation will be generated later if this fails */ }
 
   await setUserSession(event, {
     ...session,

@@ -42,6 +42,9 @@ function timeLabel(val: string) {
       </p>
     </div>
 
+    <!-- Personalized recommendation -->
+    <RecommendationCard />
+
     <!-- Carbon intensity card -->
     <CarbonIntensityCard />
 

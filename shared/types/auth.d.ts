@@ -5,6 +5,7 @@ declare module '#auth-utils' {
     name?: string | null
     role: 'admin' | 'user'
     avatarUrl?: string | null
+    onboardingCompletedAt?: number | null
   }
 
   interface UserSession {

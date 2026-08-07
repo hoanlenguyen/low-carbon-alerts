@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -99,6 +99,31 @@ export const userProfiles = sqliteTable('user_profiles', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
 
+// One active recommendation per user (cold-start for now; see prompts/02_cold_start.md).
+export const recommendations = sqliteTable('recommendations', {
+  userId: text('user_id').primaryKey(),
+  recommendation: text('recommendation').notNull(), // the friendly headline shown to the user
+  appliance: text('appliance').notNull(),
+  bestTime: text('best_time'), // "HH:MM" Helsinki, null if no forecast window
+  carbonIntensity: real('carbon_intensity'), // gCO₂/kWh at the window, null if unknown
+  carbonSaving: text('carbon_saving', { enum: ['low', 'medium', 'high'] }).notNull(),
+  reason: text('reason').notNull(), // deterministic, factual "why"
+  tip: text('tip'), // retrieved knowledge-base tip (RAG), null if none
+  isColdStart: integer('is_cold_start', { mode: 'boolean' }).notNull().default(true),
+  generatedAt: integer('generated_at', { mode: 'timestamp' }).notNull()
+})
+
+// RAG knowledge-base chunks + their OpenAI embeddings (prompts/03–05).
+// Retrieval loads these and ranks by cosine similarity in the Worker.
+export const kbChunks = sqliteTable('kb_chunks', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  appliance: text('appliance').notNull(),
+  content: text('content').notNull(),
+  embedding: text('embedding').notNull(), // JSON-encoded number[] (1536-dim)
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+})
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type MessageTemplate = typeof messageTemplates.$inferSelect
@@ -107,3 +132,5 @@ export type UserMessage = typeof userMessages.$inferSelect
 export type FcmToken = typeof fcmTokens.$inferSelect
 export type ScheduledJob = typeof scheduledJobs.$inferSelect
 export type UserProfile = typeof userProfiles.$inferSelect
+export type Recommendation = typeof recommendations.$inferSelect
+export type KbChunk = typeof kbChunks.$inferSelect
