@@ -1,10 +1,11 @@
 import type { H3Event } from 'h3'
-import { useDrizzle } from '../database'
-import { embedText } from './embed'
+import { inArray } from 'drizzle-orm'
+import { useDrizzle, schema } from '../database'
+import { useVectorize, embedViaWorkersAi } from './cfBindings'
 
-// Single retrieval abstraction for the RAG layer. Backed by D1 + in-Worker
-// cosine similarity today; swap the body for Cloudflare Vectorize later
-// without touching call sites (prompts/03–05, see prompts/README.md).
+// RAG retrieval over Cloudflare Vectorize: embed the query with Workers AI,
+// find the nearest vectors, then load the chunk text from D1 (Vectorize holds
+// the vectors, D1 holds the content — matching Cloudflare's RAG tutorial).
 
 export interface RetrievedChunk {
   id: string
@@ -14,64 +15,39 @@ export interface RetrievedChunk {
   score: number // cosine similarity, 1.0 = identical
 }
 
-export interface RetrieveOptions {
-  topK?: number
-  apiKey: string
-  baseUrl?: string
-  model?: string
-}
-
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length) return 0
-  let dot = 0
-  let normA = 0
-  let normB = 0
-  for (let i = 0; i < a.length; i++) {
-    const x = a[i] ?? 0
-    const y = b[i] ?? 0
-    dot += x * y
-    normA += x * x
-    normB += y * y
-  }
-  const denom = Math.sqrt(normA) * Math.sqrt(normB)
-  return denom === 0 ? 0 : dot / denom
-}
-
 /**
  * Retrieve the top-k knowledge-base chunks most relevant to `query`.
- * Returns [] when embeddings are unavailable or the KB is empty — callers
- * treat retrieval as best-effort context, never a hard dependency.
+ * Best-effort: returns [] if the AI/Vectorize bindings are unavailable (e.g.
+ * local dev without remote bindings) or nothing matches — callers treat
+ * retrieval as optional context, never a hard dependency.
  */
 export async function retrieveKnowledge(
   event: H3Event,
   query: string,
-  opts: RetrieveOptions
+  topK = 3
 ): Promise<RetrievedChunk[]> {
-  const topK = opts.topK ?? 3
-  const queryVec = await embedText(query, opts.apiKey, opts.baseUrl, opts.model)
-  if (!queryVec) return []
+  try {
+    const [vec] = await embedViaWorkersAi(event, [query])
+    if (!vec) return []
 
-  const db = useDrizzle(event)
-  const rows = await db.query.kbChunks.findMany()
-  if (rows.length === 0) return []
+    const vectorize = useVectorize(event)
+    const res = await vectorize.query(vec, { topK, returnValues: false, returnMetadata: 'none' })
+    const matches = res.matches ?? []
+    if (matches.length === 0) return []
 
-  const scored: RetrievedChunk[] = []
-  for (const row of rows) {
-    let vec: number[]
-    try {
-      vec = JSON.parse(row.embedding) as number[]
-    } catch {
-      continue // skip a corrupt embedding rather than failing the whole query
-    }
-    scored.push({
-      id: row.id,
-      title: row.title,
-      appliance: row.appliance,
-      content: row.content,
-      score: cosineSimilarity(queryVec, vec)
+    const db = useDrizzle(event)
+    const rows = await db.query.kbChunks.findMany({
+      where: inArray(schema.kbChunks.id, matches.map(m => m.id))
     })
-  }
+    const byId = new Map(rows.map(r => [r.id, r]))
 
-  scored.sort((a, b) => b.score - a.score)
-  return scored.slice(0, topK)
+    return matches
+      .map((m): RetrievedChunk | null => {
+        const r = byId.get(m.id)
+        return r ? { id: r.id, title: r.title, appliance: r.appliance, content: r.content, score: m.score } : null
+      })
+      .filter((x): x is RetrievedChunk => x !== null)
+  } catch {
+    return []
+  }
 }

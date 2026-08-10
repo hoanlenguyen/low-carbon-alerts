@@ -5,6 +5,7 @@ import { buildColdStartRecommendation } from './buildColdStartRecommendation'
 import { rewriteRagQuery } from './rewriteRagQuery'
 import { retrieveKnowledge } from './retrieveKnowledge'
 import { generateColdStartMessage } from './generateColdStartMessage'
+import { ensureKbIndexed } from './indexKnowledgeBase'
 
 export interface RecommendationProfileInput {
   userId: string
@@ -57,6 +58,10 @@ export async function generateRecommendation(
     activeHoursEnd: profile.activeHoursEnd
   })
 
+  // Self-heal the knowledge base if the bundled tips changed since last embed
+  // (best-effort — no manual reindex needed after a deploy that edited them).
+  await ensureKbIndexed(event)
+
   // RAG: rewrite the user's context into a query, then retrieve matching tips.
   const query = await rewriteRagQuery(
     {
@@ -69,12 +74,7 @@ export async function generateRecommendation(
     config.openaiBaseUrl || undefined,
     config.openaiLlmModel || undefined
   )
-  const knowledge = await retrieveKnowledge(event, query, {
-    topK: 3,
-    apiKey: config.openaiApiKey,
-    baseUrl: config.openaiBaseUrl || undefined,
-    model: config.openaiEmbedModel || undefined
-  })
+  const knowledge = await retrieveKnowledge(event, query, 3)
 
   const recommendation = await generateColdStartMessage(
     facts,

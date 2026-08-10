@@ -8,3 +8,14 @@ binding = "DB"
 database_name = "low-carbon-alerts"
 database_id = "a38691b2-41c1-4d37-9a06-1a0f77c3d088"
 migrations_dir = "server/database/migrations"
+
+# RAG layer. Vectorize + Workers AI have no local simulator, so `remote = true`
+# lets local dev connect to the real resources (see Cloudflare remote bindings).
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "lca-knowledge"
+remote = true
+
+[ai]
+binding = "AI"
+remote = true

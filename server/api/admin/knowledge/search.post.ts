@@ -15,14 +15,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const { query, topK } = await readValidatedBody(event, bodySchema.parse)
-  const config = useRuntimeConfig()
 
-  const results = await retrieveKnowledge(event, query, {
-    topK: topK ?? 3,
-    apiKey: config.openaiApiKey,
-    baseUrl: config.openaiBaseUrl || undefined,
-    model: config.openaiEmbedModel || undefined
-  })
+  const results = await retrieveKnowledge(event, query, topK ?? 3)
 
   return { query, count: results.length, results }
 })

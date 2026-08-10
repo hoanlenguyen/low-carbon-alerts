@@ -115,12 +115,21 @@ export const recommendations = sqliteTable('recommendations', {
 
 // RAG knowledge-base chunks + their OpenAI embeddings (prompts/03–05).
 // Retrieval loads these and ranks by cosine similarity in the Worker.
+// Chunk text for the RAG layer. Vectors live in Cloudflare Vectorize (keyed by
+// the same id); this table holds the content retrieval returns.
 export const kbChunks = sqliteTable('kb_chunks', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
   appliance: text('appliance').notNull(),
   content: text('content').notNull(),
-  embedding: text('embedding').notNull(), // JSON-encoded number[] (1536-dim)
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+})
+
+// Singleton row (id = 1) tracking the content hash of the last-embedded KB, so
+// the KB can auto-reindex only when server/data/energyTips.ts actually changes.
+export const kbMeta = sqliteTable('kb_meta', {
+  id: integer('id').primaryKey(), // always 1
+  contentHash: text('content_hash').notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
 })
 
@@ -134,3 +143,4 @@ export type ScheduledJob = typeof scheduledJobs.$inferSelect
 export type UserProfile = typeof userProfiles.$inferSelect
 export type Recommendation = typeof recommendations.$inferSelect
 export type KbChunk = typeof kbChunks.$inferSelect
+export type KbMeta = typeof kbMeta.$inferSelect
