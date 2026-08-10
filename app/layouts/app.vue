@@ -7,6 +7,12 @@ const showInbox = ref(false)
 
 onMounted(init)
 
+// Reflect the unread count in the browser tab title, so a new message is
+// noticeable even when the app is in a background tab (e.g. "(2) Low Carbon Alerts").
+useHead({
+  title: computed(() => (unreadCount.value > 0 ? `(${unreadCount.value}) ` : '') + 'Low Carbon Alerts')
+})
+
 const navItems = [
   { label: 'Home', icon: 'i-lucide-zap', to: '/app' },
   { label: 'Alerts', icon: 'i-lucide-bell', to: '/app/alerts' },
