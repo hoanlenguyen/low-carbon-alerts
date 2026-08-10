@@ -42,7 +42,7 @@ export function useNotifications() {
     const es = new EventSource('/api/notifications/stream')
     es.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data) as { id: string; subject: string; body: string; createdAt: string }
+        const data = JSON.parse(event.data) as { id: string, subject: string, body: string, createdAt: string }
         const msg: InboxMessage = {
           id: data.id,
           messageId: data.id,

@@ -14,15 +14,6 @@ const links = [[{
     open.value = false
   }
 },
-// {
-//   label: 'Inbox',
-//   icon: 'i-lucide-inbox',
-//   to: '/admin/inbox',
-//   badge: '4',
-//   onSelect: () => {
-//     open.value = false
-//   }
-// },
 {
   label: 'Notifications',
   icon: 'i-lucide-bell',

@@ -78,6 +78,30 @@ const auditLogs = computed(() => auditResponse.value?.data ?? null)
 const auditPageCount = computed(() => auditResponse.value?.pageCount ?? 1)
 const auditTotal = computed(() => auditResponse.value?.total ?? 0)
 
+// ── Test smart alert (send a personalized alert to one user, verify content) ────
+const { data: users } = useFetch<{ id: string, name: string | null, email: string }[]>('/api/admin/users', { server: false })
+const testAlertUserId = ref<string>()
+const testAlertLoading = ref(false)
+const testAlertResult = ref<{ to: string, subject: string, body: string } | null>(null)
+
+async function sendTestSmartAlert() {
+  if (!testAlertUserId.value) return
+  testAlertLoading.value = true
+  try {
+    const res = await $fetch<{ to: string, subject: string, body: string }>(
+      '/api/admin/notifications/smart-alert-test',
+      { method: 'POST', body: { userId: testAlertUserId.value } }
+    )
+    testAlertResult.value = res
+    toast.add({ title: 'Test smart alert sent', description: `Delivered to ${res.to}`, color: 'success' })
+  } catch (e: unknown) {
+    const err = e as { data?: { statusMessage?: string } }
+    toast.add({ title: err?.data?.statusMessage || 'Could not send test alert', color: 'error' })
+  } finally {
+    testAlertLoading.value = false
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const timeFmt = new Intl.DateTimeFormat('en-GB', {
   day: '2-digit', month: 'short', year: 'numeric',
@@ -219,6 +243,51 @@ const keyLabel: Record<string, string> = {
                 </UButton>
               </div>
             </UForm>
+          </UPageCard>
+        </section>
+
+        <!-- Test smart alert -->
+        <section>
+          <div class="mb-4">
+            <h2 class="text-sm font-semibold text-highlighted">
+              Test smart alert
+            </h2>
+            <p class="text-sm text-muted mt-0.5">
+              Send a personalized smart-alert to one user from the live forecast — to verify the real message content.
+            </p>
+          </div>
+
+          <UPageCard variant="subtle">
+            <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+              <UFormField label="User" class="flex-1">
+                <USelectMenu
+                  v-model="testAlertUserId"
+                  :items="(users ?? []).map(u => ({ label: u.name || u.email, value: u.id }))"
+                  value-key="value"
+                  placeholder="Select a user"
+                  class="w-full"
+                />
+              </UFormField>
+              <UButton
+                icon="i-lucide-send-horizontal"
+                :loading="testAlertLoading"
+                :disabled="!testAlertUserId"
+                @click="sendTestSmartAlert">
+                Send test alert
+              </UButton>
+            </div>
+
+            <div v-if="testAlertResult" class="mt-4 rounded-lg border border-default bg-elevated/40 p-3 space-y-1">
+              <p class="text-xs text-dimmed">
+                Sent to {{ testAlertResult.to }}
+              </p>
+              <p class="text-sm font-semibold text-highlighted leading-snug">
+                {{ testAlertResult.subject }}
+              </p>
+              <p class="text-sm text-muted leading-relaxed">
+                {{ testAlertResult.body }}
+              </p>
+            </div>
           </UPageCard>
         </section>
 

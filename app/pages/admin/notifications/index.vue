@@ -58,7 +58,6 @@ async function generateSmartAlert() {
 function applyTemplate(t: { subject: string, body: string }) {
   sendState.subject = t.subject
   sendState.body = t.body
-  activeTab.value = 'send'
 }
 
 async function onSend(event: FormSubmitEvent<SendSchema>) {
@@ -78,7 +77,7 @@ async function onSend(event: FormSubmitEvent<SendSchema>) {
   }
 }
 
-// ── Template form ──
+// ── Templates (add / edit via modal) ──
 const templateSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   subject: z.string().min(1),
@@ -88,17 +87,35 @@ type TemplateSchema = z.output<typeof templateSchema>
 
 const templateState = reactive<Partial<TemplateSchema>>({ name: '', subject: '', body: '' })
 const templateLoading = ref(false)
-const showTemplateForm = ref(false)
+const showTemplateModal = ref(false)
+const editingTemplateId = ref<string | null>(null)
 
-async function onCreateTemplate(event: FormSubmitEvent<TemplateSchema>) {
+function openAddTemplate() {
+  editingTemplateId.value = null
+  templateState.name = ''
+  templateState.subject = ''
+  templateState.body = ''
+  showTemplateModal.value = true
+}
+
+function openEditTemplate(t: { id: string, name: string, subject: string, body: string }) {
+  editingTemplateId.value = t.id
+  templateState.name = t.name
+  templateState.subject = t.subject
+  templateState.body = t.body
+  showTemplateModal.value = true
+}
+
+async function onSubmitTemplate(event: FormSubmitEvent<TemplateSchema>) {
   templateLoading.value = true
   try {
-    await $fetch('/api/admin/notifications/templates', { method: 'POST', body: event.data })
-    toast.add({ title: 'Template saved', color: 'success' })
-    templateState.name = ''
-    templateState.subject = ''
-    templateState.body = ''
-    showTemplateForm.value = false
+    if (editingTemplateId.value) {
+      await $fetch(`/api/admin/notifications/templates/${editingTemplateId.value}`, { method: 'PATCH', body: event.data })
+    } else {
+      await $fetch('/api/admin/notifications/templates', { method: 'POST', body: event.data })
+    }
+    toast.add({ title: editingTemplateId.value ? 'Template updated' : 'Template saved', color: 'success' })
+    showTemplateModal.value = false
     await refreshTemplates()
   } catch {
     toast.add({ title: 'Error', color: 'error' })
@@ -171,9 +188,8 @@ function formatRunDate(val: string | null) {
 }
 
 const tabs = [
-  { label: 'Send', value: 'send', slot: 'send' as const, icon: 'i-lucide-send' },
-  { label: 'Templates', value: 'templates', slot: 'templates' as const, icon: 'i-lucide-file-text' },
-  { label: 'Scheduled', value: 'scheduled', slot: 'scheduled' as const, icon: 'i-lucide-clock' }
+  { label: 'Manual send messages', value: 'send', slot: 'send' as const, icon: 'i-lucide-send' },
+  { label: 'Scheduled messages', value: 'scheduled', slot: 'scheduled' as const, icon: 'i-lucide-clock' }
 ]
 </script>
 
@@ -209,19 +225,51 @@ const tabs = [
                 <span class="text-xs text-dimmed">Builds a message from the live forecast — review, pick users, send.</span>
               </div>
 
-              <!-- Template chips -->
-              <div v-if="(templates as any[])?.length" class="flex flex-wrap gap-2 items-center">
-                <span class="text-xs font-semibold uppercase tracking-wide text-dimmed">Templates:</span>
-                <UButton
-                  v-for="t in (templates as any[])"
-                  :key="t.id"
-                  size="xs"
-                  color="neutral"
-                  variant="outline"
-                  @click="applyTemplate(t)"
-                >
-                  {{ t.name }}
-                </UButton>
+              <!-- Templates (click to apply · manage inline) -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold uppercase tracking-wide text-dimmed">Templates</span>
+                  <UButton
+                    size="xs"
+                    color="neutral"
+                    variant="ghost"
+                    icon="i-lucide-plus"
+                    @click="openAddTemplate">
+                    New template
+                  </UButton>
+                </div>
+                <div v-if="(templates as any[])?.length" class="flex flex-wrap gap-2">
+                  <div
+                    v-for="t in (templates as any[])"
+                    :key="t.id"
+                    class="group inline-flex items-center gap-0.5 rounded-lg border border-default bg-elevated/30 hover:border-primary/40 transition-colors pl-2.5 pr-1 py-1"
+                  >
+                    <button
+                      type="button"
+                      class="text-xs font-medium text-highlighted hover:text-primary transition-colors"
+                      @click="applyTemplate(t)"
+                    >
+                      {{ t.name }}
+                    </button>
+                    <UButton
+                      icon="i-lucide-pencil"
+                      color="neutral"
+                      variant="ghost"
+                      size="xs"
+                      aria-label="Edit template"
+                      @click="openEditTemplate(t)" />
+                    <UButton
+                      icon="i-lucide-trash"
+                      color="error"
+                      variant="ghost"
+                      size="xs"
+                      aria-label="Delete template"
+                      @click="deleteTemplate(t.id)" />
+                  </div>
+                </div>
+                <p v-else class="text-xs text-dimmed">
+                  No templates yet — create one to reuse common messages.
+                </p>
               </div>
 
               <UForm
@@ -294,93 +342,6 @@ const tabs = [
                 </div>
               </div>
             </div>
-          </div>
-        </template>
-
-        <!-- ── Templates ── -->
-        <template #templates>
-          <div class="pt-5 space-y-6">
-            <!-- Header row -->
-            <div class="flex items-center justify-between">
-              <p class="text-xs font-semibold uppercase tracking-wide text-dimmed">
-                {{ (templates as any[])?.length ?? 0 }} template{{ (templates as any[])?.length === 1 ? '' : 's' }}
-              </p>
-              <UButton size="xs" icon="i-lucide-plus" @click="showTemplateForm = !showTemplateForm">
-                New template
-              </UButton>
-            </div>
-
-            <!-- Create form (collapsible) -->
-            <div v-if="showTemplateForm" class="rounded-xl border border-default bg-elevated/40 p-5">
-              <p class="text-sm font-semibold mb-4">
-                New template
-              </p>
-              <UForm
-                :schema="templateSchema"
-                :state="templateState"
-                class="space-y-4"
-                @submit="onCreateTemplate">
-                <div class="grid sm:grid-cols-2 gap-4">
-                  <UFormField label="Template name" name="name">
-                    <UInput v-model="templateState.name" placeholder="e.g. Low carbon alert" class="w-full" />
-                  </UFormField>
-                  <UFormField label="Subject" name="subject">
-                    <UInput v-model="templateState.subject" class="w-full" />
-                  </UFormField>
-                </div>
-                <UFormField label="Body" name="body">
-                  <UTextarea v-model="templateState.body" :rows="3" class="w-full" />
-                </UFormField>
-                <div class="flex gap-2">
-                  <UButton type="submit" icon="i-lucide-check" :loading="templateLoading">
-                    Save template
-                  </UButton>
-                  <UButton color="neutral" variant="ghost" @click="showTemplateForm = false">
-                    Cancel
-                  </UButton>
-                </div>
-              </UForm>
-            </div>
-
-            <!-- Card grid -->
-            <div v-if="(templates as any[])?.length" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <div
-                v-for="t in (templates as any[])"
-                :key="t.id"
-                class="group relative rounded-xl border border-default bg-elevated/30 hover:bg-elevated hover:border-primary/40 transition-colors p-4 space-y-2 cursor-pointer"
-                @click="applyTemplate(t)"
-              >
-                <div class="flex items-start justify-between gap-2">
-                  <p class="font-semibold text-sm text-highlighted leading-snug">
-                    {{ t.name }}
-                  </p>
-                  <UButton
-                    icon="i-lucide-trash"
-                    color="error"
-                    variant="ghost"
-                    size="xs"
-                    class="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                    aria-label="Delete template"
-                    @click.stop="deleteTemplate(t.id)"
-                  />
-                </div>
-                <p class="text-xs font-medium text-muted truncate">
-                  {{ t.subject }}
-                </p>
-                <p class="text-xs text-dimmed line-clamp-2 leading-relaxed">
-                  {{ t.body }}
-                </p>
-                <div class="pt-1">
-                  <span class="text-xs text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                    Use in Send →
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <p v-else-if="!showTemplateForm" class="text-sm text-muted py-6 text-center border border-dashed border-default rounded-xl">
-              No templates yet. Create one to speed up sending.
-            </p>
           </div>
         </template>
 
@@ -522,6 +483,40 @@ const tabs = [
           </div>
         </template>
       </UTabs>
+
+      <!-- Add / edit template -->
+      <UModal
+        v-model:open="showTemplateModal"
+        :title="editingTemplateId ? 'Edit template' : 'New template'"
+        description="Reusable subject + body you can apply in the Send form.">
+        <template #body>
+          <UForm
+            :schema="templateSchema"
+            :state="templateState"
+            class="space-y-4"
+            @submit="onSubmitTemplate">
+            <div class="grid sm:grid-cols-2 gap-4">
+              <UFormField label="Template name" name="name">
+                <UInput v-model="templateState.name" placeholder="e.g. Low carbon alert" class="w-full" />
+              </UFormField>
+              <UFormField label="Subject" name="subject">
+                <UInput v-model="templateState.subject" class="w-full" />
+              </UFormField>
+            </div>
+            <UFormField label="Body" name="body">
+              <UTextarea v-model="templateState.body" :rows="4" class="w-full" />
+            </UFormField>
+            <div class="flex justify-end gap-2 pt-2">
+              <UButton color="neutral" variant="ghost" @click="showTemplateModal = false">
+                Cancel
+              </UButton>
+              <UButton type="submit" icon="i-lucide-check" :loading="templateLoading">
+                {{ editingTemplateId ? 'Update' : 'Save template' }}
+              </UButton>
+            </div>
+          </UForm>
+        </template>
+      </UModal>
     </template>
   </UDashboardPanel>
 </template>

@@ -50,7 +50,7 @@ function isWithinActiveHours(pointMin: number, startMin: number, endMin: number)
   return pointMin >= startMin || pointMin <= endMin
 }
 
-function pickFlexibleAppliance(appliances: string[]): string {
+export function pickFlexibleAppliance(appliances: string[]): string {
   const lower = appliances.map(a => a.toLowerCase())
   for (const flex of FLEXIBLE_PRIORITY) {
     if (lower.includes(flex.toLowerCase())) return flex
