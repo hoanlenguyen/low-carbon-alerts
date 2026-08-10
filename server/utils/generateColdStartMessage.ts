@@ -1,5 +1,6 @@
 import type { ColdStartFacts } from './buildColdStartRecommendation'
 import type { RetrievedChunk } from './retrieveKnowledge'
+import { renderPrompt } from './renderPrompt'
 
 export interface ColdStartContext {
   name: string | null
@@ -29,30 +30,17 @@ export async function generateColdStartMessage(
   const knowledgeBlock = ctx.knowledge?.length
     ? ctx.knowledge.map(k => `- ${k.title}: ${k.content}`).join('\n')
     : 'None'
-  const prompt = `You are a personalized energy advisor welcoming a NEW user to a Finnish residential energy app called "Low Carbon Alerts". This is their very first recommendation — they have no usage history yet.
-
-## User (just onboarded)
-- Name: ${firstName ?? 'unknown'}
-- Household size: ${ctx.householdSize}
-- Appliances: ${ctx.appliances.join(', ') || 'not specified'}
-- Energy goal: ${ctx.energyGoal}
-
-## The recommendation to phrase (already computed from the live forecast — do not change these)
-- Appliance: ${facts.appliance}
-- Best time: ${facts.bestTime} (Helsinki)
-- Carbon intensity then: ${facts.carbonIntensity} gCO₂/kWh
-- Why: ${facts.reason}
-
-## Relevant energy-saving knowledge (optional context — weave in at most one practical detail if it fits naturally)
-${knowledgeBlock}
-
-## Rules
-1. Write ONE welcoming sentence (max 2 short sentences) recommending they run the ${facts.appliance} around ${facts.bestTime}.
-2. Use ONLY the appliance, time, and figures above — do not invent numbers or windows.
-3. You may draw ONE natural, practical detail from the knowledge above, but do not list tips or change the recommended appliance/time.
-4. Warm and welcoming since it's their first tip; do not claim to know their habits yet.
-5. Friendly, plain language, no technical jargon.
-6. Return JSON only, no preamble: {"recommendation":"string"}`
+  const prompt = renderPrompt('cold-start', {
+    name: firstName ?? 'unknown',
+    household_size: ctx.householdSize,
+    appliances: ctx.appliances.join(', ') || 'not specified',
+    energy_goal: ctx.energyGoal,
+    appliance: facts.appliance,
+    best_time: facts.bestTime ?? '',
+    carbon_intensity: facts.carbonIntensity ?? 'unknown',
+    reason: facts.reason,
+    knowledge: knowledgeBlock
+  })
 
   try {
     const res = await fetch(`${baseUrl}/chat/completions`, {

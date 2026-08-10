@@ -3,6 +3,8 @@
 // Falls back to a deterministic keyword query when no key / on failure, so
 // retrieval always has something to search with.
 
+import { renderPrompt } from './renderPrompt'
+
 export interface RagQueryContext {
   appliances: string[]
   timeOfDay: string // e.g. 'evening'
@@ -29,19 +31,12 @@ export async function rewriteRagQuery(
 ): Promise<string> {
   if (!apiKey) return fallbackQuery(ctx)
 
-  const prompt = `You are a search query assistant for an energy knowledge base.
-
-## User Context
-- Appliances: ${ctx.appliances.join(', ') || 'not specified'}
-- Current time of day: ${ctx.timeOfDay}
-- Carbon intensity right now: ${ctx.carbonIntensity ?? 'unknown'} gCO2/kWh
-- User goal: ${ctx.energyGoal}
-
-Rewrite this context as a short, precise search query of maximum 100 words to retrieve relevant energy-saving tips from a knowledge base.
-
-Return plain text only, no JSON, no explanation.
-Example output:
-"dishwasher washing machine off-peak low carbon evening scheduling"`
+  const prompt = renderPrompt('rag-query', {
+    appliances: ctx.appliances.join(', ') || 'not specified',
+    time_of_day: ctx.timeOfDay,
+    carbon_intensity: ctx.carbonIntensity ?? 'unknown',
+    energy_goal: ctx.energyGoal
+  })
 
   try {
     const res = await fetch(`${baseUrl}/chat/completions`, {

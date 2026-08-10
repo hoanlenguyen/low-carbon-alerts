@@ -32,6 +32,28 @@ const sendState = reactive<Partial<SendSchema>>({
   targetUserIds: []
 })
 const sendLoading = ref(false)
+const generatingAlert = ref(false)
+
+// Build a Prompt 7 smart-alert message from the live forecast and drop it into
+// the Send form for review + targeted delivery (prompts/07_push_notification_message.md).
+async function generateSmartAlert() {
+  generatingAlert.value = true
+  try {
+    const res = await $fetch<{ subject: string, body: string }>(
+      '/api/admin/notifications/smart-alert-preview',
+      { method: 'POST' }
+    )
+    sendState.subject = res.subject
+    sendState.body = res.body
+    sendState.type = 'targeted'
+    toast.add({ title: 'Smart alert generated', description: 'Pick the users to test with, then send.', color: 'success' })
+  } catch (e: unknown) {
+    const err = e as { data?: { statusMessage?: string } }
+    toast.add({ title: err?.data?.statusMessage || 'Could not generate a message', color: 'error' })
+  } finally {
+    generatingAlert.value = false
+  }
+}
 
 function applyTemplate(t: { subject: string, body: string }) {
   sendState.subject = t.subject
@@ -167,13 +189,26 @@ const tabs = [
 
     <template #body>
       <UTabs v-model="activeTab" :items="tabs" class="w-full">
-
         <!-- ── Send ── -->
         <template #send>
           <div class="pt-5 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-
             <!-- Form -->
             <div class="space-y-5">
+              <!-- Smart-alert generator (Prompt 7) -->
+              <div class="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-default bg-elevated/30 px-3 py-2.5">
+                <UButton
+                  size="xs"
+                  color="primary"
+                  variant="soft"
+                  icon="i-lucide-sparkles"
+                  :loading="generatingAlert"
+                  @click="generateSmartAlert"
+                >
+                  Generate smart-alert message
+                </UButton>
+                <span class="text-xs text-dimmed">Builds a message from the live forecast — review, pick users, send.</span>
+              </div>
+
               <!-- Template chips -->
               <div v-if="(templates as any[])?.length" class="flex flex-wrap gap-2 items-center">
                 <span class="text-xs font-semibold uppercase tracking-wide text-dimmed">Templates:</span>
@@ -189,13 +224,21 @@ const tabs = [
                 </UButton>
               </div>
 
-              <UForm :schema="sendSchema" :state="sendState" class="space-y-4" @submit="onSend">
+              <UForm
+                :schema="sendSchema"
+                :state="sendState"
+                class="space-y-4"
+                @submit="onSend">
                 <UFormField label="Subject" name="subject">
                   <UInput v-model="sendState.subject" placeholder="e.g. Low carbon window tonight" class="w-full" />
                 </UFormField>
 
                 <UFormField label="Body" name="body">
-                  <UTextarea v-model="sendState.body" :rows="4" placeholder="Write your message…" class="w-full" />
+                  <UTextarea
+                    v-model="sendState.body"
+                    :rows="4"
+                    placeholder="Write your message…"
+                    class="w-full" />
                 </UFormField>
 
                 <UFormField label="Audience" name="type">
@@ -257,7 +300,6 @@ const tabs = [
         <!-- ── Templates ── -->
         <template #templates>
           <div class="pt-5 space-y-6">
-
             <!-- Header row -->
             <div class="flex items-center justify-between">
               <p class="text-xs font-semibold uppercase tracking-wide text-dimmed">
@@ -273,7 +315,11 @@ const tabs = [
               <p class="text-sm font-semibold mb-4">
                 New template
               </p>
-              <UForm :schema="templateSchema" :state="templateState" class="space-y-4" @submit="onCreateTemplate">
+              <UForm
+                :schema="templateSchema"
+                :state="templateState"
+                class="space-y-4"
+                @submit="onCreateTemplate">
                 <div class="grid sm:grid-cols-2 gap-4">
                   <UFormField label="Template name" name="name">
                     <UInput v-model="templateState.name" placeholder="e.g. Low carbon alert" class="w-full" />
@@ -341,7 +387,6 @@ const tabs = [
         <!-- ── Scheduled ── -->
         <template #scheduled>
           <div class="pt-5 space-y-6">
-
             <!-- Header row -->
             <div class="flex items-center justify-between">
               <p class="text-xs font-semibold uppercase tracking-wide text-dimmed">
@@ -357,7 +402,11 @@ const tabs = [
               <p class="text-sm font-semibold mb-4">
                 New scheduled job
               </p>
-              <UForm :schema="jobSchema" :state="jobState" class="space-y-4" @submit="onCreateJob">
+              <UForm
+                :schema="jobSchema"
+                :state="jobState"
+                class="space-y-4"
+                @submit="onCreateJob">
                 <div class="grid sm:grid-cols-2 gap-4">
                   <UFormField label="Job name" name="name">
                     <UInput v-model="jobState.name" placeholder="e.g. Morning alert" class="w-full" />
@@ -472,7 +521,6 @@ const tabs = [
             </p>
           </div>
         </template>
-
       </UTabs>
     </template>
   </UDashboardPanel>
