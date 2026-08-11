@@ -49,8 +49,8 @@ export default defineCachedEventHandler(async (event): Promise<GridSeriesData> =
   const currentValue = forecastEntries[0]?.[1] ?? historyEntries[historyEntries.length - 1]?.[1] ?? 0
 
   const points: GridPoint[] = [
-    ...historyEntries.map(([t, v]) => ({ time: new Date(t).getTime(), value: Math.round(v * 10) / 10, isForecast: false })),
-    ...forecastEntries.map(([t, v]) => ({ time: new Date(t).getTime(), value: Math.round(v * 10) / 10, isForecast: true }))
+    ...historyEntries.map(([t, v]) => ({ time: new Date(t).getTime(), value: Math.round(v * 100) / 100, isForecast: false })),
+    ...forecastEntries.map(([t, v]) => ({ time: new Date(t).getTime(), value: Math.round(v * 100) / 100, isForecast: true }))
   ]
 
   return {
@@ -58,7 +58,7 @@ export default defineCachedEventHandler(async (event): Promise<GridSeriesData> =
     seriesLabel: SERIES_META[series].label,
     unit: SERIES_META[series].unit,
     higherIsBetter: SERIES_META[series].higherIsBetter,
-    current: Math.round(currentValue * 10) / 10,
+    current: Math.round(currentValue * 100) / 100,
     forecastStartMs: new Date(raw.metadata.forecast_start).getTime(),
     points,
     generatedAt: raw.metadata.generated_at

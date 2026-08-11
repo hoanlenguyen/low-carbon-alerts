@@ -49,7 +49,7 @@ const xTickValues = computed<number[]>(() => {
 const tooltipTriggers = computed(() => ({
   [Line.selectors.line]: (d: CarbonPoint) => {
     const time = tooltipFmt.format(new Date(d.time))
-    return `<span style="white-space:nowrap">${time} · <b>${d.value.toFixed(2)}</b> ${props.unit ?? 'gCO₂/kWh'}${d.isForecast ? ' · forecast' : ''}</span>`
+    return `<span style="white-space:nowrap">${time} · <b>${d.value}</b> ${props.unit ?? 'gCO₂/kWh'}${d.isForecast ? ' · forecast' : ''}</span>`
   }
 }))
 
