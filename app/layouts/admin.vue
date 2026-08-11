@@ -13,14 +13,6 @@ const links = [[{
   onSelect: () => {
     open.value = false
   }
-},
-{
-  label: 'Notifications',
-  icon: 'i-lucide-bell',
-  to: '/admin/notifications',
-  onSelect: () => {
-    open.value = false
-  }
 }, {
   label: 'Grid Forecast',
   icon: 'i-lucide-activity',
@@ -32,6 +24,14 @@ const links = [[{
   label: 'Smart Alert',
   icon: 'i-lucide-bot',
   to: '/admin/smart-alert',
+  onSelect: () => {
+    open.value = false
+  }
+},
+{
+  label: 'Notifications',
+  icon: 'i-lucide-bell',
+  to: '/admin/notifications',
   onSelect: () => {
     open.value = false
   }

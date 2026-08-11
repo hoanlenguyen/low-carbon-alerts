@@ -9,9 +9,6 @@ const props = defineProps<{
   unit?: string
 }>()
 
-const cardRef = useTemplateRef<HTMLElement | null>('cardRef')
-const { width } = useElementSize(cardRef)
-
 const historyData = computed(() => props.points.filter(p => !p.isForecast))
 const forecastData = computed(() => props.points.filter(p => p.isForecast))
 const allData = computed(() => [...props.points].sort((a, b) => a.time - b.time))
@@ -60,15 +57,14 @@ const nowX = Date.now()
 </script>
 
 <template>
-  <div ref="cardRef" class="w-full">
+  <div class="w-full">
     <VisXYContainer
       :data="allData"
       :x="x"
       :y="y"
       :y-domain="[0, undefined]"
       :padding="{ top: 16, bottom: 4 }"
-      class="h-52"
-      :width="width"
+      class="h-52 w-full"
     >
       <!-- "Excellent" zone band 0–20 gCO₂ (axis y = horizontal band) -->
       <VisPlotband

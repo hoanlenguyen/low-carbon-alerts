@@ -46,7 +46,7 @@ function timeLabel(val: string) {
     <RecommendationCard />
 
     <!-- Carbon intensity card -->
-    <CarbonIntensityCard />
+    <GridForecastCard :switcher="false" show-next-window />
 
     <!-- Recent alerts -->
     <UPageCard variant="subtle">

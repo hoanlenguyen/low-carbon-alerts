@@ -7,7 +7,14 @@ const seriesOptions: Array<{ key: GridSeriesKey, label: string, icon: string, de
   { key: 'domestic_production_share', label: 'Domestic', icon: 'i-lucide-home', description: 'Share produced domestically vs imported' }
 ]
 
-const props = defineProps<{ modelValue?: GridSeriesKey }>()
+const props = withDefaults(defineProps<{
+  modelValue?: GridSeriesKey
+  switcher?: boolean // show the series selector (Carbon / Renewable / Domestic)
+  showNextWindow?: boolean // show the "next low-carbon window" badge (carbon only)
+}>(), {
+  switcher: true,
+  showNextWindow: false
+})
 const emit = defineEmits<{ 'update:modelValue': [key: GridSeriesKey] }>()
 
 const selectedSeries = ref<GridSeriesKey>(props.modelValue ?? 'consumption_emissions')
@@ -56,6 +63,47 @@ const currentStatus = computed<StatusKey>(() =>
 )
 const currentCfg = computed(() => statusConfig[currentStatus.value])
 
+// Next low-carbon window: first run of ≥2 consecutive forecast hours below the
+// "excellent" carbon threshold. Only meaningful for the carbon series.
+const TZ = 'Europe/Helsinki'
+const EXCELLENT_CARBON = 20
+
+interface ForecastPoint { time: number, value: number, isForecast: boolean }
+
+const nextLowWindow = computed<{ time: number, hoursFromNow: number } | null>(() => {
+  if (!props.showNextWindow || !data.value || selectedSeries.value !== 'consumption_emissions') return null
+  if (currentStatus.value === 'excellent') return null
+  const forecast = (data.value.points as ForecastPoint[])
+    .filter(p => p.isForecast)
+    .sort((a, b) => a.time - b.time)
+  let runStart = -1
+  let runLen = 0
+  for (const p of forecast) {
+    if (p.value < EXCELLENT_CARBON) {
+      if (runStart < 0) runStart = p.time
+      runLen++
+      if (runLen >= 2) {
+        return { time: runStart, hoursFromNow: Math.round((runStart - Date.now()) / 3_600_000) }
+      }
+    } else {
+      runStart = -1
+      runLen = 0
+    }
+  }
+  return null
+})
+
+function nextWindowLabel(win: { time: number, hoursFromNow: number }): string {
+  const timeStr = new Date(win.time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  if (win.hoursFromNow <= 0) return 'Starting now'
+  if (win.hoursFromNow === 1) return `In ~1 hour (${timeStr})`
+  return `In ~${win.hoursFromNow}h · ${timeStr}`
+}
+
+const showWindowBadges = computed(() =>
+  props.showNextWindow && selectedSeries.value === 'consumption_emissions'
+)
+
 function timeAgo(val: string): string {
   const diff = Date.now() - new Date(val).getTime()
   const mins = Math.floor(diff / 60_000)
@@ -77,7 +125,7 @@ const selectedOption = computed(() => seriesOptions.find(s => s.key === selected
           <span class="font-semibold text-sm text-highlighted">Grid Forecast · Finland</span>
         </div>
         <!-- Series selector -->
-        <div class="flex gap-1.5 overflow-x-auto pb-0.5">
+        <div v-if="switcher" class="flex gap-1.5 overflow-x-auto pb-0.5">
           <button
             v-for="s in seriesOptions"
             :key="s.key"
@@ -130,6 +178,26 @@ const selectedOption = computed(() => seriesOptions.find(s => s.key === selected
             >
               {{ statusLabels[selectedSeries][currentStatus] }}
             </UBadge>
+            <template v-if="showWindowBadges">
+              <UBadge
+                v-if="currentStatus === 'excellent'"
+                color="success"
+                variant="outline"
+                size="sm"
+                icon="i-lucide-check"
+              >
+                Good time to run appliances
+              </UBadge>
+              <UBadge
+                v-else-if="nextLowWindow"
+                color="neutral"
+                variant="subtle"
+                size="sm"
+                icon="i-lucide-clock"
+              >
+                Next low window: {{ nextWindowLabel(nextLowWindow) }}
+              </UBadge>
+            </template>
           </div>
         </div>
       </div>
