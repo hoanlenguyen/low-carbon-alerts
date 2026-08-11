@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { useDrizzle, schema } from '../database'
-import type { CarbonData } from '../api/carbon.get'
+import type { ForecastData } from '../api/forecast/[series].get'
 import { buildColdStartRecommendation } from './buildColdStartRecommendation'
 import { rewriteRagQuery } from './rewriteRagQuery'
 import { retrieveKnowledge } from './retrieveKnowledge'
@@ -48,7 +48,7 @@ export async function generateRecommendation(
 ) {
   const config = useRuntimeConfig()
 
-  const carbon = await $fetch<CarbonData>('/api/carbon', {
+  const carbon = await $fetch<ForecastData>('/api/forecast/consumption_emissions', {
     baseURL: getRequestURL(event).origin
   })
 
@@ -67,7 +67,7 @@ export async function generateRecommendation(
     {
       appliances: profile.appliances,
       timeOfDay: helsinkiTimeOfDay(),
-      carbonIntensity: carbon.current.value,
+      carbonIntensity: carbon.current,
       energyGoal: profile.energyGoal
     },
     config.openaiApiKey,

@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/html-closing-bracket-newline -->
 <script setup lang="ts">
-import type { GridSeriesData, GridSeriesKey } from '~/server/api/grid/[series].get'
+import type { ForecastData, ForecastKey } from '~/server/api/forecast/[series].get'
 
 definePageMeta({
   layout: 'app',
@@ -32,10 +32,10 @@ function getStatus(value: number, higherIsBetter: boolean): StatusKey {
 }
 
 // Synced via v-model with GridForecastCard
-const selectedSeries = ref<GridSeriesKey>('consumption_emissions')
+const selectedSeries = ref<ForecastKey>('consumption_emissions')
 
 // Separate fetch for hourly + guide sections — same endpoint, shares SWR cache
-const { data, status } = useFetch<GridSeriesData>(() => `/api/grid/${selectedSeries.value}`, {
+const { data, status } = useFetch<ForecastData>(() => `/api/forecast/${selectedSeries.value}`, {
   watch: [selectedSeries]
 })
 
@@ -58,7 +58,7 @@ function formatHour(ms: number) {
   return new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
 }
 
-const guides: Record<GridSeriesKey, Array<{ status: StatusKey, emoji: string, label: string, range: string, tip: string }>> = {
+const guides: Record<ForecastKey, Array<{ status: StatusKey, emoji: string, label: string, range: string, tip: string }>> = {
   consumption_emissions: [
     { status: 'excellent', emoji: '🍃', label: 'Excellent', range: '< 20 gCO₂/kWh', tip: 'Run dishwasher, EV charging, laundry, water heater — now is the time.' },
     { status: 'good', emoji: '💧', label: 'Good', range: '20–30 gCO₂/kWh', tip: 'Better than average. Go ahead with energy-intensive tasks.' },

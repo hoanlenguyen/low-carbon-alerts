@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { and, eq } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../../database'
-import type { CarbonData } from '../../carbon.get'
+import type { ForecastData } from '../../forecast/[series].get'
 import { findLowCarbonWindow, windowUrgency } from '../../../utils/lowCarbonWindow'
 import { pickFlexibleAppliance } from '../../../utils/buildColdStartRecommendation'
 import { generatePushMessage } from '../../../utils/generatePushMessage'
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   }
   const profile = await db.query.userProfiles.findFirst({ where: eq(schema.userProfiles.userId, userId) })
 
-  const carbon = await $fetch<CarbonData>('/api/carbon', { baseURL: getRequestURL(event).origin })
+  const carbon = await $fetch<ForecastData>('/api/forecast/consumption_emissions', { baseURL: getRequestURL(event).origin })
   const win = findLowCarbonWindow(carbon)
   if (!win) {
     throw createError({ statusCode: 422, statusMessage: 'No low-carbon window in the next 24h to alert on' })

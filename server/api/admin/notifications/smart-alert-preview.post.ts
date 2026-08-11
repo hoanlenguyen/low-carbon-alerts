@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { CarbonData } from '../../carbon.get'
+import type { ForecastData } from '../../forecast/[series].get'
 import { findLowCarbonWindow, windowUrgency } from '../../../utils/lowCarbonWindow'
 import { generatePushMessage } from '../../../utils/generatePushMessage'
 
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   const { appliance: applianceOverride } = bodySchema.parse(raw && typeof raw === 'object' ? raw : {})
   const config = useRuntimeConfig()
 
-  const carbon = await $fetch<CarbonData>('/api/carbon', {
+  const carbon = await $fetch<ForecastData>('/api/forecast/consumption_emissions', {
     baseURL: getRequestURL(event).origin
   })
 

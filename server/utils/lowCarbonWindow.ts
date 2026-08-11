@@ -1,4 +1,4 @@
-import type { CarbonData } from '../api/carbon.get'
+import type { ForecastData } from '../api/forecast/[series].get'
 
 const TZ = 'Europe/Helsinki'
 
@@ -18,7 +18,7 @@ export interface LowCarbonWindow {
 // First run of ≥2 consecutive forecast hours below a threshold (tiered from
 // cleanest to merely-good), searching the next 24h. Shared by the smart-alert
 // preview and per-user test endpoints.
-export function findLowCarbonWindow(carbon: CarbonData): LowCarbonWindow | null {
+export function findLowCarbonWindow(carbon: ForecastData): LowCarbonWindow | null {
   const now = Date.now()
   const fc = carbon.points
     .filter(p => p.isForecast && p.time >= now && p.time <= now + 24 * 3_600_000)
@@ -40,7 +40,7 @@ export function findLowCarbonWindow(carbon: CarbonData): LowCarbonWindow | null 
   return null
 }
 
-function build(fc: CarbonData['points'], s: number, e: number): LowCarbonWindow {
+function build(fc: ForecastData['points'], s: number, e: number): LowCarbonWindow {
   let min = fc[s]!.value
   for (let i = s; i <= e; i++) min = Math.min(min, fc[i]!.value)
   return { startMs: fc[s]!.time, start: hhmm(fc[s]!.time), end: hhmm(fc[e]!.time), intensity: Math.round(min * 10) / 10 }

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Line } from '@unovis/ts'
 import { VisXYContainer, VisLine, VisArea, VisAxis, VisTooltip, VisPlotline, VisPlotband } from '@unovis/vue'
-import type { CarbonPoint } from '~/server/api/carbon.get'
+import type { ForecastPoint } from '~/server/api/forecast/[series].get'
 
 const props = defineProps<{
-  points: CarbonPoint[]
+  points: ForecastPoint[]
   forecastStartMs: number
   unit?: string
 }>()
@@ -13,21 +13,21 @@ const historyData = computed(() => props.points.filter(p => !p.isForecast))
 const forecastData = computed(() => props.points.filter(p => p.isForecast))
 const allData = computed(() => [...props.points].sort((a, b) => a.time - b.time))
 
-const x = (d: CarbonPoint) => d.time
-const y = (d: CarbonPoint) => d.value
+const x = (d: ForecastPoint) => d.time
+const y = (d: ForecastPoint) => d.value
 
 const TZ = 'Europe/Helsinki'
 
-const tickFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: TZ })
+const tickFmt = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ })
 const tooltipFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: TZ })
 
 const xTicks = (t: number) => tickFmt.format(new Date(t))
 
-// Generate tick positions at clean 6-hour boundaries in Helsinki time
+// Generate tick positions at every whole hour in Helsinki time
 const xTickValues = computed<number[]>(() => {
   if (!allData.value.length) return []
   const HOUR_MS = 3_600_000
-  const INTERVAL = 6 * HOUR_MS
+  const INTERVAL = HOUR_MS
   const start = allData.value[0].time
   const end = allData.value[allData.value.length - 1].time
 
@@ -47,7 +47,7 @@ const xTickValues = computed<number[]>(() => {
 })
 
 const tooltipTriggers = computed(() => ({
-  [Line.selectors.line]: (d: CarbonPoint) => {
+  [Line.selectors.line]: (d: ForecastPoint) => {
     const time = tooltipFmt.format(new Date(d.time))
     return `<span style="white-space:nowrap">${time} · <b>${d.value}</b> ${props.unit ?? 'gCO₂/kWh'}${d.isForecast ? ' · forecast' : ''}</span>`
   }
@@ -105,8 +105,8 @@ const nowX = Date.now()
       <VisPlotline
         :value="nowX"
         axis="x"
-        color="rgba(148,163,184,0.5)"
-        :line-width="1"
+        color="cyan"
+        :line-width="2"
         label-text="Now"
       />
 
@@ -114,8 +114,8 @@ const nowX = Date.now()
       <VisPlotline
         :value="20"
         axis="y"
-        color="rgba(34,197,94,0.5)"
-        :line-width="1"
+        color="indigo"
+        :line-width="2"
         label-text="Excellent"
         label-position="right"
       />

@@ -1,4 +1,4 @@
-import type { CarbonData } from '../api/carbon.get'
+import type { ForecastData } from '../api/forecast/[series].get'
 
 const TZ = 'Europe/Helsinki'
 
@@ -73,7 +73,7 @@ function savingBand(windowValue: number, avg24h: number): 'low' | 'medium' | 'hi
  * never invents numbers. The friendly prose is layered on separately by the LLM.
  */
 export function buildColdStartRecommendation(
-  carbon: CarbonData,
+  carbon: ForecastData,
   profile: ColdStartProfile
 ): ColdStartFacts {
   const appliance = pickFlexibleAppliance(profile.appliances)
@@ -87,7 +87,7 @@ export function buildColdStartRecommendation(
   const history = carbon.points.filter(p => !p.isForecast)
   const avg24h = history.length
     ? history.reduce((s, p) => s + p.value, 0) / history.length
-    : (carbon.current.value || (forecast.length ? forecast[0]!.value : 0))
+    : (carbon.current || (forecast.length ? forecast[0]!.value : 0))
 
   // No usable forecast → honest, welcoming placeholder.
   if (forecast.length === 0) {

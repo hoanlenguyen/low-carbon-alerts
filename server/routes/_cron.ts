@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
         current: number
         points: Array<{ time: number, value: number, isForecast: boolean }>
         forecastStartMs: number
-      }>('/api/grid/consumption_emissions', { baseURL: getRequestURL(event).origin })
+      }>('/api/forecast/consumption_emissions', { baseURL: getRequestURL(event).origin })
 
       if (gridData.current < threshold) {
         // Debounce: skip if a smart alert was already sent within debounceHours

@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import type { GridSeriesData, GridSeriesKey } from '~/server/api/grid/[series].get'
+import type { ForecastData, ForecastKey } from '~/server/api/forecast/[series].get'
 
-const seriesOptions: Array<{ key: GridSeriesKey, label: string, icon: string, description: string }> = [
+const seriesOptions: Array<{ key: ForecastKey, label: string, icon: string, description: string }> = [
   { key: 'consumption_emissions', label: 'Carbon', icon: 'i-lucide-leaf', description: 'CO₂ emitted per kWh consumed' },
   { key: 'renew_production_share', label: 'Renewable', icon: 'i-lucide-wind', description: 'Share of electricity from renewables' },
   { key: 'domestic_production_share', label: 'Domestic', icon: 'i-lucide-home', description: 'Share produced domestically vs imported' }
 ]
 
 const props = withDefaults(defineProps<{
-  modelValue?: GridSeriesKey
+  modelValue?: ForecastKey
   switcher?: boolean // show the series selector (Carbon / Renewable / Domestic)
   showNextWindow?: boolean // show the "next low-carbon window" badge (carbon only)
 }>(), {
   switcher: true,
   showNextWindow: false
 })
-const emit = defineEmits<{ 'update:modelValue': [key: GridSeriesKey] }>()
+const emit = defineEmits<{ 'update:modelValue': [key: ForecastKey] }>()
 
-const selectedSeries = ref<GridSeriesKey>(props.modelValue ?? 'consumption_emissions')
+const selectedSeries = ref<ForecastKey>(props.modelValue ?? 'consumption_emissions')
 
 watch(() => props.modelValue, (v) => { if (v) selectedSeries.value = v })
 watch(selectedSeries, v => emit('update:modelValue', v))
 
-const { data, status } = useFetch<GridSeriesData>(() => `/api/grid/${selectedSeries.value}`, {
+const { data, status } = useFetch<ForecastData>(() => `/api/forecast/${selectedSeries.value}`, {
   watch: [selectedSeries]
 })
 
@@ -39,7 +39,7 @@ const statusBadgeColor: Record<StatusKey, 'success' | 'primary' | 'warning' | 'e
   excellent: 'success', good: 'primary', moderate: 'warning', high: 'error'
 }
 
-const statusLabels: Record<GridSeriesKey, Record<StatusKey, string>> = {
+const statusLabels: Record<ForecastKey, Record<StatusKey, string>> = {
   consumption_emissions: { excellent: 'Excellent', good: 'Good', moderate: 'Moderate', high: 'High' },
   renew_production_share: { excellent: 'High', good: 'Good', moderate: 'Mixed', high: 'Low' },
   domestic_production_share: { excellent: 'High', good: 'Good', moderate: 'Mixed', high: 'Low' }
@@ -205,7 +205,7 @@ const selectedOption = computed(() => seriesOptions.find(s => s.key === selected
       <!-- 48h chart -->
       <div>
         <p class="text-xs text-dimmed mb-2 flex items-center gap-2">
-          <span>Past 24h + 24h forecast</span>
+          <span>Past 12h + forecast</span>
           <span class="inline-flex items-center gap-1 opacity-60">
             <span class="inline-block w-4 border-t-2 border-primary/60 border-dashed" />
             <span>forecast</span>
