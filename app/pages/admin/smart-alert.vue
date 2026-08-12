@@ -10,7 +10,8 @@ const TZ = 'Europe/Helsinki'
 // ── Settings ─────────────────────────────────────────────────────────────────
 const settingsSchema = z.object({
   threshold: z.number().int().min(1).max(200),
-  debounceHours: z.number().int().min(1).max(24)
+  debounceHours: z.number().int().min(1).max(24),
+  horizonHours: z.number().int().min(1).max(24)
 })
 type SettingsSchema = z.output<typeof settingsSchema>
 
@@ -21,7 +22,8 @@ const togglingEnabled = ref(false)
 
 const form = reactive<SettingsSchema>({
   threshold: 20,
-  debounceHours: 3
+  debounceHours: 3,
+  horizonHours: 6
 })
 
 watch(settings, (s) => {
@@ -29,6 +31,7 @@ watch(settings, (s) => {
   enabled.value = s.enabled
   form.threshold = s.threshold
   form.debounceHours = s.debounceHours
+  form.horizonHours = s.horizonHours
 }, { immediate: true })
 
 async function onToggleEnabled() {
@@ -36,7 +39,7 @@ async function onToggleEnabled() {
   try {
     await $fetch('/api/admin/smart-alert/settings', {
       method: 'PATCH',
-      body: { enabled: enabled.value, threshold: form.threshold, debounceHours: form.debounceHours }
+      body: { enabled: enabled.value, threshold: form.threshold, debounceHours: form.debounceHours, horizonHours: form.horizonHours }
     })
     await Promise.all([refreshSettings(), refreshAudit()])
   } catch {
@@ -67,6 +70,35 @@ async function onSave(event: FormSubmitEvent<SettingsSchema>) {
 
 // ── Alert history ─────────────────────────────────────────────────────────────
 const { data: history, refresh: refreshHistory } = useFetch('/api/admin/smart-alert/history', { server: false })
+
+// ── Trigger runs (last success + recent run log) ───────────────────────────────
+interface RunRow { id: string, ranAt: string | null, windowFound: boolean, carbonIntensity: number | null, windowStart: string | null, windowEnd: string | null, recipientCount: number }
+const { data: runsData, refresh: refreshRuns } = useFetch<{ lastSent: RunRow | null, runs: RunRow[] }>('/api/admin/smart-alert/runs', { server: false })
+const lastSent = computed(() => runsData.value?.lastSent ?? null)
+const runs = computed(() => runsData.value?.runs ?? [])
+
+const runningNow = ref(false)
+async function runNow() {
+  runningNow.value = true
+  try {
+    const res = await $fetch<{ windowFound: boolean, sent: number, reason?: string }>(
+      '/api/admin/smart-alert/run',
+      { method: 'POST' }
+    )
+    const desc = res.sent > 0
+      ? `Sent to ${res.sent} user${res.sent === 1 ? '' : 's'}`
+      : res.windowFound
+        ? (res.reason === 'debounced' ? 'Window found, but debounced' : 'Window found, but no eligible users')
+        : (res.reason === 'disabled' ? 'Smart alerts are disabled' : 'No low-carbon window right now')
+    toast.add({ title: 'Smart alert run complete', description: desc, color: res.sent > 0 ? 'success' : 'neutral' })
+    await refreshRuns()
+  } catch (e: unknown) {
+    const err = e as { data?: { statusMessage?: string } }
+    toast.add({ title: err?.data?.statusMessage || 'Run failed', color: 'error' })
+  } finally {
+    runningNow.value = false
+  }
+}
 
 // ── Audit log ─────────────────────────────────────────────────────────────────
 const auditPage = ref(1)
@@ -126,6 +158,7 @@ function diffBadge(
 const keyLabel: Record<string, string> = {
   enabled: 'Enabled',
   threshold: 'Threshold',
+  horizonHours: 'Horizon',
   debounceHours: 'Debounce'
 }
 </script>
@@ -143,7 +176,7 @@ const keyLabel: Record<string, string> = {
             variant="ghost"
             icon="i-lucide-refresh-cw"
             size="sm"
-            @click="() => { refreshHistory(); refreshAudit() }"
+            @click="() => { refreshHistory(); refreshAudit(); refreshRuns() }"
           >
             Refresh
           </UButton>
@@ -183,7 +216,7 @@ const keyLabel: Record<string, string> = {
                     Smart alerts on forecast
                   </p>
                   <p class="text-xs text-muted mt-0.5">
-                    AI alert generation runs each time the forecast API is called.
+                    Each cron run scans the forecast and alerts users whose active hours cover an upcoming window.
                   </p>
                 </div>
               </div>
@@ -206,7 +239,7 @@ const keyLabel: Record<string, string> = {
               <UFormField
                 name="threshold"
                 label="Carbon threshold (gCO₂/kWh)"
-                description="An alert is sent when current intensity falls below this value."
+                description="A low-carbon window is one where forecast intensity stays below this value."
               >
                 <div class="flex items-center gap-3">
                   <UInput
@@ -217,6 +250,23 @@ const keyLabel: Record<string, string> = {
                     class="w-28"
                   />
                   <span class="text-sm text-muted">gCO₂/kWh</span>
+                </div>
+              </UFormField>
+
+              <UFormField
+                name="horizonHours"
+                label="Look-ahead horizon (hours)"
+                description="How far ahead to scan the forecast for an upcoming window (≥3 consecutive hours)."
+              >
+                <div class="flex items-center gap-3">
+                  <UInput
+                    v-model.number="form.horizonHours"
+                    type="number"
+                    min="1"
+                    max="24"
+                    class="w-28"
+                  />
+                  <span class="text-sm text-muted">hours</span>
                 </div>
               </UFormField>
 
@@ -243,6 +293,89 @@ const keyLabel: Record<string, string> = {
                 </UButton>
               </div>
             </UForm>
+          </UPageCard>
+        </section>
+
+        <!-- Trigger history -->
+        <section>
+          <div class="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <h2 class="text-sm font-semibold text-highlighted">
+                Trigger history
+              </h2>
+              <p class="text-sm text-muted mt-0.5">
+                When the smart-alert cron last ran and how many users it reached.
+              </p>
+            </div>
+            <UButton
+              size="xs"
+              icon="i-lucide-play"
+              :loading="runningNow"
+              @click="runNow"
+            >
+              Run now
+            </UButton>
+          </div>
+
+          <!-- Last successful -->
+          <UPageCard variant="subtle" class="mb-3">
+            <div class="flex items-center gap-3">
+              <div
+                class="size-8 rounded-full flex items-center justify-center shrink-0"
+                :class="lastSent ? 'bg-success/10' : 'bg-elevated'"
+              >
+                <UIcon name="i-lucide-bell-ring" class="size-4" :class="lastSent ? 'text-success' : 'text-dimmed'" />
+              </div>
+              <div v-if="lastSent">
+                <p class="text-sm font-medium text-highlighted">
+                  Last alert sent {{ fmtTime(lastSent.ranAt) }}
+                </p>
+                <p class="text-xs text-muted mt-0.5">
+                  Reached {{ lastSent.recipientCount }} user{{ lastSent.recipientCount === 1 ? '' : 's' }}<template v-if="lastSent.windowStart">
+                    · window {{ lastSent.windowStart }}–{{ lastSent.windowEnd }} at {{ lastSent.carbonIntensity }} gCO₂/kWh
+                  </template>
+                </p>
+              </div>
+              <div v-else>
+                <p class="text-sm font-medium text-highlighted">
+                  No smart alerts sent yet
+                </p>
+                <p class="text-xs text-muted mt-0.5">
+                  Runs appear here once the cron fires and a low-carbon window is found.
+                </p>
+              </div>
+            </div>
+          </UPageCard>
+
+          <!-- Recent runs -->
+          <UPageCard variant="subtle" :ui="{ body: 'p-0' }">
+            <div v-if="!runs.length" class="py-8 text-center text-sm text-muted">
+              No runs recorded yet.
+            </div>
+            <ul v-else class="divide-y divide-default">
+              <li
+                v-for="r in runs"
+                :key="r.id"
+                class="px-4 sm:px-6 py-3 flex items-center justify-between gap-3"
+              >
+                <div class="flex items-center gap-2 min-w-0">
+                  <UBadge
+                    :color="r.windowFound ? (r.recipientCount ? 'success' : 'warning') : 'neutral'"
+                    variant="subtle"
+                    size="xs"
+                  >
+                    {{ r.windowFound ? (r.recipientCount ? 'Sent' : 'Window · not sent') : 'No window' }}
+                  </UBadge>
+                  <span v-if="r.windowStart" class="text-xs text-muted tabular-nums truncate">
+                    {{ r.windowStart }}–{{ r.windowEnd }} · {{ r.carbonIntensity }} gCO₂/kWh
+                  </span>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class="text-xs text-muted tabular-nums">{{ r.recipientCount }} user{{ r.recipientCount === 1 ? '' : 's' }}</span>
+                  <span class="text-xs text-dimmed tabular-nums">{{ fmtTime(r.ranAt) }}</span>
+                </div>
+              </li>
+            </ul>
           </UPageCard>
         </section>
 
@@ -298,7 +431,7 @@ const keyLabel: Record<string, string> = {
               Sent alerts
             </h2>
             <p class="text-sm text-muted mt-0.5">
-              Last 50 AI-generated notifications broadcast to users.
+              Last 50 smart-alert notifications sent to eligible users.
             </p>
           </div>
 
@@ -321,6 +454,10 @@ const keyLabel: Record<string, string> = {
                   </p>
                   <span class="text-xs text-dimmed shrink-0 tabular-nums">{{ fmtTime(alert.sentAt) }}</span>
                 </div>
+                <p v-if="alert.recipient" class="text-xs text-dimmed leading-relaxed flex items-center gap-1">
+                  <UIcon name="i-lucide-user" class="size-3 shrink-0" />
+                  {{ alert.recipient }}
+                </p>
                 <p class="text-xs text-muted leading-relaxed">
                   {{ alert.body }}
                 </p>
@@ -363,7 +500,7 @@ const keyLabel: Record<string, string> = {
                   </div>
                   <div class="flex flex-wrap gap-2">
                     <template
-                      v-for="key in ['enabled', 'threshold', 'debounceHours']"
+                      v-for="key in ['enabled', 'threshold', 'horizonHours', 'debounceHours']"
                       :key="key"
                     >
                       <div

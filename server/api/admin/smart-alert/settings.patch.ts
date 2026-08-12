@@ -5,7 +5,8 @@ import { useDrizzle, schema } from '../../../database'
 const bodySchema = z.object({
   enabled: z.boolean(),
   threshold: z.number().int().min(1).max(200),
-  debounceHours: z.number().int().min(1).max(24)
+  debounceHours: z.number().int().min(1).max(24),
+  horizonHours: z.number().int().min(1).max(24)
 })
 
 export default defineEventHandler(async (event) => {
@@ -31,7 +32,7 @@ export default defineEventHandler(async (event) => {
     userId: session.user.id,
     userEmail: session.user.email,
     action: 'smart_alert.settings.update',
-    before: JSON.stringify({ enabled: before?.enabled, threshold: before?.threshold, debounceHours: before?.debounceHours }),
+    before: JSON.stringify({ enabled: before?.enabled, threshold: before?.threshold, debounceHours: before?.debounceHours, horizonHours: before?.horizonHours }),
     after: JSON.stringify(data),
     createdAt: now
   })

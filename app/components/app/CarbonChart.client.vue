@@ -23,11 +23,20 @@ const tooltipFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', hour: '2
 
 const xTicks = (t: number) => tickFmt.format(new Date(t))
 
-// Generate tick positions at every whole hour in Helsinki time
+// Tick density adapts to viewport width so labels never overlap:
+// desktop = hourly, tablet = every 2h, mobile = every 6h.
+const { width: screenWidth } = useWindowSize()
+const tickStepHours = computed(() => {
+  if (screenWidth.value >= 1024) return 2
+  if (screenWidth.value >= 640) return 4
+  return 6
+})
+
+// Generate tick positions at the responsive hour step, aligned to Helsinki time
 const xTickValues = computed<number[]>(() => {
   if (!allData.value.length) return []
   const HOUR_MS = 3_600_000
-  const INTERVAL = HOUR_MS
+  const INTERVAL = tickStepHours.value * HOUR_MS
   const start = allData.value[0].time
   const end = allData.value[allData.value.length - 1].time
 
@@ -38,7 +47,7 @@ const xTickValues = computed<number[]>(() => {
   if (offsetH > 12) offsetH -= 24
   const offsetMs = offsetH * HOUR_MS
 
-  // Round up to the next 6-hour boundary in Helsinki, then convert back to UTC ms
+  // Round up to the next interval boundary in Helsinki, then convert back to UTC ms
   const firstTick = Math.ceil((start + offsetMs) / INTERVAL) * INTERVAL - offsetMs
 
   const ticks: number[] = []

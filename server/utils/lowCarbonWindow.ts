@@ -50,3 +50,35 @@ export function windowUrgency(startMs: number): 'low' | 'medium' | 'high' {
   const hoursAway = (startMs - Date.now()) / 3_600_000
   return hoursAway <= 3 ? 'high' : hoursAway <= 8 ? 'medium' : 'low'
 }
+
+// First run of >= minRunHours consecutive forecast hours below a SPECIFIC
+// threshold, starting within `horizonMs` from now. Used by the smart-alert cron
+// (uses the configured threshold, not the tiered findLowCarbonWindow).
+export function findWindowBelow(
+  points: ForecastData['points'],
+  threshold: number,
+  horizonMs: number,
+  minRunHours = 3
+): LowCarbonWindow | null {
+  const now = Date.now()
+  const fc = points
+    .filter(p => p.isForecast && p.time >= now && p.time <= now + horizonMs)
+    .sort((a, b) => a.time - b.time)
+  if (fc.length < minRunHours) return null
+
+  let start = -1
+  for (let i = 0; i < fc.length; i++) {
+    if (fc[i]!.value < threshold) {
+      if (start < 0) start = i
+      if (i - start + 1 >= minRunHours) {
+        // qualifying run reached — extend to the full contiguous low run
+        let end = i
+        while (end + 1 < fc.length && fc[end + 1]!.value < threshold) end++
+        return build(fc, start, end)
+      }
+    } else {
+      start = -1
+    }
+  }
+  return null
+}

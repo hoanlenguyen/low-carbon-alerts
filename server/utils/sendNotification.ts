@@ -6,7 +6,7 @@ import { getFcmAccessToken } from './getFcmAccessToken'
 interface SendOptions {
   subject: string
   body: string
-  type: 'broadcast' | 'targeted'
+  type: 'broadcast' | 'targeted' | 'smart-alert'
   sentById: string
   targetUserIds?: string[]
 }

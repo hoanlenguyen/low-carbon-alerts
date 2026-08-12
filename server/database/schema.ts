@@ -26,7 +26,7 @@ export const messages = sqliteTable('messages', {
   id: text('id').primaryKey(),
   subject: text('subject').notNull(),
   body: text('body').notNull(),
-  type: text('type', { enum: ['broadcast', 'targeted'] }).notNull(),
+  type: text('type', { enum: ['broadcast', 'targeted', 'smart-alert'] }).notNull(),
   sentById: text('sent_by_id').notNull(),
   sentAt: integer('sent_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
@@ -53,7 +53,7 @@ export const scheduledJobs = sqliteTable('scheduled_jobs', {
   name: text('name').notNull(),
   subject: text('subject').notNull(),
   body: text('body').notNull(),
-  targetType: text('target_type', { enum: ['broadcast', 'targeted'] }).notNull(),
+  targetType: text('target_type', { enum: ['broadcast', 'targeted', 'smartAlert'] }).notNull(),
   targetUserIds: text('target_user_ids'),
   cronExpression: text('cron_expression').notNull(),
   nextRunAt: integer('next_run_at', { mode: 'timestamp' }).notNull(),
@@ -68,17 +68,30 @@ export const smartAlertSettings = sqliteTable('smart_alert_settings', {
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
   threshold: integer('threshold').notNull().default(20), // gCO₂/kWh
   debounceHours: integer('debounce_hours').notNull().default(3),
+  horizonHours: integer('horizon_hours').notNull().default(6), // how far ahead to scan the forecast
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   updatedById: text('updated_by_id').notNull()
+})
+
+// One row per smart-alert cron run — the trigger history. "windowFound" marks a
+// successful run (a qualifying low-carbon window met the threshold).
+export const smartAlertRuns = sqliteTable('smart_alert_runs', {
+  id: text('id').primaryKey(),
+  ranAt: integer('ran_at', { mode: 'timestamp' }).notNull(),
+  windowFound: integer('window_found', { mode: 'boolean' }).notNull(),
+  carbonIntensity: real('carbon_intensity'), // the window's carbon point, null if no window
+  windowStart: text('window_start'), // "HH:MM", null if no window
+  windowEnd: text('window_end'), // "HH:MM", null if no window
+  recipientCount: integer('recipient_count').notNull().default(0)
 })
 
 export const auditLogs = sqliteTable('audit_logs', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull(),
   userEmail: text('user_email').notNull(),
-  action: text('action').notNull(),       // e.g. 'smart_alert.settings.update'
-  before: text('before'),                 // JSON snapshot
-  after: text('after'),                   // JSON snapshot
+  action: text('action').notNull(), // e.g. 'smart_alert.settings.update'
+  before: text('before'), // JSON snapshot
+  after: text('after'), // JSON snapshot
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
 
@@ -88,11 +101,11 @@ export const userProfiles = sqliteTable('user_profiles', {
   householdSize: integer('household_size').notNull(),
   contractType: text('contract_type').notNull(),
   primaryHeating: text('primary_heating').notNull(),
-  appliances: text('appliances').notNull(),       // JSON string[]
+  appliances: text('appliances').notNull(), // JSON string[]
   activeHoursStart: text('active_hours_start').notNull(),
   activeHoursEnd: text('active_hours_end').notNull(),
-  peakTimes: text('peak_times').notNull(),         // JSON string[]
-  notifTimes: text('notif_times').notNull(),        // JSON string[]
+  peakTimes: text('peak_times').notNull(), // JSON string[]
+  notifTimes: text('notif_times').notNull(), // JSON string[]
   energyGoal: text('energy_goal').notNull(),
   notifStyle: text('notif_style', { enum: ['detailed', 'simple'] }).notNull(),
   followsPrices: text('follows_prices').notNull(),
@@ -144,3 +157,4 @@ export type UserProfile = typeof userProfiles.$inferSelect
 export type Recommendation = typeof recommendations.$inferSelect
 export type KbChunk = typeof kbChunks.$inferSelect
 export type KbMeta = typeof kbMeta.$inferSelect
+export type SmartAlertRun = typeof smartAlertRuns.$inferSelect
