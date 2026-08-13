@@ -16,6 +16,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     setupToken: '',
+    cronSecret: '',
     fcmServiceAccount: '',
     fcmProjectId: '',
     openaiApiKey: '',

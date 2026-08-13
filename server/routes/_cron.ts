@@ -5,6 +5,16 @@ import { sendNotification } from '../utils/sendNotification'
 import { runSmartAlert } from '../utils/runSmartAlert'
 
 export default defineEventHandler(async (event) => {
+  // Only the scheduler (the standalone cron Worker) may trigger job processing.
+  // Requires `Authorization: Bearer <NUXT_CRON_SECRET>`. If no secret is
+  // configured, the endpoint is locked down rather than left open.
+  const cronSecret = useRuntimeConfig(event).cronSecret
+  const authorized = cronSecret
+    && getHeader(event, 'authorization') === `Bearer ${cronSecret}`
+  if (!authorized) {
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  }
+
   const db = useDrizzle(event)
   const now = new Date()
 

@@ -1,0 +1,21 @@
+# Standalone scheduler Worker for low-carbon-alerts.
+#
+# Cloudflare Cron Triggers are a Workers-only feature — the main app is a Pages
+# project and can't register them. This tiny Worker fires hourly and pings the
+# Pages app's /_cron route, which does the real work (processing due
+# scheduledJobs, including the smart-alert job). All business logic + D1 stay in
+# the Pages app; this Worker only makes an authenticated HTTP call.
+#
+# Deploy from this directory:  wrangler deploy
+# Set the shared secret:       wrangler secret put CRON_SECRET   (must equal the
+#                              Pages app's NUXT_CRON_SECRET)
+
+name = "low-carbon-alerts-cron"
+main = "index.ts"
+compatibility_date = "2024-07-11"
+
+[triggers]
+crons = ["0 * * * *"] # hourly, on the hour (UTC)
+
+[vars]
+CRON_TARGET_URL = "https://low-carbon-alerts.pages.dev"
