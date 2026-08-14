@@ -14,6 +14,11 @@ const useMessages = () => useState<InboxMessage[]>('notifications-messages', () 
 const useInitialized = () => useState<boolean>('notifications-initialized', () => false)
 const useFcmToken = () => useState<string | null>('notifications-fcm-token', () => null)
 
+// Persisted opt-out so a page reload doesn't silently re-enable push after the
+// user turned it off. Bound once so we don't stack foreground handlers.
+const PUSH_PREF_KEY = 'lca-push-enabled'
+let foregroundBound = false
+
 export function useNotifications() {
   const nuxtApp = useNuxtApp()
   const { user } = useUserSession()
@@ -65,40 +70,51 @@ export function useNotifications() {
     nuxtApp.hook('app:beforeMount', () => es.close())
   }
 
-  async function registerFCM() {
-    if (!import.meta.client) return
-    const $firebaseMessaging = nuxtApp.$firebaseMessaging as ReturnType<typeof import('firebase/messaging').getMessaging> | undefined
-    if (!$firebaseMessaging || !config.public.firebaseVapidKey) return
-    try {
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') return
+  function messaging() {
+    return nuxtApp.$firebaseMessaging as ReturnType<typeof import('firebase/messaging').getMessaging> | undefined
+  }
 
-      const sw = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
-      const token = await getToken($firebaseMessaging, {
-        vapidKey: config.public.firebaseVapidKey,
-        serviceWorkerRegistration: sw
-      })
-      if (token) {
-        fcmToken.value = token
-        await $fetch('/api/notifications/fcm-token', { method: 'POST', body: { token } })
-      }
+  // Register the SW, fetch the FCM token, save it, and bind the foreground handler
+  // once. Assumes permission is already granted — no prompting happens here.
+  async function saveToken() {
+    const $fm = messaging()
+    if (!$fm || !config.public.firebaseVapidKey) return
 
-      // Foreground handler — fires when the tab is active and FCM delivers
-      onMessage($firebaseMessaging, (payload) => {
+    const sw = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    const token = await getToken($fm, {
+      vapidKey: config.public.firebaseVapidKey,
+      serviceWorkerRegistration: sw
+    })
+    if (token) {
+      fcmToken.value = token
+      await $fetch('/api/notifications/fcm-token', { method: 'POST', body: { token } })
+    }
+
+    if (!foregroundBound) {
+      foregroundBound = true
+      onMessage($fm, (payload) => {
         const id = payload.data?.messageId ?? crypto.randomUUID()
-        const msg: InboxMessage = {
+        prependMessage({
           id,
           messageId: id,
           subject: payload.notification?.title ?? '',
           body: payload.notification?.body ?? '',
           read: false,
           createdAt: new Date().toISOString()
-        }
-        prependMessage(msg)
-        // SSE already shows a toast for server-sent messages; FCM foreground is a duplicate path
-        // only show toast if this message wasn't already added via SSE
+        })
       })
-    } catch { /* FCM registration failure is non-fatal */ }
+    }
+  }
+
+  // Called on every app load. Only re-registers the token if push is already
+  // granted AND the user hasn't opted out — never prompts.
+  async function syncPush() {
+    if (!import.meta.client) return
+    if (!('Notification' in window) || Notification.permission !== 'granted') return
+    if (localStorage.getItem(PUSH_PREF_KEY) === 'off') return
+    try {
+      await saveToken()
+    } catch { /* non-fatal */ }
   }
 
   async function markAsRead(id: string) {
@@ -118,19 +134,30 @@ export function useNotifications() {
     initialized.value = true
     await loadInbox()
     connectSSE()
-    await registerFCM()
+    await syncPush()
   }
 
   async function disablePush() {
+    // Remember the choice so init() won't re-register on the next load.
+    if (import.meta.client) localStorage.setItem(PUSH_PREF_KEY, 'off')
     if (!fcmToken.value) return
     await $fetch('/api/notifications/fcm-token', { method: 'DELETE', body: { token: fcmToken.value } })
     fcmToken.value = null
   }
 
+  // Explicit user action — this is the only place we prompt for permission.
   async function enablePush() {
-    initialized.value = false
-    await registerFCM()
-    initialized.value = true
+    if (!import.meta.client) return
+    if (!messaging() || !config.public.firebaseVapidKey) {
+      toast.add({ title: 'Push notifications aren’t available', description: 'Messaging is not configured.', color: 'warning' })
+      return
+    }
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') return
+    localStorage.setItem(PUSH_PREF_KEY, 'on')
+    try {
+      await saveToken()
+    } catch { /* non-fatal */ }
   }
 
   return { messages, unreadCount, fcmToken, init, markAsRead, markAllAsRead, loadInbox, enablePush, disablePush }

@@ -45,6 +45,9 @@ function timeLabel(val: string) {
     <!-- Personalized recommendation -->
     <RecommendationCard />
 
+    <!-- Enable-notifications tip (platform-aware: desktop / Android / iOS) -->
+    <NotificationTip />
+
     <!-- Carbon intensity card -->
     <GridForecastCard :switcher="false" show-next-window />
 

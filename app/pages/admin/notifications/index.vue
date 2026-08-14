@@ -233,7 +233,7 @@ async function deleteTemplate(id: string) {
             <UFormField v-if="sendState.type === 'targeted'" label="Select users" name="targetUserIds">
               <USelectMenu
                 v-model="sendState.targetUserIds"
-                :items="(users ?? []).map(u => ({ label: u.name || u.email, value: u.id }))"
+                :items="(users ?? []).map(u => ({ label: u.name ? `${u.name} · ${u.email}` : u.email, value: u.id }))"
                 value-key="value"
                 multiple
                 class="w-full"
