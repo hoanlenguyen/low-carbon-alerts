@@ -18,6 +18,7 @@ const useFcmToken = () => useState<string | null>('notifications-fcm-token', () 
 // user turned it off. Bound once so we don't stack foreground handlers.
 const PUSH_PREF_KEY = 'lca-push-enabled'
 let foregroundBound = false
+let sseConnection: EventSource | null = null
 
 export function useNotifications() {
   const nuxtApp = useNuxtApp()
@@ -44,7 +45,11 @@ export function useNotifications() {
 
   function connectSSE() {
     if (!import.meta.client || !user.value) return
+    if (sseConnection) {
+      try { sseConnection.close() } catch { /* already closed */ }
+    }
     const es = new EventSource('/api/notifications/stream')
+    sseConnection = es
     es.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data) as { id: string, subject: string, body: string, createdAt: string }
@@ -137,6 +142,18 @@ export function useNotifications() {
     await syncPush()
   }
 
+  // Tear down per-user state on logout so the next account (same tab) re-inits
+  // cleanly — otherwise `initialized` stays true and their inbox/SSE never load.
+  function reset() {
+    if (sseConnection) {
+      try { sseConnection.close() } catch { /* already closed */ }
+      sseConnection = null
+    }
+    messages.value = []
+    fcmToken.value = null
+    initialized.value = false
+  }
+
   async function disablePush() {
     // Remember the choice so init() won't re-register on the next load.
     if (import.meta.client) localStorage.setItem(PUSH_PREF_KEY, 'off')
@@ -160,5 +177,5 @@ export function useNotifications() {
     } catch { /* non-fatal */ }
   }
 
-  return { messages, unreadCount, fcmToken, init, markAsRead, markAllAsRead, loadInbox, enablePush, disablePush }
+  return { messages, unreadCount, fcmToken, init, reset, markAsRead, markAllAsRead, loadInbox, enablePush, disablePush }
 }
