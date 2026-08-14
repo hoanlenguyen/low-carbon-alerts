@@ -22,6 +22,10 @@ export default defineNuxtConfig({
     openaiApiKey: '',
     openaiBaseUrl: 'https://api.openai.com/v1',
     openaiLlmModel: 'gpt-4o-mini',
+    // Gmail API sending (reuses the Google OAuth client id/secret from oauth.google).
+    gmailRefreshToken: '',
+    emailFrom: 'lowcarbonalertadmin@gmail.com',
+    emailFromName: 'Low Carbon Alerts',
     public: {
       firebaseApiKey: '',
       firebaseAuthDomain: '',

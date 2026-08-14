@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, format } from 'date-fns'
 import { VisXYContainer, VisLine, VisAxis, VisArea, VisCrosshair, VisTooltip } from '@unovis/vue'
 import type { Period, Range } from '~/types'
 
@@ -11,51 +10,41 @@ const props = defineProps<{
 }>()
 
 type DataRecord = {
-  date: Date
+  label: string
   count: number
 }
 
 const { width } = useElementSize(cardRef)
 
-const data = ref<DataRecord[]>([])
+// (labels are pre-formatted in Helsinki time by the endpoint).
+const { data: series } = useFetch('/api/admin/stats/messages-sent', {
+  lazy: true,
+  query: computed(() => ({
+    start: props.range.start.toISOString(),
+    end: props.range.end.toISOString(),
+    period: props.period
+  })),
+  default: () => ({ total: 0, data: [] as DataRecord[] })
+})
 
-watch([() => props.period, () => props.range], () => {
-  const dates = ({
-    daily: eachDayOfInterval,
-    weekly: eachWeekOfInterval,
-    monthly: eachMonthOfInterval
-  } as Record<Period, typeof eachDayOfInterval>)[props.period](props.range)
-
-  const min = 0
-  const max = 80
-
-  data.value = dates.map(date => ({ date, count: Math.floor(Math.random() * (max - min + 1)) + min }))
-}, { immediate: true })
+const data = computed<DataRecord[]>(() => series.value?.data ?? [])
 
 const x = (_: DataRecord, i: number) => i
 const y = (d: DataRecord) => d.count
 
-const total = computed(() => data.value.reduce((acc: number, { count }) => acc + count, 0))
+const total = computed(() => series.value?.total ?? 0)
 
 const formatNumber = (n: number) => n.toLocaleString()
-
-const formatDate = (date: Date): string => {
-  return ({
-    daily: format(date, 'd MMM'),
-    weekly: format(date, 'd MMM'),
-    monthly: format(date, 'MMM yyy')
-  })[props.period]
-}
 
 const xTicks = (i: number) => {
   if (i === 0 || i === data.value.length - 1 || !data.value[i]) {
     return ''
   }
 
-  return formatDate(data.value[i].date)
+  return data.value[i].label
 }
 
-const template = (d: DataRecord) => `${formatDate(d.date)}: ${formatNumber(d.amount)}`
+const template = (d: DataRecord) => `${d.label}: ${formatNumber(d.count)}`
 </script>
 
 <template>

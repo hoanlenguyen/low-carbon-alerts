@@ -170,7 +170,7 @@ function copyToClipboard(text: string, description: string) {
             </tr>
             <tr v-else-if="paginated.length === 0">
               <td colspan="5" class="px-4 py-8 text-center text-sm text-muted">
-                No customers found.
+                No consumers found.
               </td>
             </tr>
             <tr
@@ -240,7 +240,7 @@ function copyToClipboard(text: string, description: string) {
                     variant="ghost"
                     size="xs"
                     class="opacity-0 group-hover:opacity-100 transition-opacity"
-                    aria-label="Customer actions"
+                    aria-label="Consumer actions"
                   />
                 </UDropdownMenu>
               </td>

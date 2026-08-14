@@ -68,14 +68,28 @@ async function onSave(event: FormSubmitEvent<SettingsSchema>) {
   }
 }
 
-// ── Alert history ─────────────────────────────────────────────────────────────
-const { data: history, refresh: refreshHistory } = useFetch('/api/admin/smart-alert/history', { server: false })
+// ── Alert history (paginated) ──────────────────────────────────────────────────
+interface HistoryRow { id: string, subject: string, body: string, sentAt: string | null, recipient: string | null }
+const historyPage = ref(1)
+const { data: historyData, refresh: refreshHistory } = useFetch<{ data: HistoryRow[], total: number, pageCount: number }>('/api/admin/smart-alert/history', {
+  server: false,
+  query: { page: historyPage }
+})
+const history = computed(() => historyData.value?.data ?? null)
+const historyTotal = computed(() => historyData.value?.total ?? 0)
+const historyPageCount = computed(() => historyData.value?.pageCount ?? 1)
 
-// ── Trigger runs (last success + recent run log) ───────────────────────────────
+// ── Trigger runs (last success + paginated run log) ────────────────────────────
 interface RunRow { id: string, ranAt: string | null, windowFound: boolean, carbonIntensity: number | null, windowStart: string | null, windowEnd: string | null, recipientCount: number }
-const { data: runsData, refresh: refreshRuns } = useFetch<{ lastSent: RunRow | null, runs: RunRow[] }>('/api/admin/smart-alert/runs', { server: false })
+const runsPage = ref(1)
+const { data: runsData, refresh: refreshRuns } = useFetch<{ lastSent: RunRow | null, runs: RunRow[], total: number, pageCount: number }>('/api/admin/smart-alert/runs', {
+  server: false,
+  query: { page: runsPage }
+})
 const lastSent = computed(() => runsData.value?.lastSent ?? null)
 const runs = computed(() => runsData.value?.runs ?? [])
+const runsTotal = computed(() => runsData.value?.total ?? 0)
+const runsPageCount = computed(() => runsData.value?.pageCount ?? 1)
 
 const runningNow = ref(false)
 async function runNow() {
@@ -91,6 +105,7 @@ async function runNow() {
         ? (res.reason === 'debounced' ? 'Window found, but debounced' : 'Window found, but no eligible users')
         : (res.reason === 'disabled' ? 'Smart alerts are disabled' : 'No low-carbon window right now')
     toast.add({ title: 'Smart alert run complete', description: desc, color: res.sent > 0 ? 'success' : 'neutral' })
+    runsPage.value = 1
     await refreshRuns()
   } catch (e: unknown) {
     const err = e as { data?: { statusMessage?: string } }
@@ -376,6 +391,14 @@ const keyLabel: Record<string, string> = {
                 </div>
               </li>
             </ul>
+            <div v-if="runsPageCount > 1" class="flex items-center justify-between gap-4 px-4 sm:px-6 py-3 border-t border-default">
+              <span class="text-xs text-muted tabular-nums">{{ runsTotal }} total</span>
+              <UPagination
+                v-model:page="runsPage"
+                :total="runsTotal"
+                :page-size="10"
+                size="xs" />
+            </div>
           </UPageCard>
         </section>
 
@@ -392,13 +415,14 @@ const keyLabel: Record<string, string> = {
 
           <UPageCard variant="subtle">
             <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
-              <UFormField label="User" class="flex-1">
+              <UFormField class="flex-1">
                 <USelectMenu
                   v-model="testAlertUserId"
-                  :items="(users ?? []).map(u => ({ label: u.name || u.email, value: u.id }))"
+                  :items="(users ?? []).map(u => ({ label: u.name ? `${u.name} · ${u.email}` : u.email, value: u.id }))"
                   value-key="value"
-                  placeholder="Select a user"
+                  placeholder="Select a consumer"
                   class="w-full"
+                  clear
                 />
               </UFormField>
               <UButton
@@ -431,7 +455,7 @@ const keyLabel: Record<string, string> = {
               Sent alerts
             </h2>
             <p class="text-sm text-muted mt-0.5">
-              Last 50 smart-alert notifications sent to eligible users.
+              Smart-alert notifications sent to eligible users.
             </p>
           </div>
 
@@ -442,27 +466,37 @@ const keyLabel: Record<string, string> = {
             <div v-else-if="!history.length" class="py-10 text-center text-sm text-muted">
               No smart alerts sent yet.
             </div>
-            <ul v-else class="divide-y divide-default">
-              <li
-                v-for="alert in history"
-                :key="alert.id"
-                class="px-4 sm:px-6 py-3 space-y-1"
-              >
-                <div class="flex items-start justify-between gap-4">
-                  <p class="text-sm font-medium text-highlighted leading-snug">
-                    {{ alert.subject }}
+            <template v-else>
+              <ul class="divide-y divide-default">
+                <li
+                  v-for="alert in history"
+                  :key="alert.id"
+                  class="px-4 sm:px-6 py-3 space-y-1"
+                >
+                  <div class="flex items-start justify-between gap-4">
+                    <p class="text-sm font-medium text-highlighted leading-snug">
+                      {{ alert.subject }}
+                    </p>
+                    <span class="text-xs text-dimmed shrink-0 tabular-nums">{{ fmtTime(alert.sentAt) }}</span>
+                  </div>
+                  <p v-if="alert.recipient" class="text-xs text-dimmed leading-relaxed flex items-center gap-1">
+                    <UIcon name="i-lucide-user" class="size-3 shrink-0" />
+                    {{ alert.recipient }}
                   </p>
-                  <span class="text-xs text-dimmed shrink-0 tabular-nums">{{ fmtTime(alert.sentAt) }}</span>
-                </div>
-                <p v-if="alert.recipient" class="text-xs text-dimmed leading-relaxed flex items-center gap-1">
-                  <UIcon name="i-lucide-user" class="size-3 shrink-0" />
-                  {{ alert.recipient }}
-                </p>
-                <p class="text-xs text-muted leading-relaxed">
-                  {{ alert.body }}
-                </p>
-              </li>
-            </ul>
+                  <p class="text-xs text-muted leading-relaxed">
+                    {{ alert.body }}
+                  </p>
+                </li>
+              </ul>
+              <div v-if="historyPageCount > 1" class="flex items-center justify-between gap-4 px-4 sm:px-6 py-3 border-t border-default">
+                <span class="text-xs text-muted tabular-nums">{{ historyTotal }} total</span>
+                <UPagination
+                  v-model:page="historyPage"
+                  :total="historyTotal"
+                  :page-size="10"
+                  size="xs" />
+              </div>
+            </template>
           </UPageCard>
         </section>
 

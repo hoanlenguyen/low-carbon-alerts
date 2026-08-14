@@ -43,6 +43,13 @@ const links = [[{
     open.value = false
   }
 }, {
+  label: 'Scheduled jobs',
+  icon: 'i-lucide-calendar-clock',
+  to: '/admin/scheduled-jobs',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Settings',
   to: '/admin/settings',
   icon: 'i-lucide-settings',

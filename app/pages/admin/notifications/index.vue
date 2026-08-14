@@ -5,16 +5,12 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
 const toast = useToast()
-const activeTab = ref('send')
 
 // ── Users list for targeted sends ──
 const { data: users } = await useFetch<{ id: string, name: string | null, email: string }[]>('/api/admin/users', { lazy: true })
 
 // ── Templates ──
 const { data: templates, refresh: refreshTemplates } = await useFetch('/api/admin/notifications/templates', { lazy: true })
-
-// ── Scheduled jobs ──
-const { data: jobs, refresh: refreshJobs } = await useFetch('/api/admin/notifications/scheduled', { lazy: true })
 
 // ── Send form ──
 const sendSchema = z.object({
@@ -128,69 +124,6 @@ async function deleteTemplate(id: string) {
   await $fetch(`/api/admin/notifications/templates/${id}`, { method: 'DELETE' })
   await refreshTemplates()
 }
-
-// ── Scheduled job form ──
-const jobSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  subject: z.string().min(1),
-  body: z.string().min(1),
-  targetType: z.enum(['broadcast', 'targeted']),
-  targetUserIds: z.array(z.string()).optional(),
-  cronExpression: z.string().min(1, 'Cron expression is required')
-})
-type JobSchema = z.output<typeof jobSchema>
-
-const jobState = reactive<Partial<JobSchema>>({
-  name: '',
-  subject: '',
-  body: '',
-  targetType: 'broadcast',
-  targetUserIds: [],
-  cronExpression: '0 9 * * 1'
-})
-const jobLoading = ref(false)
-const showJobForm = ref(false)
-
-async function onCreateJob(event: FormSubmitEvent<JobSchema>) {
-  jobLoading.value = true
-  try {
-    await $fetch('/api/admin/notifications/scheduled', { method: 'POST', body: event.data })
-    toast.add({ title: 'Job scheduled', color: 'success' })
-    jobState.name = ''
-    jobState.subject = ''
-    jobState.body = ''
-    jobState.cronExpression = '0 9 * * 1'
-    showJobForm.value = false
-    await refreshJobs()
-  } catch (e: unknown) {
-    const err = e as { data?: { statusMessage?: string } }
-    toast.add({ title: err?.data?.statusMessage || 'Error', color: 'error' })
-  } finally {
-    jobLoading.value = false
-  }
-}
-
-async function toggleJob(id: string, enabled: boolean) {
-  await $fetch(`/api/admin/notifications/scheduled/${id}`, { method: 'PATCH', body: { enabled } })
-  await refreshJobs()
-}
-
-async function deleteJob(id: string) {
-  await $fetch(`/api/admin/notifications/scheduled/${id}`, { method: 'DELETE' })
-  await refreshJobs()
-}
-
-function formatRunDate(val: string | null) {
-  if (!val) return '—'
-  return new Date(val).toLocaleString('en-GB', {
-    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Helsinki'
-  })
-}
-
-const tabs = [
-  { label: 'Manual send messages', value: 'send', slot: 'send' as const, icon: 'i-lucide-send' },
-  { label: 'Scheduled messages', value: 'scheduled', slot: 'scheduled' as const, icon: 'i-lucide-clock' }
-]
 </script>
 
 <template>
@@ -204,285 +137,142 @@ const tabs = [
     </template>
 
     <template #body>
-      <UTabs v-model="activeTab" :items="tabs" class="w-full">
-        <!-- ── Send ── -->
-        <template #send>
-          <div class="pt-5 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            <!-- Form -->
-            <div class="space-y-5">
-              <!-- Smart-alert generator (Prompt 7) -->
-              <div class="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-default bg-elevated/30 px-3 py-2.5">
-                <UButton
-                  size="xs"
-                  color="primary"
-                  variant="soft"
-                  icon="i-lucide-sparkles"
-                  :loading="generatingAlert"
-                  @click="generateSmartAlert"
-                >
-                  Generate smart-alert message
-                </UButton>
-                <span class="text-xs text-dimmed">Builds a message from the live forecast — review, pick users, send.</span>
-              </div>
-
-              <!-- Templates (click to apply · manage inline) -->
-              <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-semibold uppercase tracking-wide text-dimmed">Templates</span>
-                  <UButton
-                    size="xs"
-                    color="neutral"
-                    variant="ghost"
-                    icon="i-lucide-plus"
-                    @click="openAddTemplate">
-                    New template
-                  </UButton>
-                </div>
-                <div v-if="(templates as any[])?.length" class="flex flex-wrap gap-2">
-                  <div
-                    v-for="t in (templates as any[])"
-                    :key="t.id"
-                    class="group inline-flex items-center gap-0.5 rounded-lg border border-default bg-elevated/30 hover:border-primary/40 transition-colors pl-2.5 pr-1 py-1"
-                  >
-                    <button
-                      type="button"
-                      class="text-xs font-medium text-highlighted hover:text-primary transition-colors"
-                      @click="applyTemplate(t)"
-                    >
-                      {{ t.name }}
-                    </button>
-                    <UButton
-                      icon="i-lucide-pencil"
-                      color="neutral"
-                      variant="ghost"
-                      size="xs"
-                      aria-label="Edit template"
-                      @click="openEditTemplate(t)" />
-                    <UButton
-                      icon="i-lucide-trash"
-                      color="error"
-                      variant="ghost"
-                      size="xs"
-                      aria-label="Delete template"
-                      @click="deleteTemplate(t.id)" />
-                  </div>
-                </div>
-                <p v-else class="text-xs text-dimmed">
-                  No templates yet — create one to reuse common messages.
-                </p>
-              </div>
-
-              <UForm
-                :schema="sendSchema"
-                :state="sendState"
-                class="space-y-4"
-                @submit="onSend">
-                <UFormField label="Subject" name="subject">
-                  <UInput v-model="sendState.subject" placeholder="e.g. Low carbon window tonight" class="w-full" />
-                </UFormField>
-
-                <UFormField label="Body" name="body">
-                  <UTextarea
-                    v-model="sendState.body"
-                    :rows="4"
-                    placeholder="Write your message…"
-                    class="w-full" />
-                </UFormField>
-
-                <UFormField label="Audience" name="type">
-                  <USelect
-                    v-model="sendState.type"
-                    :items="[
-                      { label: 'All users (broadcast)', value: 'broadcast' },
-                      { label: 'Specific users', value: 'targeted' }
-                    ]"
-                    class="w-full"
-                  />
-                </UFormField>
-
-                <UFormField v-if="sendState.type === 'targeted'" label="Select users" name="targetUserIds">
-                  <USelectMenu
-                    v-model="sendState.targetUserIds"
-                    :items="(users ?? []).map(u => ({ label: u.name || u.email, value: u.id }))"
-                    value-key="value"
-                    multiple
-                    class="w-full"
-                  />
-                </UFormField>
-
-                <UButton type="submit" icon="i-lucide-send" :loading="sendLoading">
-                  Send now
-                </UButton>
-              </UForm>
-            </div>
-
-            <!-- Live preview -->
-            <div class="hidden lg:block">
-              <p class="text-xs font-semibold uppercase tracking-wide text-dimmed mb-3">
-                Preview
-              </p>
-              <div class="rounded-xl border border-default bg-elevated/40 p-5 space-y-3">
-                <div class="flex items-center gap-2">
-                  <UIcon name="i-lucide-bell" class="size-4 text-primary shrink-0" />
-                  <span class="text-xs font-semibold text-muted uppercase tracking-wide">Push notification</span>
-                </div>
-                <USeparator />
-                <div class="space-y-1.5">
-                  <p class="font-semibold text-highlighted text-sm leading-snug">
-                    {{ sendState.subject || 'Your subject line will appear here' }}
-                  </p>
-                  <p class="text-sm text-muted leading-relaxed whitespace-pre-wrap">
-                    {{ sendState.body || 'Message body will appear here.' }}
-                  </p>
-                </div>
-                <USeparator />
-                <div class="flex items-center justify-between text-xs text-dimmed">
-                  <span>{{ sendState.type === 'broadcast' ? 'All users' : `${sendState.targetUserIds?.length ?? 0} user(s)` }}</span>
-                  <span>Just now</span>
-                </div>
-              </div>
-            </div>
+      <div class="pt-5 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <!-- Form -->
+        <div class="space-y-5">
+          <!-- Smart-alert generator (Prompt 7) -->
+          <div class="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-default bg-elevated/30 px-3 py-2.5">
+            <UButton
+              size="xs"
+              color="primary"
+              variant="soft"
+              icon="i-lucide-sparkles"
+              :loading="generatingAlert"
+              @click="generateSmartAlert"
+            >
+              Generate smart-alert message
+            </UButton>
+            <span class="text-xs text-dimmed">Builds a message from the live forecast — review, pick users, send.</span>
           </div>
-        </template>
 
-        <!-- ── Scheduled ── -->
-        <template #scheduled>
-          <div class="pt-5 space-y-6">
-            <!-- Header row -->
+          <!-- Templates (click to apply · manage inline) -->
+          <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <p class="text-xs font-semibold uppercase tracking-wide text-dimmed">
-                {{ (jobs as any[])?.length ?? 0 }} job{{ (jobs as any[])?.length === 1 ? '' : 's' }}
-              </p>
-              <UButton size="xs" icon="i-lucide-plus" @click="showJobForm = !showJobForm">
-                New job
+              <span class="text-xs font-semibold uppercase tracking-wide text-dimmed">Templates</span>
+              <UButton
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                icon="i-lucide-plus"
+                @click="openAddTemplate">
+                New template
               </UButton>
             </div>
-
-            <!-- Create form (collapsible) -->
-            <div v-if="showJobForm" class="rounded-xl border border-default bg-elevated/40 p-5">
-              <p class="text-sm font-semibold mb-4">
-                New scheduled job
-              </p>
-              <UForm
-                :schema="jobSchema"
-                :state="jobState"
-                class="space-y-4"
-                @submit="onCreateJob">
-                <div class="grid sm:grid-cols-2 gap-4">
-                  <UFormField label="Job name" name="name">
-                    <UInput v-model="jobState.name" placeholder="e.g. Morning alert" class="w-full" />
-                  </UFormField>
-                  <UFormField label="Cron expression" name="cronExpression">
-                    <UInput v-model="jobState.cronExpression" placeholder="0 9 * * 1-5" class="w-full font-mono" />
-                  </UFormField>
-                </div>
-                <UFormField label="Subject" name="subject">
-                  <UInput v-model="jobState.subject" class="w-full" />
-                </UFormField>
-                <UFormField label="Body" name="body">
-                  <UTextarea v-model="jobState.body" :rows="3" class="w-full" />
-                </UFormField>
-                <UFormField label="Audience" name="targetType">
-                  <USelect
-                    v-model="jobState.targetType"
-                    :items="[
-                      { label: 'All users', value: 'broadcast' },
-                      { label: 'Specific users', value: 'targeted' }
-                    ]"
-                    class="w-full"
-                  />
-                </UFormField>
-                <UFormField v-if="jobState.targetType === 'targeted'" label="Select users" name="targetUserIds">
-                  <USelectMenu
-                    v-model="jobState.targetUserIds"
-                    :items="(users ?? []).map(u => ({ label: u.name || u.email, value: u.id }))"
-                    value-key="value"
-                    multiple
-                    class="w-full"
-                  />
-                </UFormField>
-                <div class="flex gap-2">
-                  <UButton type="submit" icon="i-lucide-clock" :loading="jobLoading">
-                    Schedule job
-                  </UButton>
-                  <UButton color="neutral" variant="ghost" @click="showJobForm = false">
-                    Cancel
-                  </UButton>
-                </div>
-              </UForm>
+            <div v-if="(templates as any[])?.length" class="flex flex-wrap gap-2">
+              <div
+                v-for="t in (templates as any[])"
+                :key="t.id"
+                class="group inline-flex items-center gap-0.5 rounded-lg border border-default bg-elevated/30 hover:border-primary/40 transition-colors pl-2.5 pr-1 py-1"
+              >
+                <button
+                  type="button"
+                  class="text-xs font-medium text-highlighted hover:text-primary transition-colors"
+                  @click="applyTemplate(t)"
+                >
+                  {{ t.name }}
+                </button>
+                <UButton
+                  icon="i-lucide-pencil"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  aria-label="Edit template"
+                  @click="openEditTemplate(t)" />
+                <UButton
+                  icon="i-lucide-trash"
+                  color="error"
+                  variant="ghost"
+                  size="xs"
+                  aria-label="Delete template"
+                  @click="deleteTemplate(t.id)" />
+              </div>
             </div>
-
-            <!-- Jobs table -->
-            <div v-if="(jobs as any[])?.length" class="rounded-xl border border-default overflow-hidden">
-              <table class="w-full text-sm border-separate border-spacing-0">
-                <thead>
-                  <tr class="bg-elevated/50">
-                    <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
-                      Job
-                    </th>
-                    <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default hidden sm:table-cell">
-                      Schedule
-                    </th>
-                    <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default hidden md:table-cell">
-                      Next run
-                    </th>
-                    <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default hidden md:table-cell">
-                      Last run
-                    </th>
-                    <th class="px-4 py-2.5 border-b border-default w-24 text-right text-xs font-semibold uppercase tracking-wide text-dimmed">
-                      Active
-                    </th>
-                    <th class="border-b border-default w-10" />
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="job in (jobs as any[])"
-                    :key="job.id"
-                    class="group hover:bg-elevated/40 transition-colors"
-                  >
-                    <td class="px-4 py-3 border-b border-default">
-                      <p class="font-medium text-highlighted text-sm">
-                        {{ job.name }}
-                      </p>
-                      <p class="text-xs text-muted mt-0.5 truncate max-w-xs">
-                        {{ job.subject }}
-                      </p>
-                    </td>
-                    <td class="px-4 py-3 border-b border-default hidden sm:table-cell">
-                      <code class="text-xs font-mono text-muted bg-elevated px-2 py-0.5 rounded">{{ job.cronExpression }}</code>
-                    </td>
-                    <td class="px-4 py-3 border-b border-default text-xs text-muted tabular-nums hidden md:table-cell">
-                      {{ formatRunDate(job.nextRunAt) }}
-                    </td>
-                    <td class="px-4 py-3 border-b border-default text-xs text-muted tabular-nums hidden md:table-cell">
-                      {{ formatRunDate(job.lastRunAt) }}
-                    </td>
-                    <td class="px-4 py-3 border-b border-default text-right">
-                      <USwitch :model-value="job.enabled" @update:model-value="toggleJob(job.id, $event)" />
-                    </td>
-                    <td class="px-3 py-3 border-b border-default">
-                      <UButton
-                        icon="i-lucide-trash"
-                        color="error"
-                        variant="ghost"
-                        size="xs"
-                        class="opacity-0 group-hover:opacity-100 transition-opacity"
-                        aria-label="Delete job"
-                        @click="deleteJob(job.id)"
-                      />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <p v-else-if="!showJobForm" class="text-sm text-muted py-6 text-center border border-dashed border-default rounded-xl">
-              No scheduled jobs yet.
+            <p v-else class="text-xs text-dimmed">
+              No templates yet — create one to reuse common messages.
             </p>
           </div>
-        </template>
-      </UTabs>
+
+          <UForm
+            :schema="sendSchema"
+            :state="sendState"
+            class="space-y-4"
+            @submit="onSend">
+            <UFormField label="Subject" name="subject">
+              <UInput v-model="sendState.subject" placeholder="e.g. Low carbon window tonight" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Body" name="body">
+              <UTextarea
+                v-model="sendState.body"
+                :rows="4"
+                placeholder="Write your message…"
+                class="w-full" />
+            </UFormField>
+
+            <UFormField label="Audience" name="type">
+              <USelect
+                v-model="sendState.type"
+                :items="[
+                  { label: 'All users (broadcast)', value: 'broadcast' },
+                  { label: 'Specific users', value: 'targeted' }
+                ]"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField v-if="sendState.type === 'targeted'" label="Select users" name="targetUserIds">
+              <USelectMenu
+                v-model="sendState.targetUserIds"
+                :items="(users ?? []).map(u => ({ label: u.name || u.email, value: u.id }))"
+                value-key="value"
+                multiple
+                class="w-full"
+              />
+            </UFormField>
+
+            <UButton type="submit" icon="i-lucide-send" :loading="sendLoading">
+              Send now
+            </UButton>
+          </UForm>
+        </div>
+
+        <!-- Live preview -->
+        <div class="hidden lg:block">
+          <p class="text-xs font-semibold uppercase tracking-wide text-dimmed mb-3">
+            Preview
+          </p>
+          <div class="rounded-xl border border-default bg-elevated/40 p-5 space-y-3">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-bell" class="size-4 text-primary shrink-0" />
+              <span class="text-xs font-semibold text-muted uppercase tracking-wide">Push notification</span>
+            </div>
+            <USeparator />
+            <div class="space-y-1.5">
+              <p class="font-semibold text-highlighted text-sm leading-snug">
+                {{ sendState.subject || 'Your subject line will appear here' }}
+              </p>
+              <p class="text-sm text-muted leading-relaxed whitespace-pre-wrap">
+                {{ sendState.body || 'Message body will appear here.' }}
+              </p>
+            </div>
+            <USeparator />
+            <div class="flex items-center justify-between text-xs text-dimmed">
+              <span>{{ sendState.type === 'broadcast' ? 'All users' : `${sendState.targetUserIds?.length ?? 0} user(s)` }}</span>
+              <span>Just now</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Add / edit template -->
       <UModal

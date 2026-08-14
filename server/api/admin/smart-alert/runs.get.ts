@@ -1,7 +1,9 @@
-import { desc, gte } from 'drizzle-orm'
+import { desc, gte, count } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../../database'
 
-// Smart-alert trigger history: the last run that reached users, plus the recent
+const PAGE_SIZE = 10
+
+// Smart-alert trigger history: the last run that reached users, plus a paginated
 // run log (when it ran, whether a window was found, how many users). Admin-only.
 // (Recipient emails come from the messages/user_messages join — see history.get.ts.)
 export default defineEventHandler(async (event) => {
@@ -10,17 +12,34 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 
+  const query = getQuery(event)
+  const page = Math.max(1, Number(query.page) || 1)
+  const limit = Math.min(100, Math.max(1, Number(query.limit) || PAGE_SIZE))
+  const offset = (page - 1) * limit
+
   const db = useDrizzle(event)
 
-  const lastSent = await db.query.smartAlertRuns.findFirst({
-    where: gte(schema.smartAlertRuns.recipientCount, 1),
-    orderBy: desc(schema.smartAlertRuns.ranAt)
-  })
+  const [lastSent, runs, [totals]] = await Promise.all([
+    db.query.smartAlertRuns.findFirst({
+      where: gte(schema.smartAlertRuns.recipientCount, 1),
+      orderBy: desc(schema.smartAlertRuns.ranAt)
+    }),
+    db.query.smartAlertRuns.findMany({
+      orderBy: desc(schema.smartAlertRuns.ranAt),
+      limit,
+      offset
+    }),
+    db.select({ total: count() }).from(schema.smartAlertRuns)
+  ])
 
-  const runs = await db.query.smartAlertRuns.findMany({
-    orderBy: desc(schema.smartAlertRuns.ranAt),
-    limit: 20
-  })
+  const total = totals?.total ?? 0
 
-  return { lastSent: lastSent ?? null, runs }
+  return {
+    lastSent: lastSent ?? null,
+    runs,
+    total,
+    page,
+    pageSize: limit,
+    pageCount: Math.ceil(total / limit)
+  }
 })

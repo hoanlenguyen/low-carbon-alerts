@@ -15,7 +15,7 @@ const items = [[{
   icon: 'i-lucide-send',
   to: '/admin/notifications'
 }, {
-  label: 'New customer',
+  label: 'New consumer',
   icon: 'i-lucide-user-plus',
   to: '/admin/customers'
 }]] satisfies DropdownMenuItem[][]
