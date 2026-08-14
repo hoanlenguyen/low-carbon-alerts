@@ -40,20 +40,6 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=low-carbon-alerts
 
-  # Standalone scheduler Worker (workers/cron) — provides the hourly Cron Trigger
-  # that Pages can't. Independent of the Pages deploy; the CRON_SECRET is set once
-  # via `wrangler secret put` and is not managed here.
-  deploy-cron-worker:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Deploy cron Worker
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: workers/cron
-          command: deploy
+# The standalone scheduler Worker (workers/cron) is deployed manually — it changes
+# rarely and needs a token with Workers Scripts:Edit, which the Pages CI token lacks.
+# Deploy it from your machine when it changes:  cd workers/cron && npx wrangler deploy

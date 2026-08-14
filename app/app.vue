@@ -3,11 +3,15 @@ const colorMode = useColorMode()
 
 const color = computed(() => colorMode.value === 'dark' ? '#1b1718' : 'white')
 
+// Google Search Console domain verification (set NUXT_PUBLIC_GOOGLE_SITE_VERIFICATION).
+const siteVerification = useRuntimeConfig().public.googleSiteVerification
+
 useHead({
   meta: [
     { charset: 'utf-8' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-    { key: 'theme-color', name: 'theme-color', content: color }
+    { key: 'theme-color', name: 'theme-color', content: color },
+    ...(siteVerification ? [{ name: 'google-site-verification', content: siteVerification }] : [])
   ],
   link: [
     { rel: 'icon', href: '/favicon.ico' }

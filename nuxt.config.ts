@@ -27,6 +27,8 @@ export default defineNuxtConfig({
     emailFrom: 'lowcarbonalertadmin@gmail.com',
     emailFromName: 'Low Carbon Alerts',
     public: {
+      // Google Search Console site-verification token (for OAuth domain verification).
+      googleSiteVerification: '',
       firebaseApiKey: '',
       firebaseAuthDomain: '',
       firebaseProjectId: '',
