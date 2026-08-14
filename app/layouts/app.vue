@@ -31,8 +31,14 @@ function isActive(to: string) {
   <div class="min-h-screen flex flex-col bg-default">
     <!-- Header -->
     <header class="border-b border-default px-4 sm:px-6 h-14 flex items-center justify-between shrink-0">
-      <NuxtLink to="/app" class="font-semibold text-highlighted hover:text-primary transition-colors">
-        Low Carbon Alerts
+      <NuxtLink to="/app" class="flex items-center gap-2 font-semibold text-highlighted hover:text-primary transition-colors">
+        <img
+          src="/android-chrome-192x192.png"
+          alt="Low Carbon Alerts"
+          width="28"
+          height="28"
+          class="size-7 rounded-md">
+        <span>Low Carbon Alerts</span>
       </NuxtLink>
 
       <div class="flex items-center gap-2">

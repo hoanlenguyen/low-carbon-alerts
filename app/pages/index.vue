@@ -33,7 +33,12 @@ const features = [
     <!-- Header -->
     <header class="max-w-5xl w-full mx-auto px-4 py-5 flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-leaf" class="size-6 text-primary" />
+        <img
+          src="/android-chrome-192x192.png"
+          alt="Low Carbon Alerts"
+          width="28"
+          height="28"
+          class="size-7 rounded-md">
         <span class="font-semibold text-highlighted">Low Carbon Alerts</span>
       </div>
       <div class="flex items-center gap-2">

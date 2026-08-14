@@ -8,7 +8,7 @@ defineProps<{
 const teams = ref([{
   label: 'Low Carbon Alerts',
   avatar: {
-    src: 'https://github.com/nuxt.png',
+    src: '/android-chrome-192x192.png',
     alt: 'Low Carbon Alerts'
   }
 }])
