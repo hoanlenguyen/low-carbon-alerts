@@ -58,8 +58,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         block
         color="neutral"
         variant="subtle"
-        icon="i-simple-icons-google"
       >
+        <template #leading>
+          <GoogleIcon class="size-4" />
+        </template>
         Continue with Google
       </UButton>
 
