@@ -2,6 +2,7 @@
 // Platform-aware "enable notifications" tip, shown under the recommendation.
 // iOS Safari can't prompt for push in a normal tab — the site must be added to
 // the Home Screen first — so we detect the platform and adapt the guidance.
+// Android can prompt in-tab, but installing still gives an icon + unread badge.
 const { enablePush } = useNotifications()
 
 type Platform = 'desktop' | 'android' | 'ios'
@@ -33,6 +34,29 @@ const needsInstall = computed(() => platform.value === 'ios' && !isStandalone.va
 const canPrompt = computed(() => permission.value === 'default' && !needsInstall.value)
 const hidden = computed(() => permission.value === 'granted' || permission.value === 'unsupported')
 
+// Add-to-Home-Screen guidance for mobile, shown whenever the app isn't installed.
+const showInstall = computed(() =>
+  (platform.value === 'ios' || platform.value === 'android') && !isStandalone.value
+)
+const installSteps = computed(() => platform.value === 'ios'
+  ? [
+      'Open this site in Safari',
+      'Tap the Share icon (the square with an up arrow)',
+      'Choose “Add to Home Screen”',
+      'Open the app from its new Home Screen icon'
+    ]
+  : [
+      'Open this site in Chrome',
+      'Tap the ⋮ menu (top-right)',
+      'Choose “Add to Home screen” (or “Install app”)',
+      'Open the app from its new Home Screen icon'
+    ]
+)
+const installNote = computed(() => platform.value === 'ios'
+  ? 'Required on iPhone/iPad to receive notifications'
+  : 'Optional — adds a home-screen icon with an unread badge'
+)
+
 async function enable() {
   busy.value = true
   try {
@@ -61,24 +85,11 @@ async function enable() {
         </p>
 
         <!-- iOS, not installed -->
-        <template v-else-if="needsInstall">
-          <p class="text-sm text-muted mt-1 leading-relaxed">
-            On iPhone/iPad, add the app to your Home Screen first, then enable notifications from there:
-          </p>
-          <ol class="text-sm text-muted mt-1.5 list-decimal pl-5 space-y-0.5">
-            <li>Tap the <strong>Share</strong> icon in Safari</li>
-            <li>Choose <strong>Add to Home Screen</strong></li>
-            <li>Open the installed app icon, then return here to enable</li>
-          </ol>
-        </template>
-
-        <!-- Android -->
-        <p v-else-if="platform === 'android'" class="text-sm text-muted mt-1 leading-relaxed">
-          Tap <strong>Enable</strong>, then <strong>Allow</strong>. You can also install the app from your
-          browser menu (“Install app”) for a home-screen icon.
+        <p v-else-if="needsInstall" class="text-sm text-muted mt-1 leading-relaxed">
+          To get alerts on iPhone/iPad, add the app to your Home Screen, then open it and enable notifications.
         </p>
 
-        <!-- Desktop / installed iOS -->
+        <!-- Desktop / Android / installed -->
         <p v-else class="text-sm text-muted mt-1 leading-relaxed">
           Tap <strong>Enable</strong>, then <strong>Allow</strong> in the browser prompt.
         </p>
@@ -91,6 +102,22 @@ async function enable() {
             @click="enable">
             Enable notifications
           </UButton>
+        </div>
+
+        <!-- Add to Home Screen (iPhone / Android) -->
+        <div v-if="showInstall" class="mt-3 rounded-lg border border-dashed border-default bg-elevated/30 p-3">
+          <div class="flex items-center gap-1.5">
+            <UIcon name="i-lucide-smartphone" class="size-3.5 text-primary shrink-0" />
+            <span class="text-xs font-semibold text-highlighted">Add to your Home Screen</span>
+          </div>
+          <p class="text-[11px] text-dimmed mt-0.5">
+            {{ installNote }}
+          </p>
+          <ol class="text-xs text-muted mt-2 list-decimal pl-5 space-y-0.5">
+            <li v-for="(step, i) in installSteps" :key="i">
+              {{ step }}
+            </li>
+          </ol>
         </div>
 
         <p class="text-xs text-dimmed mt-3">

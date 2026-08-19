@@ -32,14 +32,10 @@ function timeLabel(val: string) {
 
 <template>
   <div class="space-y-6">
-    <!-- Welcome -->
     <div>
       <h1 class="text-xl font-semibold text-highlighted">
         Welcome back, {{ user?.name?.split(' ')[0] || user?.email }}
       </h1>
-      <p class="text-sm text-muted mt-0.5">
-        Here's Finland's grid right now.
-      </p>
     </div>
 
     <!-- Personalized recommendation -->

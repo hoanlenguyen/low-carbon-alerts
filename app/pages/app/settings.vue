@@ -15,7 +15,7 @@ const colorMode = useColorMode()
 const appearances = [
   { value: 'light', label: 'Light', icon: 'i-lucide-sun' },
   { value: 'dark', label: 'Dark', icon: 'i-lucide-moon' },
-  { value: 'system', label: 'System', icon: 'i-lucide-monitor' },
+  { value: 'system', label: 'System', icon: 'i-lucide-monitor' }
 ] as const
 
 // ── Profile ──
@@ -120,7 +120,6 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
 
 <template>
   <div class="space-y-8">
-
     <!-- Page title -->
     <div>
       <h1 class="text-xl font-semibold text-highlighted">
@@ -131,7 +130,6 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
       </p>
     </div>
 
-
     <!-- Profile -->
     <section>
       <div class="mb-4">
@@ -139,7 +137,7 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
           Profile
         </h2>
         <p class="text-sm text-muted">
-          Update your display name and email address.
+          Update your display name.
         </p>
       </div>
 
@@ -160,15 +158,16 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
             />
           </UFormField>
 
-          <UFormField name="email" label="Email">
+          <!-- <UFormField name="email" label="Email">
             <UInput
               v-model="profile.email"
               type="email"
               placeholder="you@example.com"
               class="w-full"
               autocomplete="email"
+              disabled
             />
-          </UFormField>
+          </UFormField> -->
 
           <div class="flex justify-end">
             <UButton type="submit" :loading="profileLoading">
@@ -345,7 +344,9 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
           </UButton>
         </div>
       </UPageCard>
-    </section>
 
+      <!-- Platform-aware enable + Add-to-Home-Screen guidance (hides once granted) -->
+      <NotificationTip class="mt-4" />
+    </section>
   </div>
 </template>

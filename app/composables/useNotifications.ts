@@ -18,6 +18,7 @@ const useFcmToken = () => useState<string | null>('notifications-fcm-token', () 
 // user turned it off. Bound once so we don't stack foreground handlers.
 const PUSH_PREF_KEY = 'lca-push-enabled'
 let foregroundBound = false
+let visibilityBound = false
 let sseConnection: EventSource | null = null
 
 export function useNotifications() {
@@ -31,8 +32,10 @@ export function useNotifications() {
   const fcmToken = useFcmToken()
   const unreadCount = computed(() => messages.value.filter(m => !m.read).length)
 
+  // Identity is messageId (messages.id) — the value the inbox, SSE, and FCM all
+  // carry — so a pushed message and its later inbox row don't double-count.
   function prependMessage(msg: InboxMessage) {
-    if (!messages.value.find(m => m.id === msg.id)) {
+    if (!messages.value.find(m => m.messageId === msg.messageId)) {
       messages.value = [msg, ...messages.value]
     }
   }
@@ -40,7 +43,8 @@ export function useNotifications() {
   async function loadInbox() {
     if (!user.value) return
     const data = await $fetch<InboxMessage[]>('/api/notifications/inbox')
-    messages.value = data
+    // Use messageId as the client-side id so it matches pushed messages.
+    messages.value = data.map(m => ({ ...m, id: m.messageId }))
   }
 
   function connectSSE() {
@@ -140,6 +144,15 @@ export function useNotifications() {
     await loadInbox()
     connectSSE()
     await syncPush()
+
+    // Reopening the app (e.g. after a background push froze the tab) can leave
+    // the in-memory list stale; refresh on resume so the count + badge correct.
+    if (import.meta.client && !visibilityBound) {
+      visibilityBound = true
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && user.value) loadInbox().catch(() => {})
+      })
+    }
   }
 
   // Tear down per-user state on logout so the next account (same tab) re-inits
