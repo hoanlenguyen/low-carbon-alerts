@@ -12,6 +12,19 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging()
 
+// Reflect the current unread count on the app icon (Badging API). Best-effort:
+// supported on iOS 16.4+ Home Screen apps and installed desktop PWAs.
+function syncAppBadge() {
+  if (!self.navigator || typeof self.navigator.setAppBadge !== 'function') return Promise.resolve()
+  return fetch('/api/notifications/inbox', { credentials: 'same-origin' })
+    .then(res => (res.ok ? res.json() : []))
+    .then((msgs) => {
+      const unread = Array.isArray(msgs) ? msgs.filter(m => !m.read).length : 0
+      return unread > 0 ? self.navigator.setAppBadge(unread) : self.navigator.clearAppBadge()
+    })
+    .catch(() => {})
+}
+
 messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title ?? 'New notification'
   const body = payload.notification?.body ?? ''
@@ -24,6 +37,8 @@ messaging.onBackgroundMessage((payload) => {
     data: { messageId },
     requireInteraction: false
   })
+
+  syncAppBadge()
 })
 
 self.addEventListener('notificationclick', (event) => {
