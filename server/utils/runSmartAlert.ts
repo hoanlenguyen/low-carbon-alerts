@@ -2,9 +2,13 @@ import type { H3Event } from 'h3'
 import { eq, and, gte } from 'drizzle-orm'
 import { useDrizzle, schema } from '../database'
 import type { ForecastData } from '../api/forecast/[series].get'
-import { findWindowBelowInActiveHours, windowUrgency } from './lowCarbonWindow'
+import {
+  findWindowBelowInActiveHours,
+  windowUrgency,
+  next24hAverage
+} from './lowCarbonWindow'
 import { generatePushMessage } from './generatePushMessage'
-import { pickFlexibleAppliance } from './buildColdStartRecommendation'
+import { flexibleAppliances } from './buildColdStartRecommendation'
 import { sendNotification } from './sendNotification'
 
 const SYSTEM_SENDER_ID = 'system'
@@ -30,7 +34,9 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
   const config = useRuntimeConfig()
   const now = new Date()
 
-  const settings = await db.query.smartAlertSettings.findFirst({ where: eq(schema.smartAlertSettings.id, 1) })
+  const settings = await db.query.smartAlertSettings.findFirst({
+    where: eq(schema.smartAlertSettings.id, 1)
+  })
   const enabled = settings?.enabled ?? true
   const threshold = settings?.threshold ?? 20
   const debounceHours = settings?.debounceHours ?? 3
@@ -38,14 +44,19 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
 
   if (!enabled) return { windowFound: false, sent: 0, reason: 'disabled' }
 
-  const forecast = await $fetch<ForecastData>('/api/forecast/consumption_emissions', {
-    baseURL: getRequestURL(event).origin
-  })
+  const forecast = await $fetch<ForecastData>(
+    '/api/forecast/consumption_emissions',
+    { baseURL: getRequestURL(event).origin }
+  )
   const horizonMs = horizonHours * 3_600_000
+  const avg24h = next24hAverage(forecast.points) // global grid metric, same for all consumers
 
   // Active end-users with a profile (active hours drive per-consumer detection).
   const users = await db.query.users.findMany({
-    where: and(eq(schema.users.role, 'user'), eq(schema.users.status, 'active')),
+    where: and(
+      eq(schema.users.role, 'user'),
+      eq(schema.users.status, 'active')
+    ),
     columns: { id: true, name: true }
   })
   const profiles = await db.query.userProfiles.findMany()
@@ -56,8 +67,16 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
   const recentRows = await db
     .select({ userId: schema.userMessages.userId })
     .from(schema.userMessages)
-    .innerJoin(schema.messages, eq(schema.messages.id, schema.userMessages.messageId))
-    .where(and(eq(schema.messages.type, 'smart-alert'), gte(schema.userMessages.createdAt, debounceFrom)))
+    .innerJoin(
+      schema.messages,
+      eq(schema.messages.id, schema.userMessages.messageId)
+    )
+    .where(
+      and(
+        eq(schema.messages.type, 'smart-alert'),
+        gte(schema.userMessages.createdAt, debounceFrom)
+      )
+    )
   const recentlyAlerted = new Set(recentRows.map(r => r.userId))
 
   let sent = 0
@@ -69,8 +88,12 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
 
     // The best low-carbon window inside THIS consumer's active hours.
     const window = findWindowBelowInActiveHours(
-      forecast.points, threshold, horizonMs, MIN_WINDOW_HOURS,
-      toMin(profile.activeHoursStart), toMin(profile.activeHoursEnd)
+      forecast.points,
+      threshold,
+      horizonMs,
+      MIN_WINDOW_HOURS,
+      toMin(profile.activeHoursStart),
+      toMin(profile.activeHoursEnd)
     )
     if (!window) continue
     anyWindow = true
@@ -78,11 +101,26 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
     if (recentlyAlerted.has(user.id)) continue // already alerted recently
 
     let appliances: string[] = []
-    try { appliances = JSON.parse(profile.appliances) as string[] } catch { /* invalid JSON — leave empty */ }
-    const appliance = appliances.length ? pickFlexibleAppliance(appliances) : 'Washing machine'
+    try {
+      appliances = JSON.parse(profile.appliances) as string[]
+    } catch {
+      /* invalid JSON — leave empty */
+    }
+    const options = appliances.length
+      ? flexibleAppliances(appliances)
+      : ['Washing machine']
 
     const body = await generatePushMessage(
-      { name: user.name ?? null, appliance, windowStart: window.start, windowEnd: window.end, carbonIntensity: window.intensity, urgency: windowUrgency(window.startMs), notifStyle: profile.notifStyle },
+      {
+        name: user.name ?? null,
+        appliances: options,
+        windowStart: window.start,
+        windowEnd: window.end,
+        carbonIntensity: window.intensity,
+        avg24h,
+        urgency: windowUrgency(window.startMs),
+        notifStyle: profile.notifStyle
+      },
       config.openaiApiKey,
       config.openaiBaseUrl || undefined,
       config.openaiLlmModel || undefined
@@ -101,9 +139,16 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
   // One run row per tick. Windows differ per consumer, so the window columns stay
   // null; windowFound marks whether any consumer had a qualifying window.
   await db.insert(schema.smartAlertRuns).values({
-    id: crypto.randomUUID(), ranAt: now, windowFound: anyWindow, recipientCount: sent
+    id: crypto.randomUUID(),
+    ranAt: now,
+    windowFound: anyWindow,
+    recipientCount: sent
   })
 
   if (!anyWindow) return { windowFound: false, sent: 0 }
-  return { windowFound: true, sent, reason: sent === 0 ? 'debounced' : undefined }
+  return {
+    windowFound: true,
+    sent,
+    reason: sent === 0 ? 'debounced' : undefined
+  }
 }

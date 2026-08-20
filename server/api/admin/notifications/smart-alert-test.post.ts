@@ -2,8 +2,8 @@ import { z } from 'zod'
 import { and, eq } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../../database'
 import type { ForecastData } from '../../forecast/[series].get'
-import { findLowCarbonWindow, windowUrgency } from '../../../utils/lowCarbonWindow'
-import { pickFlexibleAppliance } from '../../../utils/buildColdStartRecommendation'
+import { findLowCarbonWindow, windowUrgency, next24hAverage } from '../../../utils/lowCarbonWindow'
+import { flexibleAppliances } from '../../../utils/buildColdStartRecommendation'
 import { generatePushMessage } from '../../../utils/generatePushMessage'
 import { sendNotification } from '../../../utils/sendNotification'
 
@@ -41,11 +41,11 @@ export default defineEventHandler(async (event) => {
   if (profile) {
     try { appliances = JSON.parse(profile.appliances) as string[] } catch { appliances = [] }
   }
-  const appliance = appliances.length ? pickFlexibleAppliance(appliances) : 'Washing machine'
+  const options = appliances.length ? flexibleAppliances(appliances) : ['Washing machine']
   const urgency = windowUrgency(win.startMs)
 
   const body = await generatePushMessage(
-    { name: user.name ?? null, appliance, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, urgency, notifStyle: profile?.notifStyle ?? 'detailed' },
+    { name: user.name ?? null, appliances: options, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, avg24h: next24hAverage(carbon.points), urgency, notifStyle: profile?.notifStyle ?? 'detailed' },
     config.openaiApiKey,
     config.openaiBaseUrl || undefined,
     config.openaiLlmModel || undefined
@@ -65,6 +65,6 @@ export default defineEventHandler(async (event) => {
     to: user.name || user.email,
     subject,
     body,
-    meta: { appliance, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, urgency }
+    meta: { appliances: options, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, urgency }
   }
 })

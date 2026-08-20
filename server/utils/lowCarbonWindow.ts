@@ -51,6 +51,22 @@ export function windowUrgency(startMs: number): 'low' | 'medium' | 'high' {
   return hoursAway <= 3 ? 'high' : hoursAway <= 8 ? 'medium' : 'low'
 }
 
+// Mean forecast carbon intensity over the next ~24h (gCO₂/kWh), for the data-rich
+// "Next 24h avg: N" notification line. Includes the current (in-progress) hour and
+// looks 24h ahead. Returns null if the forecast horizon is too short to fairly call
+// it a 24h average — so the message never claims "24h" over only a few hours.
+const MIN_FORECAST_HOURS = 18
+
+export function next24hAverage(points: ForecastData['points']): number | null {
+  const now = Date.now()
+  const from = now - 3_600_000 // include the hour we're currently in
+  const vals = points
+    .filter(p => p.isForecast && p.time >= from && p.time <= now + 24 * 3_600_000)
+    .map(p => p.value)
+  if (vals.length < MIN_FORECAST_HOURS) return null
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
+}
+
 function todMin(ms: number): number {
   const [h, m] = hhmm(ms).split(':').map(Number)
   return (h ?? 0) * 60 + (m ?? 0)

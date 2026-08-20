@@ -59,6 +59,16 @@ export function pickFlexibleAppliance(appliances: string[]): string {
   return appliances[0] ?? 'a high-energy appliance'
 }
 
+// The user's time-shiftable appliances, ordered by shiftability — the shortlist we
+// hand the LLM to pick the best fit for a given window. Falls back to whatever they
+// listed (or a generic) if none are in the flexible set.
+export function flexibleAppliances(appliances: string[]): string[] {
+  const lower = appliances.map(a => a.toLowerCase())
+  const matched = FLEXIBLE_PRIORITY.filter(flex => lower.includes(flex.toLowerCase()))
+  if (matched.length) return matched
+  return appliances.length ? appliances : ['a high-energy appliance']
+}
+
 function savingBand(windowValue: number, avg24h: number): 'low' | 'medium' | 'high' {
   if (avg24h <= 0) return 'low'
   const reduction = (avg24h - windowValue) / avg24h

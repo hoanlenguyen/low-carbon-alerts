@@ -6,10 +6,11 @@ import { renderPrompt } from './renderPrompt'
 
 export interface PushMessageContext {
   name: string | null
-  appliance: string
+  appliances: string[] // the user's shiftable appliances — the LLM picks the best fit for the window
   windowStart: string // "HH:MM"
   windowEnd: string // "HH:MM"
-  carbonIntensity: number | null // shown in the "detailed" style; omitted in "simple"
+  carbonIntensity: number | null // the clean window's intensity — context for the model
+  avg24h: number | null // next-24h average, shown as "Next 24h avg: N" in the "detailed" style
   urgency: 'low' | 'medium' | 'high'
   notifStyle: 'detailed' | 'simple'
 }
@@ -18,16 +19,26 @@ const MAX_LEN = 200
 
 function clamp(text: string): string {
   const t = text.trim().replace(/^["']|["']$/g, '')
-  return t.length <= MAX_LEN ? t : `${t.slice(0, MAX_LEN - 1).trimEnd()}…`
+  if (t.length <= MAX_LEN) return t
+  const head = t.slice(0, MAX_LEN)
+  // Prefer ending at the last complete sentence within the limit (no ellipsis)…
+  const period = head.lastIndexOf('. ')
+  if (period >= MAX_LEN * 0.6) return head.slice(0, period + 1)
+  // …otherwise trim to a word boundary and mark the cut.
+  const space = head.lastIndexOf(' ')
+  return `${(space > 0 ? head.slice(0, space) : head).trimEnd()}…`
 }
 
 function fallback(ctx: PushMessageContext): string {
+  // Deterministic pick for the no-LLM path: the most shiftable appliance they own.
+  const appliance = (ctx.appliances[0] ?? 'a high-energy appliance').toLowerCase()
   if (ctx.notifStyle === 'detailed') {
-    const num = ctx.carbonIntensity != null ? `${Math.round(ctx.carbonIntensity)} gCO₂/kWh` : 'low-carbon'
-    return clamp(`Cleanest window ${ctx.windowStart}–${ctx.windowEnd} at ${num}. Run your ${ctx.appliance.toLowerCase()} before ${ctx.windowEnd}.`)
+    const level = ctx.carbonIntensity != null ? `${Math.round(ctx.carbonIntensity)} gCO₂/kWh` : 'a low-carbon level'
+    const vsAvg = ctx.avg24h != null ? `, below the ${Math.round(ctx.avg24h)} gCO₂/kWh daily average` : ''
+    return clamp(`The cleanest window ahead is ${ctx.windowStart}–${ctx.windowEnd} at ${level}${vsAvg}. Run your ${appliance} then to cut its carbon footprint.`)
   }
   const spark = ctx.urgency === 'high' ? 'Clean window now! ' : ''
-  return clamp(`${spark}Run your ${ctx.appliance.toLowerCase()} between ${ctx.windowStart} and ${ctx.windowEnd} for a greener load.`)
+  return clamp(`${spark}Run your ${appliance} between ${ctx.windowStart} and ${ctx.windowEnd} for a greener load.`)
 }
 
 export async function generatePushMessage(
@@ -41,10 +52,11 @@ export async function generatePushMessage(
   const templateName = ctx.notifStyle === 'detailed' ? 'push-message-detailed' : 'push-message-simple'
   const prompt = renderPrompt(templateName, {
     name: ctx.name ?? 'unknown',
-    appliance: ctx.appliance,
+    appliance_options: ctx.appliances.length ? ctx.appliances.join(', ') : 'a high-energy appliance',
     window_start: ctx.windowStart,
     window_end: ctx.windowEnd,
     carbon_intensity: ctx.carbonIntensity != null ? Math.round(ctx.carbonIntensity) : 'unknown',
+    avg_24h: ctx.avg24h != null ? Math.round(ctx.avg24h) : 'unknown',
     urgency: ctx.urgency
   })
 

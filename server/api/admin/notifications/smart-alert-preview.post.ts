@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { ForecastData } from '../../forecast/[series].get'
-import { findLowCarbonWindow, windowUrgency } from '../../../utils/lowCarbonWindow'
+import { findLowCarbonWindow, windowUrgency, next24hAverage } from '../../../utils/lowCarbonWindow'
 import { generatePushMessage } from '../../../utils/generatePushMessage'
 
 // Builds a Prompt 7 smart-alert message from the live forecast so an admin can
@@ -29,11 +29,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 422, statusMessage: 'No low-carbon window in the next 24h to alert on' })
   }
 
-  const appliance = applianceOverride ?? 'Washing machine'
+  // No specific user here: use the override if given, else a small flexible set
+  // for the model to choose from.
+  const options = applianceOverride ? [applianceOverride] : ['EV charger', 'Dishwasher', 'Washing machine']
   const urgency = windowUrgency(win.startMs)
 
   const body = await generatePushMessage(
-    { name: null, appliance, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, urgency, notifStyle: notifStyle ?? 'detailed' },
+    { name: null, appliances: options, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, avg24h: next24hAverage(carbon.points), urgency, notifStyle: notifStyle ?? 'detailed' },
     config.openaiApiKey,
     config.openaiBaseUrl || undefined,
     config.openaiLlmModel || undefined
@@ -42,6 +44,6 @@ export default defineEventHandler(async (event) => {
   return {
     subject: `Clean energy window ${win.start}–${win.end}`,
     body,
-    meta: { appliance, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, urgency }
+    meta: { appliances: options, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, urgency }
   }
 })
