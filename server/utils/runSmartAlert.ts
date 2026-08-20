@@ -1,10 +1,14 @@
 import type { H3Event } from 'h3'
-import { eq, and, gte, desc } from 'drizzle-orm'
+import { eq, and, gte } from 'drizzle-orm'
 import { useDrizzle, schema } from '../database'
 import type { ForecastData } from '../api/forecast/[series].get'
-import { findWindowBelow, windowUrgency } from './lowCarbonWindow'
+import {
+  findWindowBelowInActiveHours,
+  windowUrgency,
+  next24hAverage
+} from './lowCarbonWindow'
 import { generatePushMessage } from './generatePushMessage'
-import { pickFlexibleAppliance } from './buildColdStartRecommendation'
+import { flexibleAppliances } from './buildColdStartRecommendation'
 import { sendNotification } from './sendNotification'
 
 const SYSTEM_SENDER_ID = 'system'
@@ -15,36 +19,24 @@ function toMin(hhmm: string): number {
   return (h ?? 0) * 60 + (m ?? 0)
 }
 
-// Does the low-carbon window overlap the user's active-hours interval? Both are
-// times-of-day; the window's final hourly slot is included (+60 min), and active
-// hours may wrap past midnight (e.g. 22:00–06:00).
-function windowInActiveHours(windowStart: string, windowEnd: string, activeStart: string, activeEnd: string): boolean {
-  const segs = (s: number, e: number): Array<[number, number]> => s <= e ? [[s, e]] : [[s, 1440], [0, e]]
-  const win = segs(toMin(windowStart), Math.min(toMin(windowEnd) + 60, 1440))
-  const active = segs(toMin(activeStart), toMin(activeEnd))
-  for (const [w1, w2] of win) {
-    for (const [a1, a2] of active) {
-      if (w1 < a2 && a1 < w2) return true
-    }
-  }
-  return false
-}
-
 export interface SmartAlertResult {
   windowFound: boolean
   sent: number
   reason?: string
 }
 
-// Forecast-based smart alert: find an upcoming low-carbon window and notify the
-// end-users whose active hours overlap it. One run per cron tick; every run is
-// recorded to smart_alert_runs (the trigger history).
+// Forecast-based smart alert, detected PER CONSUMER: for each active end-user we
+// find the best low-carbon window inside their own active hours and alert them
+// about that window (debounced per consumer). One run per cron tick is recorded
+// to smart_alert_runs (the trigger history).
 export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
   const db = useDrizzle(event)
   const config = useRuntimeConfig()
   const now = new Date()
 
-  const settings = await db.query.smartAlertSettings.findFirst({ where: eq(schema.smartAlertSettings.id, 1) })
+  const settings = await db.query.smartAlertSettings.findFirst({
+    where: eq(schema.smartAlertSettings.id, 1)
+  })
   const enabled = settings?.enabled ?? true
   const threshold = settings?.threshold ?? 20
   const debounceHours = settings?.debounceHours ?? 3
@@ -52,68 +44,90 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
 
   if (!enabled) return { windowFound: false, sent: 0, reason: 'disabled' }
 
-  const forecast = await $fetch<ForecastData>('/api/forecast/consumption_emissions', {
-    baseURL: getRequestURL(event).origin
-  })
+  const forecast = await $fetch<ForecastData>(
+    '/api/forecast/consumption_emissions',
+    { baseURL: getRequestURL(event).origin }
+  )
+  const horizonMs = horizonHours * 3_600_000
+  const avg24h = next24hAverage(forecast.points) // global grid metric, same for all consumers
 
-  const window = findWindowBelow(forecast.points, threshold, horizonHours * 3_600_000, MIN_WINDOW_HOURS)
-
-  // No qualifying window — record the run and stop.
-  if (!window) {
-    await db.insert(schema.smartAlertRuns).values({
-      id: crypto.randomUUID(), ranAt: now, windowFound: false, recipientCount: 0
-    })
-    return { windowFound: false, sent: 0 }
-  }
-
-  // Debounce: skip sending if we already delivered to users within debounceHours.
-  const debounceFrom = new Date(now.getTime() - debounceHours * 3_600_000)
-  const recentSent = await db.query.smartAlertRuns.findFirst({
-    where: and(gte(schema.smartAlertRuns.ranAt, debounceFrom), gte(schema.smartAlertRuns.recipientCount, 1)),
-    orderBy: desc(schema.smartAlertRuns.ranAt)
-  })
-  if (recentSent) {
-    await db.insert(schema.smartAlertRuns).values({
-      id: crypto.randomUUID(), ranAt: now, windowFound: true,
-      carbonIntensity: window.intensity, windowStart: window.start, windowEnd: window.end, recipientCount: 0
-    })
-    return { windowFound: true, sent: 0, reason: 'debounced' }
-  }
-
-  // Eligible users: active end-users whose active hours overlap the window.
+  // Active end-users with a profile (active hours drive per-consumer detection).
   const users = await db.query.users.findMany({
-    where: and(eq(schema.users.role, 'user'), eq(schema.users.status, 'active')),
+    where: and(
+      eq(schema.users.role, 'user'),
+      eq(schema.users.status, 'active')
+    ),
     columns: { id: true, name: true }
   })
   const profiles = await db.query.userProfiles.findMany()
   const profileByUser = new Map(profiles.map(p => [p.userId, p]))
 
-  const eligible = users
-    .map(u => ({ user: u, profile: profileByUser.get(u.id) }))
-    .filter(x => x.profile && windowInActiveHours(window.start, window.end, x.profile.activeHoursStart, x.profile.activeHoursEnd))
+  // Per-consumer debounce: users who already got a smart-alert within the window.
+  const debounceFrom = new Date(now.getTime() - debounceHours * 3_600_000)
+  const recentRows = await db
+    .select({ userId: schema.userMessages.userId })
+    .from(schema.userMessages)
+    .innerJoin(
+      schema.messages,
+      eq(schema.messages.id, schema.userMessages.messageId)
+    )
+    .where(
+      and(
+        eq(schema.messages.type, 'smart-alert'),
+        gte(schema.userMessages.createdAt, debounceFrom)
+      )
+    )
+  const recentlyAlerted = new Set(recentRows.map(r => r.userId))
 
-  const urgency = windowUrgency(window.startMs)
-  const subject = `Clean energy window ${window.start}–${window.end}`
-
-  // Each eligible user gets their OWN message, personalized to their name + a
-  // flexible appliance from their profile (Prompt 7). Sent individually, typed
-  // 'smart-alert' — recipients are recorded via messages → user_messages.
   let sent = 0
-  for (const { user, profile } of eligible) {
+  let anyWindow = false
+
+  for (const user of users) {
+    const profile = profileByUser.get(user.id)
     if (!profile) continue
+
+    // The best low-carbon window inside THIS consumer's active hours.
+    const window = findWindowBelowInActiveHours(
+      forecast.points,
+      threshold,
+      horizonMs,
+      MIN_WINDOW_HOURS,
+      toMin(profile.activeHoursStart),
+      toMin(profile.activeHoursEnd)
+    )
+    if (!window) continue
+    anyWindow = true
+
+    if (recentlyAlerted.has(user.id)) continue // already alerted recently
+
     let appliances: string[] = []
-    try { appliances = JSON.parse(profile.appliances) as string[] } catch { /* invalid JSON — leave empty */ }
-    const appliance = appliances.length ? pickFlexibleAppliance(appliances) : 'Washing machine'
+    try {
+      appliances = JSON.parse(profile.appliances) as string[]
+    } catch {
+      /* invalid JSON — leave empty */
+    }
+    const options = appliances.length
+      ? flexibleAppliances(appliances)
+      : ['Washing machine']
 
     const body = await generatePushMessage(
-      { name: user.name ?? null, appliance, windowStart: window.start, windowEnd: window.end, carbonIntensity: window.intensity, urgency },
+      {
+        name: user.name ?? null,
+        appliances: options,
+        windowStart: window.start,
+        windowEnd: window.end,
+        carbonIntensity: window.intensity,
+        avg24h,
+        urgency: windowUrgency(window.startMs),
+        notifStyle: profile.notifStyle
+      },
       config.openaiApiKey,
       config.openaiBaseUrl || undefined,
       config.openaiLlmModel || undefined
     )
 
     await sendNotification(event, {
-      subject,
+      subject: `Clean energy window ${window.start}–${window.end}`,
       body,
       type: 'smart-alert',
       sentById: SYSTEM_SENDER_ID,
@@ -122,10 +136,19 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
     sent++
   }
 
+  // One run row per tick. Windows differ per consumer, so the window columns stay
+  // null; windowFound marks whether any consumer had a qualifying window.
   await db.insert(schema.smartAlertRuns).values({
-    id: crypto.randomUUID(), ranAt: now, windowFound: true,
-    carbonIntensity: window.intensity, windowStart: window.start, windowEnd: window.end, recipientCount: sent
+    id: crypto.randomUUID(),
+    ranAt: now,
+    windowFound: anyWindow,
+    recipientCount: sent
   })
 
-  return { windowFound: true, sent }
+  if (!anyWindow) return { windowFound: false, sent: 0 }
+  return {
+    windowFound: true,
+    sent,
+    reason: sent === 0 ? 'debounced' : undefined
+  }
 }

@@ -50,25 +50,47 @@ Return plain text only, no JSON, no explanation.
 Example output:
 "dishwasher washing machine off-peak low carbon evening scheduling"`,
 
-  // Prompt 7 — Push notification message (prompts/07_push_notification_message.md)
-  'push-message': `You are a friendly energy assistant writing a mobile push notification for a Finnish energy app.
+  //  (prompts/07_push_notification_message.md)
+  'push-message-simple': `You are a friendly energy assistant writing a mobile push notification for a Finnish energy app.
 
 ## Context
 - User name: {name}
-- Recommended appliance: {appliance}
+- The user's time-shiftable appliances: {appliance_options}
 - Best window: {window_start} to {window_end}
 - Carbon intensity during window: {carbon_intensity} gCO2/kWh
 - Urgency: {urgency}
 
 ## Rules
-1. Maximum 100 characters including spaces
-2. Mention the specific appliance and time window
-3. If urgency is high, add a light sense of excitement
-4. Friendly tone, no technical jargon
-5. Do not start with "Hey" or "Hi"
-6. Do not include carbon intensity numbers
-7. Return plain text only, no JSON, no quotes
+1. Maximum 120 characters including spaces
+2. Choose ONE appliance from the list above that best fits the {window_start}-{window_end} window, and mention only that one — never invent an appliance not on the list
+3. Mention the time window
+4. If urgency is high, add a light sense of excitement
+5. Friendly tone, no technical jargon
+6. Do not start with "Hey" or "Hi"
+7. Do not include carbon intensity numbers
+8. Return plain text only, no JSON, no quotes
 
 Example good output:
-"Great wind tonight! Run your washing machine after 22:00 for a clean green load."`
+"Great wind tonight! Run your washing machine after 22:00 for a clean green load."`,
+
+  'push-message-detailed': `You are writing a data-rich mobile push notification for a Finnish energy app.
+The user prefers informative, number-led notifications with real detail — not a one-liner.
+
+## Context
+- User name: {name}
+- The user's time-shiftable appliances: {appliance_options}
+- Cleanest window: {window_start} to {window_end}
+- Carbon intensity during that window: {carbon_intensity} gCO2/kWh
+- Next 24h average grid intensity: {avg_24h} gCO2/kWh
+- Urgency: {urgency}
+
+## Rules
+1. One or two sentences, AT MOST 160 characters including spaces — the message must be complete, never cut off mid-sentence
+2. Choose ONE appliance from the list above that best fits the {window_start}-{window_end} window (longer or overnight windows suit an EV charger or dishwasher; short windows suit a quick load). Recommend only that one — never invent an appliance not on the list
+3. Include the window intensity ({carbon_intensity} gCO2/kWh); mention the 24h average ({avg_24h} gCO2/kWh) only if it still fits
+4. Factual, informative tone — no greetings, no emojis, no hype; do not address the user by name
+5. Return plain text only, no JSON, no quotes
+
+Example good output:
+"Cleanest window is 12:00-14:00 at 14 gCO2/kWh, below today's 23 average. Run your dishwasher then to cut its carbon footprint."`
 }
