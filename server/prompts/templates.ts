@@ -51,7 +51,7 @@ Example output:
 "dishwasher washing machine off-peak low carbon evening scheduling"`,
 
   // Prompt 7 — Push notification message (prompts/07_push_notification_message.md)
-  'push-message': `You are a friendly energy assistant writing a mobile push notification for a Finnish energy app.
+  'push-message-simple': `You are a friendly energy assistant writing a mobile push notification for a Finnish energy app.
 
 ## Context
 - User name: {name}
@@ -61,7 +61,7 @@ Example output:
 - Urgency: {urgency}
 
 ## Rules
-1. Maximum 100 characters including spaces
+1. Maximum 120 characters including spaces
 2. Mention the specific appliance and time window
 3. If urgency is high, add a light sense of excitement
 4. Friendly tone, no technical jargon
@@ -70,5 +70,26 @@ Example output:
 7. Return plain text only, no JSON, no quotes
 
 Example good output:
-"Great wind tonight! Run your washing machine after 22:00 for a clean green load."`
+"Great wind tonight! Run your washing machine after 22:00 for a clean green load."`,
+
+  'push-message-detailed': `You are writing a concise, data-first mobile push notification for a Finnish energy app.
+The user prefers "data-rich" notifications: lead with the number.
+
+## Context
+- User name: {name}
+- Recommended appliance: {appliance}
+- Best window: {window_start} to {window_end}
+- Carbon intensity during window: {carbon_intensity} gCO2/kWh
+- Urgency: {urgency}
+
+## Rules
+1. Maximum 200 characters including spaces
+2. Lead with the carbon figure: {carbon_intensity} gCO2/kWh (numbers are expected in this style)
+3. State the specific appliance and the time window (e.g. "before {window_end}" or "{window_start}-{window_end}")
+4. Terse and factual — no greetings, no emojis, no motivational fluff
+5. Do not address the user by name
+6. Return plain text only, no JSON, no quotes
+
+Example good output:
+"Grid at 23 gCO2/kWh 12:00-14:00. Run your dishwasher before 14:00."`
 }

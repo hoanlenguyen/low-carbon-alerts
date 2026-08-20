@@ -5,7 +5,10 @@ import { generatePushMessage } from '../../../utils/generatePushMessage'
 
 // Builds a Prompt 7 smart-alert message from the live forecast so an admin can
 // review it and send to specific users via the normal Send flow. Admin-only.
-const bodySchema = z.object({ appliance: z.string().min(1).optional() })
+const bodySchema = z.object({
+  appliance: z.string().min(1).optional(),
+  notifStyle: z.enum(['detailed', 'simple']).optional()
+})
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -14,7 +17,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const raw = await readBody(event).catch(() => ({}))
-  const { appliance: applianceOverride } = bodySchema.parse(raw && typeof raw === 'object' ? raw : {})
+  const { appliance: applianceOverride, notifStyle } = bodySchema.parse(raw && typeof raw === 'object' ? raw : {})
   const config = useRuntimeConfig()
 
   const carbon = await $fetch<ForecastData>('/api/forecast/consumption_emissions', {
@@ -30,7 +33,7 @@ export default defineEventHandler(async (event) => {
   const urgency = windowUrgency(win.startMs)
 
   const body = await generatePushMessage(
-    { name: null, appliance, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, urgency },
+    { name: null, appliance, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, urgency, notifStyle: notifStyle ?? 'detailed' },
     config.openaiApiKey,
     config.openaiBaseUrl || undefined,
     config.openaiLlmModel || undefined

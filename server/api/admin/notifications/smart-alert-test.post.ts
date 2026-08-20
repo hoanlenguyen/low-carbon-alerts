@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
   const urgency = windowUrgency(win.startMs)
 
   const body = await generatePushMessage(
-    { name: user.name ?? null, appliance, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, urgency },
+    { name: user.name ?? null, appliance, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, urgency, notifStyle: profile?.notifStyle ?? 'detailed' },
     config.openaiApiKey,
     config.openaiBaseUrl || undefined,
     config.openaiLlmModel || undefined
