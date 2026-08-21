@@ -5,7 +5,8 @@ import type { ForecastData } from '../api/forecast/[series].get'
 import {
   findWindowBelowInActiveHours,
   windowUrgency,
-  next24hAverage
+  next24hAverage,
+  formatWindowRange
 } from './lowCarbonWindow'
 import { generatePushMessage } from './generatePushMessage'
 import { flexibleAppliances } from './buildColdStartRecommendation'
@@ -110,12 +111,14 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
       ? flexibleAppliances(appliances)
       : ['Washing machine']
 
+    const win = formatWindowRange(window.startMs, window.endMs)
+
     const body = await generatePushMessage(
       {
         name: user.name ?? null,
         appliances: options,
-        windowStart: window.start,
-        windowEnd: window.end,
+        windowStart: win.start,
+        windowEnd: win.end,
         carbonIntensity: window.intensity,
         avg24h,
         urgency: windowUrgency(window.startMs),
@@ -127,7 +130,7 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
     )
 
     await sendNotification(event, {
-      subject: `Clean energy window ${window.start}–${window.end}`,
+      subject: `Clean energy window ${win.start} – ${win.end}`,
       body,
       type: 'smart-alert',
       sentById: SYSTEM_SENDER_ID,
