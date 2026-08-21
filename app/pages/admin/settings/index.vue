@@ -60,7 +60,7 @@ async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
   >
     <UPageCard
       title="Profile"
-      description="Update your name and email address."
+      description="Update your name here."
       variant="naked"
       orientation="horizontal"
       class="mb-4"
@@ -81,9 +81,8 @@ async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
         label="Name"
         description="Will appear on your profile."
         required
-        class="flex max-sm:flex-col justify-between items-start gap-4"
       >
-        <UInput v-model="profile.name" autocomplete="off" />
+        <UInput v-model="profile.name" class="w-full" autocomplete="off" />
       </UFormField>
 
       <USeparator />
@@ -93,9 +92,13 @@ async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
         label="Email"
         description="Used to sign in and for notifications."
         required
-        class="flex max-sm:flex-col justify-between items-start gap-4"
       >
-        <UInput v-model="profile.email" type="email" autocomplete="off" />
+        <UInput
+          v-model="profile.email"
+          type="email"
+          autocomplete="off"
+          class="w-full"
+          disabled />
       </UFormField>
     </UPageCard>
   </UForm>

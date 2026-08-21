@@ -158,16 +158,15 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
             />
           </UFormField>
 
-          <!-- <UFormField name="email" label="Email">
+          <UFormField name="email" label="Email">
             <UInput
               v-model="profile.email"
               type="email"
-              placeholder="you@example.com"
               class="w-full"
               autocomplete="email"
               disabled
             />
-          </UFormField> -->
+          </UFormField>
 
           <div class="flex justify-end">
             <UButton type="submit" :loading="profileLoading">
