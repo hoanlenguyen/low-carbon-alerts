@@ -65,11 +65,11 @@ export function findLowCarbonWindow(carbon: ForecastData): LowCarbonWindow | nul
       if (fc[i]!.value < threshold) {
         if (start < 0) start = i
       } else {
-        if (start >= 0 && i - start >= 2) return build(fc, start, i - 1)
+        if (start >= 0 && i - start >= 2) return capWindow(fc, start, i - 1)
         start = -1
       }
     }
-    if (start >= 0 && fc.length - start >= 2) return build(fc, start, fc.length - 1)
+    if (start >= 0 && fc.length - start >= 2) return capWindow(fc, start, fc.length - 1)
   }
   return null
 }
@@ -78,6 +78,27 @@ function build(fc: ForecastData['points'], s: number, e: number): LowCarbonWindo
   let min = fc[s]!.value
   for (let i = s; i <= e; i++) min = Math.min(min, fc[i]!.value)
   return { startMs: fc[s]!.time, endMs: fc[e]!.time, start: hhmm(fc[s]!.time), end: hhmm(fc[e]!.time), intensity: Math.round(min * 10) / 10 }
+}
+
+// A clean run can span most of a day. For an actionable "when to run" alert we
+// narrow it to its cleanest slice: the contiguous window of up to MAX_WINDOW_HOURS
+// with the lowest average intensity (indices s..e must be contiguous hours).
+const MAX_WINDOW_HOURS = 4
+
+function capWindow(fc: ForecastData['points'], s: number, e: number): LowCarbonWindow {
+  const len = Math.min(e - s + 1, MAX_WINDOW_HOURS)
+  let bestStart = s
+  let bestAvg = Infinity
+  for (let i = s; i + len - 1 <= e; i++) {
+    let sum = 0
+    for (let j = i; j < i + len; j++) sum += fc[j]!.value
+    const avg = sum / len
+    if (avg < bestAvg) {
+      bestAvg = avg
+      bestStart = i
+    }
+  }
+  return build(fc, bestStart, bestStart + len - 1)
 }
 
 export function windowUrgency(startMs: number): 'low' | 'medium' | 'high' {
@@ -141,7 +162,7 @@ export function findWindowBelowInActiveHours(
         while (end + 1 < fc.length
           && fc[end + 1]!.value < threshold
           && (fc[end + 1]!.time - fc[end]!.time) <= GAP) end++
-        return build(fc, start, end)
+        return capWindow(fc, start, end)
       }
     } else if (below) {
       start = i // below threshold but a gap broke the previous run — start fresh
