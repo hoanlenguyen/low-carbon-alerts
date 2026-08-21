@@ -8,8 +8,42 @@ export function hhmm(ms: number): string {
   }).format(new Date(ms))
 }
 
+function time12(ms: number): string {
+  return new Intl.DateTimeFormat('en-US', {
+    hour: '2-digit', minute: '2-digit', hour12: true, timeZone: TZ
+  }).format(new Date(ms))
+}
+
+function dateKey(ms: number): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric', month: '2-digit', day: '2-digit', timeZone: TZ
+  }).format(new Date(ms))
+}
+
+function relativeDay(ms: number, nowMs: number): string {
+  const d = dateKey(ms)
+  if (d === dateKey(nowMs)) return 'today'
+  if (d === dateKey(nowMs + 86_400_000)) return 'tomorrow'
+  return new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: TZ }).format(new Date(ms))
+}
+
+// Human display for a window: 12-hour times with AM/PM, plus a "today"/"tomorrow"
+// day marker when the window crosses days (or falls entirely on another day).
+// e.g. { start: "11:00 PM today", end: "06:00 AM tomorrow" }.
+export function formatWindowRange(startMs: number, endMs: number, nowMs = Date.now()): { start: string, end: string } {
+  const sTime = time12(startMs)
+  const eTime = time12(endMs)
+  if (dateKey(startMs) === dateKey(endMs)) {
+    const day = relativeDay(startMs, nowMs)
+    const suffix = day === 'today' ? '' : ` ${day}` // label both ends when not today
+    return { start: `${sTime}${suffix}`, end: `${eTime}${suffix}` }
+  }
+  return { start: `${sTime} ${relativeDay(startMs, nowMs)}`, end: `${eTime} ${relativeDay(endMs, nowMs)}` }
+}
+
 export interface LowCarbonWindow {
   startMs: number
+  endMs: number
   start: string // "HH:MM"
   end: string // "HH:MM"
   intensity: number // lowest gCO₂/kWh in the window
@@ -43,7 +77,7 @@ export function findLowCarbonWindow(carbon: ForecastData): LowCarbonWindow | nul
 function build(fc: ForecastData['points'], s: number, e: number): LowCarbonWindow {
   let min = fc[s]!.value
   for (let i = s; i <= e; i++) min = Math.min(min, fc[i]!.value)
-  return { startMs: fc[s]!.time, start: hhmm(fc[s]!.time), end: hhmm(fc[e]!.time), intensity: Math.round(min * 10) / 10 }
+  return { startMs: fc[s]!.time, endMs: fc[e]!.time, start: hhmm(fc[s]!.time), end: hhmm(fc[e]!.time), intensity: Math.round(min * 10) / 10 }
 }
 
 export function windowUrgency(startMs: number): 'low' | 'medium' | 'high' {

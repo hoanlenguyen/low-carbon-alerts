@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { and, eq } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../../database'
 import type { ForecastData } from '../../forecast/[series].get'
-import { findLowCarbonWindow, windowUrgency, next24hAverage } from '../../../utils/lowCarbonWindow'
+import { findLowCarbonWindow, windowUrgency, next24hAverage, formatWindowRange } from '../../../utils/lowCarbonWindow'
 import { flexibleAppliances } from '../../../utils/buildColdStartRecommendation'
 import { generatePushMessage } from '../../../utils/generatePushMessage'
 import { sendNotification } from '../../../utils/sendNotification'
@@ -43,14 +43,15 @@ export default defineEventHandler(async (event) => {
   }
   const options = appliances.length ? flexibleAppliances(appliances) : ['Washing machine']
   const urgency = windowUrgency(win.startMs)
+  const display = formatWindowRange(win.startMs, win.endMs)
 
   const body = await generatePushMessage(
-    { name: user.name ?? null, appliances: options, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, avg24h: next24hAverage(carbon.points), urgency, notifStyle: profile?.notifStyle ?? 'detailed' },
+    { name: user.name ?? null, appliances: options, windowStart: display.start, windowEnd: display.end, carbonIntensity: win.intensity, avg24h: next24hAverage(carbon.points), urgency, notifStyle: profile?.notifStyle ?? 'detailed' },
     config.openaiApiKey,
     config.openaiBaseUrl || undefined,
     config.openaiLlmModel || undefined
   )
-  const subject = `Clean energy window ${win.start}–${win.end}`
+  const subject = `Clean energy window ${display.start} – ${display.end}`
 
   await sendNotification(event, {
     subject,
