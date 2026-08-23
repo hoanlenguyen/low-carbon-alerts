@@ -115,19 +115,20 @@ const nowX = Date.now()
         :value="nowX"
         axis="x"
         color="cyan"
-        :line-width="2"
+        :line-width="1"
+        line-style="longDash"
         label-text="Now"
       />
 
       <!-- Threshold plotline at 20 gCO₂ (axis y = horizontal) -->
-      <VisPlotline
+      <!-- <VisPlotline
         :value="20"
         axis="y"
         color="indigo"
         :line-width="2"
         label-text="Excellent"
         label-position="right"
-      />
+      /> -->
 
       <VisAxis
         type="x"
