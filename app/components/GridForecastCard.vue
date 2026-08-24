@@ -1,10 +1,28 @@
 <script setup lang="ts">
 import type { ForecastData, ForecastKey } from '~/server/api/forecast/[series].get'
 
-const seriesOptions: Array<{ key: ForecastKey, label: string, icon: string, description: string }> = [
-  { key: 'consumption_emissions', label: 'Carbon', icon: 'i-lucide-leaf', description: 'CO₂ emitted per kWh consumed' },
-  { key: 'renew_production_share', label: 'Renewable', icon: 'i-lucide-wind', description: 'Share of electricity from renewables' },
-  { key: 'domestic_production_share', label: 'Domestic', icon: 'i-lucide-home', description: 'Share produced domestically vs imported' }
+const seriesOptions: Array<{ key: ForecastKey, label: string, short: string, icon: string, description: string }> = [
+  {
+    key: 'consumption_emissions',
+    label: 'Consumption emissions',
+    short: 'Emissions',
+    icon: 'i-lucide-leaf',
+    description: 'Historical and forecasted hourly emissions of electricity consumption as grams of carbon dioxide equivalent per kilowatt-hour of consumed electricity. Takes imports and exports into account per Fingrid methodology.'
+  },
+  {
+    key: 'renew_production_share',
+    label: 'Renewable production share',
+    short: 'Renewable',
+    icon: 'i-lucide-wind',
+    description: 'Historical and forecasted hourly share of renewable generation — wind, solar, and hydropower — in total domestic electricity generation. Excludes electricity imports and exports.'
+  },
+  {
+    key: 'domestic_production_share',
+    label: 'Domestic production share',
+    short: 'Domestic',
+    icon: 'i-lucide-home',
+    description: 'Historical and forecasted hourly share of domestic generation in total power supply. Includes electricity imports and exports.'
+  }
 ]
 
 const props = withDefaults(defineProps<{
@@ -136,9 +154,15 @@ const selectedOption = computed(() => seriesOptions.find(s => s.key === selected
             @click="selectedSeries = s.key"
           >
             <UIcon :name="s.icon" class="size-3.5 shrink-0" />
-            {{ s.label }}
+            <span class="sm:hidden">{{ s.short }}</span>
+            <span class="hidden sm:inline">{{ s.label }}</span>
           </button>
         </div>
+
+        <!-- Description of the selected series -->
+        <p class="text-xs text-muted leading-relaxed">
+          {{ selectedOption.description }}
+        </p>
       </div>
     </template>
 
@@ -167,10 +191,7 @@ const selectedOption = computed(() => seriesOptions.find(s => s.key === selected
         </div>
 
         <div class="flex-1 min-w-0">
-          <p class="text-sm text-muted">
-            {{ selectedOption.description }}
-          </p>
-          <div class="flex flex-wrap items-center gap-2 mt-1.5">
+          <div class="flex flex-wrap items-center gap-2">
             <UBadge
               :color="statusBadgeColor[currentStatus]"
               variant="subtle"
