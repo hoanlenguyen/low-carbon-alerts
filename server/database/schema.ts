@@ -26,7 +26,7 @@ export const messages = sqliteTable('messages', {
   id: text('id').primaryKey(),
   subject: text('subject').notNull(),
   body: text('body').notNull(),
-  type: text('type', { enum: ['broadcast', 'targeted', 'smart-alert'] }).notNull(),
+  type: text('type', { enum: ['broadcast', 'targeted', 'smart-alert', 'forecast'] }).notNull(),
   sentById: text('sent_by_id').notNull(),
   sentAt: integer('sent_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
@@ -158,3 +158,14 @@ export type Recommendation = typeof recommendations.$inferSelect
 export type KbChunk = typeof kbChunks.$inferSelect
 export type KbMeta = typeof kbMeta.$inferSelect
 export type SmartAlertRun = typeof smartAlertRuns.$inferSelect
+
+// General daily electricity-forecast message: generated once per Helsinki day and
+// served to all end-users (the dashboard "Forecast · next 24h" card). Singleton id=1.
+export const dailyForecast = sqliteTable('daily_forecast', {
+  id: integer('id').primaryKey(), // always 1
+  subject: text('subject').notNull(),
+  body: text('body').notNull(), // full generated message; the card shows the forecast portion
+  forDate: text('for_date').notNull(), // "YYYY-MM-DD" Helsinki
+  generatedAt: integer('generated_at', { mode: 'timestamp' }).notNull()
+})
+export type DailyForecast = typeof dailyForecast.$inferSelect

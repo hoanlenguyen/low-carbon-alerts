@@ -89,9 +89,6 @@ const currentGuide = computed(() => guides[selectedSeries.value])
       <h1 class="text-xl font-semibold text-highlighted">
         Forecast
       </h1>
-      <p class="text-sm text-muted mt-0.5">
-        48-hour Finnish grid data.
-      </p>
     </div>
 
     <!-- Shared card — v-model keeps selectedSeries in sync with the card's selector -->

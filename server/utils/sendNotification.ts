@@ -6,7 +6,7 @@ import { getFcmAccessToken } from './getFcmAccessToken'
 interface SendOptions {
   subject: string
   body: string
-  type: 'broadcast' | 'targeted' | 'smart-alert'
+  type: 'broadcast' | 'targeted' | 'smart-alert' | 'forecast'
   sentById: string
   targetUserIds?: string[]
 }
@@ -27,7 +27,7 @@ export async function sendNotification(event: H3Event, opts: SendOptions) {
   })
 
   let recipientIds: string[]
-  if (opts.type === 'broadcast') {
+  if (opts.type === 'broadcast' || opts.type === 'forecast') {
     const allUsers = await db.query.users.findMany({
       where: eq(schema.users.role, 'user'),
       columns: { id: true }
@@ -86,7 +86,7 @@ export async function sendNotification(event: H3Event, opts: SendOptions) {
   const { sseClients } = await import('./sseClients')
   const ssePayload = JSON.stringify({ id: messageId, subject: opts.subject, body: opts.body, createdAt: now.toISOString() })
   for (const userId of recipientIds) {
-    sseClients.get(userId)?.forEach(send => {
+    sseClients.get(userId)?.forEach((send) => {
       try { send(ssePayload) } catch { /* client disconnected */ }
     })
   }

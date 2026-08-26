@@ -51,6 +51,36 @@ async function generateSmartAlert() {
   }
 }
 
+// Weekly electricity-forecast message (general, for all consumers). Generate from
+// live grid data and preview; "Use in Send" drops it into the broadcast form.
+const generatingForecast = ref(false)
+const forecastPreview = ref<{ subject: string, body: string } | null>(null)
+
+async function generateForecast() {
+  generatingForecast.value = true
+  try {
+    const res = await $fetch<{ subject: string, body: string }>(
+      '/api/admin/notifications/forecast-message',
+      { method: 'POST' }
+    )
+    forecastPreview.value = { subject: res.subject, body: res.body }
+    toast.add({ title: 'Forecast message generated', color: 'success' })
+  } catch (e: unknown) {
+    const err = e as { data?: { statusMessage?: string } }
+    toast.add({ title: err?.data?.statusMessage || 'Could not generate the forecast message', color: 'error' })
+  } finally {
+    generatingForecast.value = false
+  }
+}
+
+function useForecastInSend() {
+  if (!forecastPreview.value) return
+  sendState.subject = forecastPreview.value.subject
+  sendState.body = forecastPreview.value.body
+  sendState.type = 'broadcast'
+  toast.add({ title: 'Loaded into Send', description: 'Review, then Send now to all consumers.', color: 'success' })
+}
+
 function applyTemplate(t: { subject: string, body: string }) {
   sendState.subject = t.subject
   sendState.body = t.body
@@ -153,6 +183,41 @@ async function deleteTemplate(id: string) {
               Generate smart-alert message
             </UButton>
             <span class="text-xs text-dimmed">Builds a message from the live forecast — review, pick users, send.</span>
+          </div>
+
+          <!-- Weekly forecast message generator (general, all consumers) -->
+          <div class="rounded-lg border border-dashed border-default bg-elevated/30 px-3 py-2.5 space-y-2.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <UButton
+                size="xs"
+                color="primary"
+                variant="soft"
+                icon="i-lucide-newspaper"
+                :loading="generatingForecast"
+                @click="generateForecast"
+              >
+                Generate forecast message
+              </UButton>
+              <span class="text-xs text-dimmed">Weekly electricity forecast for all consumers, from live grid data.</span>
+            </div>
+
+            <div v-if="forecastPreview" class="rounded-md border border-default bg-default p-3 space-y-2">
+              <p class="text-xs font-semibold text-highlighted">
+                {{ forecastPreview.subject }}
+              </p>
+              <p class="text-xs text-muted leading-relaxed whitespace-pre-wrap">
+                {{ forecastPreview.body }}
+              </p>
+              <UButton
+                size="xs"
+                color="neutral"
+                variant="subtle"
+                icon="i-lucide-arrow-down-to-line"
+                @click="useForecastInSend"
+              >
+                Use in Send (broadcast)
+              </UButton>
+            </div>
           </div>
 
           <!-- Templates (click to apply · manage inline) -->
