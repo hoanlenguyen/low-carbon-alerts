@@ -41,6 +41,9 @@ function timeLabel(val: string) {
     <!-- Personalized recommendation -->
     <RecommendationCard />
 
+    <!-- General daily electricity forecast (next 24h) -->
+    <ForecastCard />
+
     <!-- Enable-notifications tip (platform-aware: desktop / Android / iOS) -->
     <NotificationTip />
 

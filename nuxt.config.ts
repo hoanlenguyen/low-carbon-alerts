@@ -17,6 +17,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     setupToken: '',
     cronSecret: '',
+    automationSecret: '', // bearer secret for external automation (n8n) endpoints
     fcmServiceAccount: '',
     fcmProjectId: '',
     openaiApiKey: '',
