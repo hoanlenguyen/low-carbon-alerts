@@ -28,12 +28,10 @@ Template `weekly-forecast-message` in [`server/prompts/templates.ts`](../server/
 The LLM writes the body only (subject is fixed) from a `{facts}` block, in this structure:
 
 ```
-Here is a quick electricity forecast update.
-
 For the next 24 hours, … [emissions level vs weekly average, renewable share, cleanest/highest times]
 Looking at the trend, … [renewable rising/falling next day; grid cleaner/dirtier this week]
 
-What can you do?
+Recommended actions
 - [shift non-urgent use to the cleanest hours]
 - [avoid the highest-emission hours, when relevant]
 - Keep essential use as normal and only shift what is easy and practical for you.

@@ -6,25 +6,15 @@ import { generateForecastMessage } from './generateForecastMessage'
 
 const TZ = 'Europe/Helsinki'
 
-function helsinkiDate(): string {
+function getFormattedLocalDate(localTimeZone: string): string {
   return new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric', month: '2-digit', day: '2-digit', timeZone: TZ
+    year: 'numeric', month: '2-digit', day: '2-digit', timeZone: localTimeZone
   }).format(new Date())
-}
-
-// The card shows only the forecast, not the "What can you do?" actions (the
-// recommendation card already gives the user their action). Also drops the
-// generic intro line since the card has its own title.
-function forecastOnly(body: string): string {
-  const i = body.search(/what can you do\??/i)
-  return (i >= 0 ? body.slice(0, i) : body)
-    .replace(/^\s*here is a quick electricity forecast update\.?\s*/i, '')
-    .trim()
 }
 
 export interface DailyForecastResult {
   subject: string
-  body: string // forecast-only
+  body: string
   generatedAt: Date
 }
 
@@ -34,11 +24,11 @@ export interface DailyForecastResult {
 export async function getDailyForecast(event: H3Event): Promise<DailyForecastResult> {
   const db = useDrizzle(event)
   const config = useRuntimeConfig()
-  const today = helsinkiDate()
+  const today = getFormattedLocalDate(TZ)
 
   const existing = await db.query.dailyForecast.findFirst({ where: eq(schema.dailyForecast.id, 1) })
   if (existing && existing.forDate === today) {
-    return { subject: existing.subject, body: forecastOnly(existing.body), generatedAt: existing.generatedAt! }
+    return { subject: existing.subject, body: existing.body, generatedAt: existing.generatedAt! }
   }
 
   try {
@@ -56,10 +46,10 @@ export async function getDailyForecast(event: H3Event): Promise<DailyForecastRes
         target: schema.dailyForecast.id,
         set: { subject, body, forDate: today, generatedAt: now }
       })
-    return { subject, body: forecastOnly(body), generatedAt: now }
+    return { subject, body, generatedAt: now }
   } catch {
     // Regeneration failed (flipapi/LLM down) — serve the last cached row if any.
-    if (existing) return { subject: existing.subject, body: forecastOnly(existing.body), generatedAt: existing.generatedAt! }
+    if (existing) return { subject: existing.subject, body: existing.body, generatedAt: existing.generatedAt! }
     throw createError({ statusCode: 503, statusMessage: 'Forecast temporarily unavailable' })
   }
 }
