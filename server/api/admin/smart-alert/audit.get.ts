@@ -16,17 +16,19 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle(event)
 
-  const [logs, [{ total }]] = await Promise.all([
+  const [logs, countRows] = await Promise.all([
     db.query.auditLogs.findMany({
       where: eq(schema.auditLogs.action, 'smart_alert.settings.update'),
       orderBy: desc(schema.auditLogs.createdAt),
       limit,
-      offset,
+      offset
     }),
-    db.select({ total: count() })
+    db
+      .select({ total: count() })
       .from(schema.auditLogs)
-      .where(eq(schema.auditLogs.action, 'smart_alert.settings.update')),
+      .where(eq(schema.auditLogs.action, 'smart_alert.settings.update'))
   ])
+  const total = countRows[0]?.total ?? 0
 
   return {
     data: logs.map(l => ({
@@ -34,11 +36,11 @@ export default defineEventHandler(async (event) => {
       userEmail: l.userEmail,
       before: l.before ? JSON.parse(l.before) : null,
       after: l.after ? JSON.parse(l.after) : null,
-      createdAt: l.createdAt,
+      createdAt: l.createdAt
     })),
     total,
     page,
     pageSize: limit,
-    pageCount: Math.ceil(total / limit),
-  }
+    pageCount: Math.ceil(total / limit)
+  } satisfies Pagination<AuditRow>
 })

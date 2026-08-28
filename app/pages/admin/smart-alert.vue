@@ -69,29 +69,35 @@ async function onSave(event: FormSubmitEvent<SettingsSchema>) {
 }
 
 // ── Alert history (paginated) ──────────────────────────────────────────────────
-interface HistoryRow { id: string, subject: string, body: string, sentAt: string | null, recipient: string | null }
+const HISTORY_PAGE_SIZE = 5
 const historyPage = ref(1)
-const { data: historyData, refresh: refreshHistory } = useFetch<{ data: HistoryRow[], total: number, pageCount: number }>('/api/admin/smart-alert/history', {
+const { data: historyQuery, refresh: refreshHistory } = useFetch<Pagination<HistoryRow>>('/api/admin/smart-alert/history', {
   server: false,
-  query: { page: historyPage }
+  query: { page: historyPage, limit: HISTORY_PAGE_SIZE }
 })
-const history = computed(() => historyData.value?.data ?? null)
-const historyTotal = computed(() => historyData.value?.total ?? 0)
-const historyPageCount = computed(() => historyData.value?.pageCount ?? 1)
+
+// Object-style view (history.data / .total / .pageSize) with a safe fallback while loading.
+const history = computed<Pagination<HistoryRow>>(() => historyQuery.value ?? { page: 1, pageSize: HISTORY_PAGE_SIZE, total: 0, pageCount: 1, data: [] })
 
 // ── Trigger runs (last success + paginated run log) ────────────────────────────
-interface RunRow { id: string, ranAt: string | null, windowFound: boolean, carbonIntensity: number | null, windowStart: string | null, windowEnd: string | null, recipientCount: number }
+const RUNS_PAGE_SIZE = 10
 const runsPage = ref(1)
-const { data: runsData, refresh: refreshRuns } = useFetch<{ lastSent: RunRow | null, runs: RunRow[], total: number, pageCount: number }>('/api/admin/smart-alert/runs', {
+const { data: runsData, refresh: refreshRuns } = useFetch<Pagination<RunRow> & { lastSent: RunRow | null }>('/api/admin/smart-alert/runs', {
   server: false,
-  query: { page: runsPage }
+  query: { page: runsPage, limit: RUNS_PAGE_SIZE }
 })
 const lastSent = computed(() => runsData.value?.lastSent ?? null)
-const runs = computed(() => runsData.value?.runs ?? [])
+const runs = computed(() => runsData.value?.data ?? [])
 const runsTotal = computed(() => runsData.value?.total ?? 0)
 const runsPageCount = computed(() => runsData.value?.pageCount ?? 1)
+const runsPageSize = computed(() => runsData.value?.pageSize ?? RUNS_PAGE_SIZE)
 
 const runningNow = ref(false)
+const showRunNowConfirm = ref(false)
+async function confirmRunNow() {
+  await runNow()
+  showRunNowConfirm.value = false
+}
 async function runNow() {
   runningNow.value = true
   try {
@@ -117,13 +123,15 @@ async function runNow() {
 
 // ── Audit log ─────────────────────────────────────────────────────────────────
 const auditPage = ref(1)
-const { data: auditResponse, refresh: refreshAudit } = useFetch('/api/admin/smart-alert/audit', {
+const AUDIT_LOG_PAGE_SIZE = 5
+const { data: auditResponse, refresh: refreshAudit } = useFetch<Pagination<AuditRow>>('/api/admin/smart-alert/audit', {
   server: false,
-  query: { page: auditPage }
+  query: { page: auditPage, limit: AUDIT_LOG_PAGE_SIZE }
 })
 const auditLogs = computed(() => auditResponse.value?.data ?? null)
 const auditPageCount = computed(() => auditResponse.value?.pageCount ?? 1)
 const auditTotal = computed(() => auditResponse.value?.total ?? 0)
+const auditPageSize = computed(() => auditResponse.value?.pageSize ?? AUDIT_LOG_PAGE_SIZE)
 
 // ── Test smart alert (send a personalized alert to one user, verify content) ────
 const { data: users } = useFetch<{ id: string, name: string | null, email: string }[]>('/api/admin/users', { server: false })
@@ -313,23 +321,13 @@ const keyLabel: Record<string, string> = {
 
         <!-- Trigger history -->
         <section>
-          <div class="mb-4 flex items-start justify-between gap-3">
-            <div>
-              <h2 class="text-sm font-semibold text-highlighted">
-                Trigger history
-              </h2>
-              <p class="text-sm text-muted mt-0.5">
-                When the smart-alert cron last ran and how many users it reached.
-              </p>
-            </div>
-            <UButton
-              size="xs"
-              icon="i-lucide-play"
-              :loading="runningNow"
-              @click="runNow"
-            >
-              Run now
-            </UButton>
+          <div class="mb-4">
+            <h2 class="text-sm font-semibold text-highlighted">
+              Trigger history
+            </h2>
+            <p class="text-sm text-muted mt-0.5">
+              When the smart-alert cron last ran and how many users it reached.
+            </p>
           </div>
 
           <!-- Last successful -->
@@ -395,8 +393,8 @@ const keyLabel: Record<string, string> = {
               <span class="text-xs text-muted tabular-nums">{{ runsTotal }} total</span>
               <UPagination
                 v-model:page="runsPage"
+                :items-per-page="runsPageSize"
                 :total="runsTotal"
-                :page-size="10"
                 size="xs" />
             </div>
           </UPageCard>
@@ -406,14 +404,16 @@ const keyLabel: Record<string, string> = {
         <section>
           <div class="mb-4">
             <h2 class="text-sm font-semibold text-highlighted">
-              Test smart alert
+              Manual trigger smart alert
             </h2>
             <p class="text-sm text-muted mt-0.5">
-              Send a personalized smart-alert to one user from the live forecast — to verify the real message content.
+              Fire a smart alert on demand to preview the exact message users receive.
             </p>
           </div>
-
           <UPageCard variant="subtle">
+            <p class="text-sm font-medium text-highlighted">
+              Send a personalized smart-alert to one user
+            </p>
             <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
               <UFormField class="flex-1">
                 <USelectMenu
@@ -445,6 +445,28 @@ const keyLabel: Record<string, string> = {
                 {{ testAlertResult.body }}
               </p>
             </div>
+
+            <!-- Run the live smart alert for everyone (caution) -->
+            <div class="mt-4 pt-4 border-t border-default flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p class="text-sm font-medium text-highlighted">
+                  Run the live smart alert now
+                </p>
+                <p class="text-xs text-muted mt-0.5">
+                  Runs the real hourly job against the live forecast and sends alerts to
+                  <strong>all eligible consumers</strong> — same as the cron.
+                </p>
+              </div>
+              <UButton
+                icon="i-lucide-play"
+                color="warning"
+                variant="subtle"
+                class="shrink-0"
+                :loading="runningNow"
+                @click="showRunNowConfirm = true">
+                Run now
+              </UButton>
+            </div>
           </UPageCard>
         </section>
 
@@ -460,16 +482,16 @@ const keyLabel: Record<string, string> = {
           </div>
 
           <UPageCard variant="subtle" :ui="{ body: 'p-0' }">
-            <div v-if="!history" class="py-10 flex justify-center">
+            <div v-if="!historyQuery" class="py-10 flex justify-center">
               <UIcon name="i-lucide-loader-circle" class="size-5 text-muted animate-spin" />
             </div>
-            <div v-else-if="!history.length" class="py-10 text-center text-sm text-muted">
+            <div v-else-if="history.data.length === 0" class="py-10 text-center text-sm text-muted">
               No smart alerts sent yet.
             </div>
             <template v-else>
               <ul class="divide-y divide-default">
                 <li
-                  v-for="alert in history"
+                  v-for="alert in history.data"
                   :key="alert.id"
                   class="px-4 sm:px-6 py-3 space-y-1"
                 >
@@ -488,12 +510,12 @@ const keyLabel: Record<string, string> = {
                   </p>
                 </li>
               </ul>
-              <div v-if="historyPageCount > 1" class="flex items-center justify-between gap-4 px-4 sm:px-6 py-3 border-t border-default">
-                <span class="text-xs text-muted tabular-nums">{{ historyTotal }} total</span>
+              <div class="flex items-center justify-between gap-4 px-4 sm:px-6 py-3 border-t border-default">
+                <span class="text-xs text-muted tabular-nums">{{ history.total }} total</span>
                 <UPagination
                   v-model:page="historyPage"
-                  :total="historyTotal"
-                  :page-size="10"
+                  :items-per-page="history.pageSize"
+                  :total="history.total"
                   size="xs" />
               </div>
             </template>
@@ -554,13 +576,36 @@ const keyLabel: Record<string, string> = {
                 <span class="text-xs text-muted tabular-nums">{{ auditTotal }} total</span>
                 <UPagination
                   v-model:page="auditPage"
+                  :items-per-page="auditPageSize"
                   :total="auditTotal"
-                  :page-size="10"
                   size="xs" />
               </div>
             </template>
           </UPageCard>
         </section>
+
+        <!-- Caution: running the live smart alert broadcasts to all eligible consumers -->
+        <UModal
+          v-model:open="showRunNowConfirm"
+          title="Run smart alert now?"
+          description="This runs the live job against the current forecast and sends real notifications to every eligible consumer right now — exactly like the hourly cron.">
+          <template #body>
+            <div class="flex justify-end gap-2">
+              <UButton
+                label="Cancel"
+                color="neutral"
+                variant="subtle"
+                :disabled="runningNow"
+                @click="showRunNowConfirm = false" />
+              <UButton
+                label="Run now"
+                icon="i-lucide-play"
+                color="warning"
+                :loading="runningNow"
+                @click="confirmRunNow" />
+            </div>
+          </template>
+        </UModal>
       </div>
     </template>
   </UDashboardPanel>
