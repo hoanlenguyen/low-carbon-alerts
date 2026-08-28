@@ -25,15 +25,13 @@ function fallbackBody(s: ForecastSummary): string {
   const clean = e.cleanestWindow ? `${e.cleanestWindow.start}-${e.cleanestWindow.end}` : 'the low-emission hours'
   const high = e.highestWindow ? `${e.highestWindow.start}-${e.highestWindow.end}` : 'the peak hours'
   return [
-    'Here is a quick electricity forecast update.',
-    '',
     `For the next 24 hours, carbon intensity averages about ${e.avg24h} ${e.unit}, ${vs} this week's average. `
     + `The cleanest hours look to be around ${clean}, while emissions are highest around ${high}. `
     + `Renewable electricity is about ${s.renewable.min}-${s.renewable.max}% of generation.`,
     '',
     `Looking at the trend, renewable generation is ${s.renewable.trend} over the next day, and the grid has been getting ${s.weekTrend} this week.`,
     '',
-    'What can you do?',
+    'Recommended actions',
     `- Prefer the cleaner hours (around ${clean}) for flexible electricity use.`,
     `- If possible, avoid non-urgent use around ${high}.`,
     '- Keep essential use as normal and only shift what is easy and practical for you.'

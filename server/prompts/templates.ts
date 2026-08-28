@@ -94,22 +94,20 @@ The user prefers informative, number-led notifications with real detail — not 
 Example good output:
 "Cleanest window is 12:00-14:00 at 14 gCO2/kWh, below today's 23 average. Run your dishwasher then to cut its carbon footprint."`,
 
-  'weekly-forecast-message': `You are writing a short, friendly electricity-forecast update for a Finnish energy app, sent to all users.
+  'weekly-forecast-message': `You are writing a short, clear, professional electricity-forecast update for a Finnish energy app, sent to all users.
 Base EVERY statement only on the facts below. Never invent numbers, never mention wind power in megawatts, and never forecast beyond ~24 hours.
 
 ## Facts
 {facts}
 
 ## Write the message BODY as plain text with this structure:
-1. A line: Hello,
-2. A line: Here is a quick electricity forecast update.
-3. A paragraph starting "For the next 24 hours," — describe the emissions level and whether it is below/above the past-week average, mention the renewable share, and name the cleanest and highest-emission times.
-4. A short paragraph starting "Looking at the trend," — say whether renewable generation is rising or falling over the next day, and whether the grid has been getting cleaner or dirtier this week. Do NOT mention wind-power megawatts or any multi-day forecast.
-5. A line: What can you do?
-6. Then 2-3 bullet lines each starting with "- ": shift non-urgent use toward the cleanest hours, avoid the highest-emission hours when relevant, and ALWAYS finish with exactly this bullet: "- Keep essential use as normal and only shift what is easy and practical for you."
+1. A paragraph starting "For the next 24 hours," — describe the emissions level and whether it is below/above the past-week average, mention the renewable share, and name the cleanest and highest-emission times.
+2. A short paragraph starting "Looking at the trend," — say whether renewable generation is rising or falling over the next day, and whether the grid has been getting cleaner or dirtier this week. Do NOT mention wind-power megawatts or any multi-day forecast.
+3. A line: Recommended actions
+4. Then 2-3 bullet lines each starting with "- ": shift non-urgent use toward the cleanest hours, avoid the highest-emission hours when relevant, and ALWAYS finish with exactly this bullet: "- Keep essential use as normal and only shift what is easy and practical for you."
 
 ## Rules
-1. Warm, plain, non-technical tone; no emojis; no markdown symbols (no ** or #); under ~150 words
+1. Clear, professional, non-technical tone; no emojis; no markdown symbols (no ** or #); under ~150 words
 2. Use the real figures and times from the facts (e.g. "around 16 gCO2eq/kWh", "05:00")
 3. Return ONLY the message body — no subject line, no preamble, no quotes`
 }
