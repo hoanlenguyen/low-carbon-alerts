@@ -5,6 +5,12 @@
 // Android can prompt in-tab, but installing still gives an icon + unread badge.
 const { enablePush } = useNotifications()
 
+// persistInstall: keep the "Add to Home Screen" steps visible even after
+// notifications are granted (used in Settings and the onboarding final step).
+const props = withDefaults(defineProps<{ persistInstall?: boolean }>(), {
+  persistInstall: false
+})
+
 type Platform = 'desktop' | 'android' | 'ios'
 
 const ready = ref(false)
@@ -32,12 +38,20 @@ onMounted(() => {
 // iOS in a Safari tab (not installed) can't be prompted — needs Home Screen install first.
 const needsInstall = computed(() => platform.value === 'ios' && !isStandalone.value)
 const canPrompt = computed(() => permission.value === 'default' && !needsInstall.value)
-const hidden = computed(() => permission.value === 'granted' || permission.value === 'unsupported')
 
 // Add-to-Home-Screen guidance for mobile, shown whenever the app isn't installed.
 const showInstall = computed(() =>
   (platform.value === 'ios' || platform.value === 'android') && !isStandalone.value
 )
+
+// When granted, we normally hide the whole card. With persistInstall we keep it
+// visible as an install reference (only if there are steps left to show).
+const installOnly = computed(() => permission.value === 'granted' && props.persistInstall && showInstall.value)
+const hidden = computed(() => {
+  if (permission.value === 'unsupported') return true
+  if (permission.value === 'granted') return !installOnly.value
+  return false
+})
 const installSteps = computed(() => platform.value === 'ios'
   ? [
       'Open this site in Safari',
@@ -76,11 +90,16 @@ async function enable() {
       </div>
       <div class="flex-1 min-w-0">
         <p class="text-sm font-semibold text-highlighted">
-          Get low-carbon alerts
+          {{ installOnly ? 'Install the app on your phone' : 'Get low-carbon alerts' }}
+        </p>
+
+        <!-- Already enabled (install steps kept as a reference) -->
+        <p v-if="installOnly" class="text-sm text-muted mt-1 leading-relaxed">
+          Notifications are on. Add the app to your Home Screen for a one-tap icon and unread badge.
         </p>
 
         <!-- Blocked -->
-        <p v-if="permission === 'denied'" class="text-sm text-muted mt-1 leading-relaxed">
+        <p v-else-if="permission === 'denied'" class="text-sm text-muted mt-1 leading-relaxed">
           Notifications are blocked. Allow them for this site in your browser settings, then reload.
         </p>
 
@@ -94,7 +113,7 @@ async function enable() {
           Tap <strong>Enable</strong>, then <strong>Allow</strong> in the browser prompt.
         </p>
 
-        <div v-if="canPrompt" class="mt-3">
+        <div v-if="canPrompt && !installOnly" class="mt-3">
           <UButton
             size="sm"
             icon="i-lucide-bell"
@@ -120,7 +139,7 @@ async function enable() {
           </ol>
         </div>
 
-        <p class="text-xs text-dimmed mt-3">
+        <p v-if="!persistInstall" class="text-xs text-dimmed mt-3">
           You can turn notifications on or off anytime in
           <NuxtLink to="/app/settings" class="text-primary hover:underline">Settings → Push notifications</NuxtLink>.
         </p>

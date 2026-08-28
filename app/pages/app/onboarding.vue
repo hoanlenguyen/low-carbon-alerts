@@ -15,8 +15,11 @@ const currentStep = ref(0)
 const steps = [
   { title: 'Your Home', description: 'Household profile' },
   { title: 'Your Habits', description: 'Appliances & schedule' },
-  { title: 'Your Goals', description: 'Targets & alerts' }
+  { title: 'Your Goals', description: 'Targets & alerts' },
+  { title: 'Notifications', description: 'Install & enable' }
 ]
+
+const LAST_STEP = steps.length - 1
 
 // ── Step 1 state ──
 const housingType = ref<string>('')
@@ -35,7 +38,7 @@ const contractOptions = [
   { value: 'spot', label: 'Spot price' },
   { value: 'fixed', label: 'Fixed price' },
   { value: 'hybrid', label: 'Hybrid' },
-  { value: 'unknown', label: "Don't know" }
+  { value: 'unknown', label: 'Don\'t know' }
 ]
 
 const heatingOptions = [
@@ -99,6 +102,7 @@ const step3Valid = computed(() =>
 function canContinue() {
   if (currentStep.value === 0) return step1Valid.value
   if (currentStep.value === 1) return step2Valid.value
+  if (currentStep.value === 2) return step3Valid.value
   return true
 }
 
@@ -375,7 +379,7 @@ async function finish() {
       </div>
 
       <!-- Step 3: Your Goals -->
-      <div v-else class="flex flex-col gap-5">
+      <div v-else-if="currentStep === 2" class="flex flex-col gap-5">
         <div>
           <p class="text-base font-semibold text-highlighted">
             What do you want to achieve?
@@ -468,6 +472,26 @@ async function finish() {
         </div>
       </div>
 
+      <!-- Step 4: Notifications & install -->
+      <div v-else class="flex flex-col gap-5">
+        <div>
+          <p class="text-base font-semibold text-highlighted">
+            Get your alerts on this device
+          </p>
+          <p class="text-sm text-muted mt-0.5">
+            Turn on notifications so we can reach you at the cleanest times — and add the app to your Home Screen for one-tap access.
+          </p>
+        </div>
+
+        <NotificationTip persist-install />
+
+        <p class="text-xs text-dimmed">
+          You can change this anytime in
+          <NuxtLink to="/app/settings" class="text-primary hover:underline">Settings → Push notifications</NuxtLink>.
+          It's optional — you can finish setup either way.
+        </p>
+      </div>
+
       <!-- Footer nav -->
       <template #footer>
         <div class="flex items-center justify-between">
@@ -483,7 +507,7 @@ async function finish() {
           <div v-else />
 
           <UButton
-            v-if="currentStep < 2"
+            v-if="currentStep < LAST_STEP"
             color="primary"
             trailing-icon="i-lucide-arrow-right"
             :disabled="!canContinue()"

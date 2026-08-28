@@ -344,8 +344,8 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
         </div>
       </UPageCard>
 
-      <!-- Platform-aware enable + Add-to-Home-Screen guidance (hides once granted) -->
-      <NotificationTip class="mt-4" />
+      <!-- Platform-aware enable + Add-to-Home-Screen guidance (install steps stay visible) -->
+      <NotificationTip class="mt-4" persist-install />
     </section>
   </div>
 </template>
