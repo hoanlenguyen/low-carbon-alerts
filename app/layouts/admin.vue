@@ -43,6 +43,13 @@ const links = [[{
     open.value = false
   }
 }, {
+  label: 'Appliances',
+  icon: 'i-lucide-plug',
+  to: '/admin/appliances',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Scheduled jobs',
   icon: 'i-lucide-calendar-clock',
   to: '/admin/scheduled-jobs',

@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { useDrizzle, schema } from '../database'
 import type { ForecastData } from '../api/forecast/[series].get'
 import { buildColdStartRecommendation } from './buildColdStartRecommendation'
+import { getFlexibleAppliancePriority } from './appliancesCache'
 import { rewriteRagQuery } from './rewriteRagQuery'
 import { retrieveKnowledge } from './retrieveKnowledge'
 import { generateColdStartMessage } from './generateColdStartMessage'
@@ -52,11 +53,12 @@ export async function generateRecommendation(
     baseURL: getRequestURL(event).origin
   })
 
+  const appliancePriority = await getFlexibleAppliancePriority(event)
   const facts = buildColdStartRecommendation(carbon, {
     appliances: profile.appliances,
     activeHoursStart: profile.activeHoursStart,
     activeHoursEnd: profile.activeHoursEnd
-  })
+  }, appliancePriority)
 
   // Self-heal the knowledge base if the bundled tips changed since last embed
   // (best-effort — no manual reindex needed after a deploy that edited them).

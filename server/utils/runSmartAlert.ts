@@ -10,6 +10,7 @@ import {
 } from './lowCarbonWindow'
 import { generatePushMessage } from './generatePushMessage'
 import { flexibleAppliances } from './buildColdStartRecommendation'
+import { getFlexibleAppliancePriority } from './appliancesCache'
 import { sendNotification } from './sendNotification'
 
 const SYSTEM_SENDER_ID = 'system'
@@ -63,6 +64,9 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
   const profiles = await db.query.userProfiles.findMany()
   const profileByUser = new Map(profiles.map(p => [p.userId, p]))
 
+  // Catalog-driven appliance shiftability order — loaded once for the whole run.
+  const appliancePriority = await getFlexibleAppliancePriority(event)
+
   // Per-consumer debounce: users who already got a smart-alert within the window.
   const debounceFrom = new Date(now.getTime() - debounceHours * 3_600_000)
   const recentRows = await db
@@ -88,6 +92,9 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
     if (!profile) continue
 
     // The best low-carbon window inside THIS consumer's active hours.
+    // TODO: window length is fixed by MIN_WINDOW_HOURS / the horizon. Later, size it
+    // from the picked appliance's `typicalDurationMin` (catalog) so the window matches
+    // how long the load actually runs. Not wired yet — see appliances table.
     const window = findWindowBelowInActiveHours(
       forecast.points,
       threshold,
@@ -108,7 +115,7 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
       /* invalid JSON — leave empty */
     }
     const options = appliances.length
-      ? flexibleAppliances(appliances)
+      ? flexibleAppliances(appliances, appliancePriority)
       : ['Washing machine']
 
     const win = formatWindowRange(window.startMs, window.endMs)

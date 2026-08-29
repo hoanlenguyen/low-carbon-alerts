@@ -50,10 +50,11 @@ const heatingOptions = [
 ]
 
 // ── Step 2 state ──
-const applianceOptions = [
-  'Washing machine', 'Dishwasher', 'EV charger', 'Electric oven',
-  'Sauna', 'Tumble dryer', 'Hot tub', 'Heat pump'
-]
+// Appliance catalog comes from the admin-managed table (active rows only).
+type ApplianceOption = { slug: string, name: string, icon: string, category: string, description: string | null }
+const { data: applianceOptions } = await useFetch<ApplianceOption[]>('/api/appliances', {
+  default: () => [] as ApplianceOption[]
+})
 const selectedAppliances = ref<string[]>([])
 
 const activeHoursStart = ref('07:00')
@@ -298,15 +299,16 @@ async function finish() {
           <div class="flex flex-wrap gap-2">
             <button
               v-for="item in applianceOptions"
-              :key="item"
+              :key="item.slug"
               type="button"
-              class="rounded-full border px-3.5 py-1.5 text-xs transition cursor-pointer"
-              :class="selectedAppliances.includes(item)
+              class="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs transition cursor-pointer"
+              :class="selectedAppliances.includes(item.name)
                 ? 'border-primary text-primary bg-primary/10'
                 : 'border-default text-muted hover:border-default/80'"
-              @click="toggleAppliance(item)"
+              @click="toggleAppliance(item.name)"
             >
-              {{ item }}
+              <UIcon :name="item.icon" class="size-3.5 shrink-0" />
+              {{ item.name }}
             </button>
           </div>
         </div>
