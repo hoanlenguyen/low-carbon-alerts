@@ -3,6 +3,7 @@ const route = useRoute()
 const { user } = useUserSession()
 const { logout } = useLogout()
 const { messages, unreadCount, markAsRead, markAllAsRead, init } = useNotifications()
+const { earned } = useAchievements()
 const showInbox = ref(false)
 
 onMounted(init)
@@ -43,6 +44,16 @@ function isActive(to: string) {
 
       <div class="flex items-center gap-2">
         <span class="hidden sm:block text-sm text-muted">{{ user?.name || user?.email }}</span>
+
+        <!-- Earned achievement badges (each in its own color, hover for the name) -->
+        <div v-if="earned.length" class="hidden sm:flex items-center gap-1">
+          <UTooltip v-for="b in earned.slice(0, 6)" :key="b.id" :text="b.label">
+            <div class="size-6 rounded-full ring-1 flex items-center justify-center" :class="BADGE_COLORS[b.color].chip">
+              <UIcon :name="b.icon" class="size-3.5" :class="BADGE_COLORS[b.color].icon" />
+            </div>
+          </UTooltip>
+          <span v-if="earned.length > 6" class="text-xs text-dimmed tabular-nums">+{{ earned.length - 6 }}</span>
+        </div>
 
         <!-- Bell popover -->
         <UPopover v-model:open="showInbox">

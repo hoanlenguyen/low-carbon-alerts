@@ -41,6 +41,9 @@ function timeLabel(val: string) {
     <!-- Personalized recommendation -->
     <RecommendationCard />
 
+    <!-- Self-reported shift impact (estimated CO₂ saved) -->
+    <ImpactCard />
+
     <!-- General daily electricity forecast (next 24h) -->
     <ForecastCard />
 
@@ -103,6 +106,9 @@ function timeLabel(val: string) {
             <p class="text-sm text-muted mt-0.5 leading-relaxed line-clamp-2">
               {{ msg.body }}
             </p>
+
+            <!-- "I shifted it" action (smart-alert messages with context) -->
+            <ShiftActionRow :message-id="msg.id" />
           </div>
         </li>
       </ul>

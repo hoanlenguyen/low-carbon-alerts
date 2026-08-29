@@ -4,7 +4,7 @@ import { useDrizzle, schema } from '../../../database'
 import type { ForecastData } from '../../forecast/[series].get'
 import { findLowCarbonWindow, windowUrgency, next24hAverage, formatWindowRange } from '../../../utils/lowCarbonWindow'
 import { flexibleAppliances } from '../../../utils/buildColdStartRecommendation'
-import { getFlexibleAppliancePriority } from '../../../utils/appliancesCache'
+import { getFlexibleAppliancePriority, getApplianceCatalog } from '../../../utils/appliancesCache'
 import { generatePushMessage } from '../../../utils/generatePushMessage'
 import { sendNotification } from '../../../utils/sendNotification'
 
@@ -55,12 +55,26 @@ export default defineEventHandler(async (event) => {
   )
   const subject = `Clean energy window ${display.start} – ${display.end}`
 
-  await sendNotification(event, {
+  const { messageId } = await sendNotification(event, {
     subject,
     body,
     type: 'targeted',
     sentById: session.user.id,
     targetUserIds: [userId]
+  })
+
+  // Persist context so the consumer can confirm "I shifted it" on this test alert.
+  const catalog = await getApplianceCatalog(event)
+  const slugByName = new Map(catalog.map(a => [a.name.toLowerCase(), a.slug]))
+  await db.insert(schema.smartAlertContext).values({
+    messageId,
+    suggestedApplianceSlug: slugByName.get(options[0]!.toLowerCase()) ?? null,
+    windowStart: display.start,
+    windowEnd: display.end,
+    windowMinutes: Math.round((win.endMs - win.startMs) / 60_000),
+    carbonIntensity: win.intensity,
+    avg24h: next24hAverage(carbon.points),
+    createdAt: new Date()
   })
 
   return {

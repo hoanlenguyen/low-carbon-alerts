@@ -127,6 +127,9 @@ function timeLabel(val: string) {
             <p class="text-sm text-muted mt-1 leading-relaxed">
               {{ msg.body }}
             </p>
+
+            <!-- "I shifted it" action (smart-alert messages with context) -->
+            <ShiftActionRow :message-id="msg.id" />
           </div>
         </li>
       </ul>

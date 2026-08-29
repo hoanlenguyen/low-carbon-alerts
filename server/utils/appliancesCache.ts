@@ -15,9 +15,17 @@ export type ActiveAppliance = {
   description: string | null
 }
 
+export type ApplianceMeta = {
+  slug: string
+  name: string
+  typicalPowerKw: number | null
+  typicalDurationMin: number | null
+}
+
 const TTL_MS = 5 * 60_000
 let cache: { data: ActiveAppliance[], expires: number } | null = null
 let priorityCache: { data: string[], expires: number } | null = null
+let catalogCache: { data: ApplianceMeta[], expires: number } | null = null
 
 const FLEX_RANK: Record<'high' | 'medium' | 'low', number> = { high: 0, medium: 1, low: 2 }
 
@@ -57,8 +65,23 @@ export async function getFlexibleAppliancePriority(event: H3Event): Promise<stri
   return data
 }
 
+// Full catalog (all rows) with power/duration, for estimating shift impact and for
+// mapping profile appliance names ↔ slugs. Cached (isolate-local, TTL).
+export async function getApplianceCatalog(event: H3Event): Promise<ApplianceMeta[]> {
+  if (catalogCache && catalogCache.expires > Date.now()) return catalogCache.data
+
+  const db = useDrizzle(event)
+  const data = await db.query.appliances.findMany({
+    columns: { slug: true, name: true, typicalPowerKw: true, typicalDurationMin: true }
+  })
+
+  catalogCache = { data, expires: Date.now() + TTL_MS }
+  return data
+}
+
 // Called after any admin create/update/delete so this isolate serves fresh data.
 export function invalidateAppliancesCache() {
   cache = null
   priorityCache = null
+  catalogCache = null
 }
