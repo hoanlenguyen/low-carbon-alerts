@@ -57,5 +57,5 @@ export default defineEventHandler(async (event) => {
     page,
     pageSize: limit,
     pageCount: Math.ceil(total / limit)
-  }
+  } satisfies Pagination<HistoryRow>
 })

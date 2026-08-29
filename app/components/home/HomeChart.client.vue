@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { VisXYContainer, VisLine, VisAxis, VisArea, VisCrosshair, VisTooltip } from '@unovis/vue'
+import { VisXYContainer, VisStackedBar, VisAxis, VisCrosshair, VisTooltip } from '@unovis/vue'
 import type { Period, Range } from '~/types'
 
 const cardRef = useTemplateRef<HTMLElement | null>('cardRef')
@@ -66,16 +66,13 @@ const template = (d: DataRecord) => `${d.label}: ${formatNumber(d.count)}`
       class="h-96"
       :width="width"
     >
-      <VisLine
+      <VisStackedBar
         :x="x"
         :y="y"
         color="var(--ui-primary)"
-      />
-      <VisArea
-        :x="x"
-        :y="y"
-        color="var(--ui-primary)"
-        :opacity="0.1"
+        :rounded-corners="4"
+        :bar-padding="0.4"
+        :bar-max-width="28"
       />
 
       <VisAxis

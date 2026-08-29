@@ -4,6 +4,7 @@ import { useDrizzle, schema } from '../../../database'
 import type { ForecastData } from '../../forecast/[series].get'
 import { findLowCarbonWindow, windowUrgency, next24hAverage, formatWindowRange } from '../../../utils/lowCarbonWindow'
 import { flexibleAppliances } from '../../../utils/buildColdStartRecommendation'
+import { getFlexibleAppliancePriority } from '../../../utils/appliancesCache'
 import { generatePushMessage } from '../../../utils/generatePushMessage'
 import { sendNotification } from '../../../utils/sendNotification'
 
@@ -41,7 +42,8 @@ export default defineEventHandler(async (event) => {
   if (profile) {
     try { appliances = JSON.parse(profile.appliances) as string[] } catch { appliances = [] }
   }
-  const options = appliances.length ? flexibleAppliances(appliances) : ['Washing machine']
+  const appliancePriority = await getFlexibleAppliancePriority(event)
+  const options = appliances.length ? flexibleAppliances(appliances, appliancePriority) : ['Washing machine']
   const urgency = windowUrgency(win.startMs)
   const display = formatWindowRange(win.startMs, win.endMs)
 

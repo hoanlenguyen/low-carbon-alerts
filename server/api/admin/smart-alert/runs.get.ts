@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle(event)
 
-  const [lastSent, runs, [totals]] = await Promise.all([
+  const [lastSent, rows, [totals]] = await Promise.all([
     db.query.smartAlertRuns.findFirst({
       where: gte(schema.smartAlertRuns.recipientCount, 1),
       orderBy: desc(schema.smartAlertRuns.ranAt)
@@ -36,10 +36,10 @@ export default defineEventHandler(async (event) => {
 
   return {
     lastSent: lastSent ?? null,
-    runs,
+    data: rows,
     total,
     page,
     pageSize: limit,
     pageCount: Math.ceil(total / limit)
-  }
+  } satisfies Pagination<RunRow> & { lastSent: RunRow | null }
 })

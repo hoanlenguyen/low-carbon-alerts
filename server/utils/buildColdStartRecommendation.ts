@@ -2,8 +2,10 @@ import type { ForecastData } from '../api/forecast/[series].get'
 
 const TZ = 'Europe/Helsinki'
 
-// Flexible loads a household can realistically time-shift, most-shiftable first.
-// Matched case-insensitively against the user's onboarding appliance labels.
+// Fallback shiftability order, most-shiftable first. The live ranking now comes from
+// the admin `appliances` catalog (getFlexibleAppliancePriority); this list only backs
+// it up when the catalog is empty or unavailable. Matched case-insensitively against
+// the user's onboarding appliance labels.
 const FLEXIBLE_PRIORITY = [
   'EV charger',
   'Dishwasher',
@@ -50,9 +52,10 @@ function isWithinActiveHours(pointMin: number, startMin: number, endMin: number)
   return pointMin >= startMin || pointMin <= endMin
 }
 
-export function pickFlexibleAppliance(appliances: string[]): string {
+export function pickFlexibleAppliance(appliances: string[], priority: string[] = FLEXIBLE_PRIORITY): string {
+  const list = priority.length ? priority : FLEXIBLE_PRIORITY
   const lower = appliances.map(a => a.toLowerCase())
-  for (const flex of FLEXIBLE_PRIORITY) {
+  for (const flex of list) {
     if (lower.includes(flex.toLowerCase())) return flex
   }
   // No obviously flexible appliance — fall back to the first they listed, else a generic phrase.
@@ -60,11 +63,13 @@ export function pickFlexibleAppliance(appliances: string[]): string {
 }
 
 // The user's time-shiftable appliances, ordered by shiftability — the shortlist we
-// hand the LLM to pick the best fit for a given window. Falls back to whatever they
-// listed (or a generic) if none are in the flexible set.
-export function flexibleAppliances(appliances: string[]): string[] {
+// hand the LLM to pick the best fit for a given window. `priority` is the catalog-driven
+// order (getFlexibleAppliancePriority); falls back to whatever they listed (or a generic)
+// if none are in the flexible set.
+export function flexibleAppliances(appliances: string[], priority: string[] = FLEXIBLE_PRIORITY): string[] {
+  const list = priority.length ? priority : FLEXIBLE_PRIORITY
   const lower = appliances.map(a => a.toLowerCase())
-  const matched = FLEXIBLE_PRIORITY.filter(flex => lower.includes(flex.toLowerCase()))
+  const matched = list.filter(flex => lower.includes(flex.toLowerCase()))
   if (matched.length) return matched
   return appliances.length ? appliances : ['a high-energy appliance']
 }
@@ -84,9 +89,10 @@ function savingBand(windowValue: number, avg24h: number): 'low' | 'medium' | 'hi
  */
 export function buildColdStartRecommendation(
   carbon: ForecastData,
-  profile: ColdStartProfile
+  profile: ColdStartProfile,
+  priority: string[] = FLEXIBLE_PRIORITY
 ): ColdStartFacts {
-  const appliance = pickFlexibleAppliance(profile.appliances)
+  const appliance = pickFlexibleAppliance(profile.appliances, priority)
 
   const now = Date.now()
   const horizon = now + 24 * 3_600_000

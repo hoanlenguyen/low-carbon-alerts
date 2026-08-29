@@ -28,6 +28,11 @@ export const messages = sqliteTable('messages', {
   body: text('body').notNull(),
   type: text('type', { enum: ['broadcast', 'targeted', 'smart-alert', 'forecast'] }).notNull(),
   sentById: text('sent_by_id').notNull(),
+  // Groups the per-consumer smart-alert messages produced by one runSmartAlert tick
+  // back to their smart_alert_runs row, so message lists can collapse a run into a
+  // single entry (recipient count = messages in the run, sent time = run.ranAt).
+  // Null for non-smart-alert messages.
+  smartAlertRunsId: text('smart_alert_runs_id'),
   sentAt: integer('sent_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
@@ -111,6 +116,26 @@ export const userProfiles = sqliteTable('user_profiles', {
   followsPrices: text('follows_prices').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
+
+// Catalog of household appliances offered in onboarding and referenced (by `name`)
+// from recommendations / kb_chunks. `flexibility` drives which appliance the smart
+// alert prefers to shift; power/duration are optional impact metadata.
+export const appliances = sqliteTable('appliances', {
+  id: text('id').primaryKey(),
+  slug: text('slug').notNull().unique(), // stable machine key, e.g. 'dishwasher'
+  name: text('name').notNull().unique(), // display label + soft join key ("Dishwasher")
+  icon: text('icon').notNull(), // lucide icon name
+  category: text('category', { enum: ['wet', 'heating', 'ev', 'cooking', 'leisure', 'other'] }).notNull(),
+  flexibility: text('flexibility', { enum: ['high', 'medium', 'low'] }).notNull(), // shiftability
+  typicalPowerKw: real('typical_power_kw'), // nullable — rough draw for impact estimates
+  typicalDurationMin: integer('typical_duration_min'), // nullable — run length, sizes the window
+  description: text('description'), // nullable — short helper text
+  sortOrder: integer('sort_order').notNull().default(0), // onboarding option order
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true), // show in the end-user onboarding picker
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+})
+export type Appliance = typeof appliances.$inferSelect
 
 // One active recommendation per user (cold-start for now; see prompts/02_cold_start.md).
 export const recommendations = sqliteTable('recommendations', {
