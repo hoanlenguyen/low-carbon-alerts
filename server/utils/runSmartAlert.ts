@@ -10,7 +10,7 @@ import {
 } from './lowCarbonWindow'
 import { generatePushMessage } from './generatePushMessage'
 import { flexibleAppliances } from './buildColdStartRecommendation'
-import { getFlexibleAppliancePriority } from './appliancesCache'
+import { getFlexibleAppliancePriority, getApplianceCatalog } from './appliancesCache'
 import { sendNotification } from './sendNotification'
 
 const SYSTEM_SENDER_ID = 'system'
@@ -66,6 +66,9 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
 
   // Catalog-driven appliance shiftability order — loaded once for the whole run.
   const appliancePriority = await getFlexibleAppliancePriority(event)
+  // Name → slug map so we can persist the suggested appliance as a catalog slug.
+  const catalog = await getApplianceCatalog(event)
+  const slugByName = new Map(catalog.map(a => [a.name.toLowerCase(), a.slug]))
 
   // Per-consumer debounce: users who already got a smart-alert within the window.
   const debounceFrom = new Date(now.getTime() - debounceHours * 3_600_000)
@@ -139,13 +142,25 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
       config.openaiLlmModel || undefined
     )
 
-    await sendNotification(event, {
+    const { messageId } = await sendNotification(event, {
       subject: `Clean energy window ${win.start} – ${win.end}`,
       body,
       type: 'smart-alert',
       sentById: SYSTEM_SENDER_ID,
       targetUserIds: [user.id],
       smartAlertRunId: runId
+    })
+
+    // Persist structured context so the user's "I shifted it" can estimate savings.
+    await db.insert(schema.smartAlertContext).values({
+      messageId,
+      suggestedApplianceSlug: slugByName.get(options[0]!.toLowerCase()) ?? null,
+      windowStart: win.start,
+      windowEnd: win.end,
+      windowMinutes: Math.round((window.endMs - window.startMs) / 60_000),
+      carbonIntensity: window.intensity,
+      avg24h,
+      createdAt: now
     })
     sent++
   }

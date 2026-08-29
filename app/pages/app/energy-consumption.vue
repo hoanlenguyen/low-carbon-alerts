@@ -5,15 +5,8 @@ const toast = useToast()
 
 const { data: saved, status } = useFetch('/api/user/profile', { server: false })
 
-// ── Stepper ──
-const stepperRef = useTemplateRef('stepper')
-const currentStep = ref(0)
-
-const steps = [
-  { title: 'Your Home', description: 'Household profile' },
-  { title: 'Your Habits', description: 'Appliances & schedule' },
-  { title: 'Your Goals', description: 'Targets & alerts' }
-]
+// The page shows all profile details read-only; Edit reveals the full form at once.
+const editing = ref(false)
 
 // ── Step 1 ──
 const housingType = ref('')
@@ -114,18 +107,41 @@ function toggleNotifTime(val: string) {
 const step1Valid = computed(() => !!housingType.value && !!contractType.value && !!primaryHeating.value)
 const step2Valid = computed(() => selectedAppliances.value.length > 0 && selectedNotifTimes.value.length > 0)
 const step3Valid = computed(() => !!energyGoal.value && !!followsPrices.value)
+const allValid = computed(() => step1Valid.value && step2Valid.value && step3Valid.value)
 
-function canContinue() {
-  if (currentStep.value === 0) return step1Valid.value
-  if (currentStep.value === 1) return step2Valid.value
-  return true
+// ── Read-only label helpers ──
+function labelOf(options: { value: string, label: string }[], value: string) {
+  return options.find(o => o.value === value)?.label ?? '—'
+}
+const notifStyleLabel = computed(() => (notifStyle.value === 'detailed' ? 'Data-rich' : 'Simple & plain'))
+
+function syncFromSaved() {
+  const p = saved.value
+  if (!p) return
+  housingType.value = p.housingType
+  householdSize.value = p.householdSize
+  contractType.value = p.contractType
+  primaryHeating.value = p.primaryHeating
+  selectedAppliances.value = [...p.appliances]
+  activeHoursStart.value = p.activeHoursStart
+  activeHoursEnd.value = p.activeHoursEnd
+  selectedPeakTimes.value = [...p.peakTimes]
+  selectedNotifTimes.value = [...p.notifTimes]
+  energyGoal.value = p.energyGoal
+  notifStyle.value = p.notifStyle as 'detailed' | 'simple'
+  followsPrices.value = p.followsPrices
+}
+
+function cancelEdit() {
+  syncFromSaved() // discard unsaved changes
+  editing.value = false
 }
 
 // ── Save ──
 const saving = ref(false)
 
 async function save() {
-  if (!step3Valid.value) return
+  if (!allValid.value) return
   saving.value = true
   try {
     await $fetch('/api/auth/onboarding', {
@@ -146,6 +162,7 @@ async function save() {
       }
     })
     await refreshNuxtData()
+    editing.value = false
     toast.add({ title: 'Profile saved', color: 'success' })
   } catch {
     toast.add({ title: 'Failed to save', color: 'error' })
@@ -167,15 +184,78 @@ async function save() {
     </div>
 
     <template v-else>
-      <UStepper
-        ref="stepper"
-        v-model="currentStep"
-        :items="steps"
-      />
+      <!-- Achievements — milestone badges derived from your shift impact -->
+      <AchievementsCard />
 
+      <!-- Energy Consumption detail -->
       <UCard>
-        <!-- Step 1: Your Home -->
-        <div v-if="currentStep === 0" class="flex flex-col gap-5">
+        <template #header>
+          <div class="flex items-start justify-between gap-3 w-full">
+            <div>
+              <p class="font-semibold text-sm text-highlighted">Energy Consumption detail</p>
+              <p class="text-xs text-muted mt-0.5">Everything we use to personalise your carbon alerts.</p>
+            </div>
+            <UButton v-if="!editing" size="sm" variant="soft" icon="i-lucide-pencil" @click="editing = true">
+              Edit
+            </UButton>
+          </div>
+        </template>
+
+        <!-- Read-only summary: all details at once -->
+        <dl v-if="!editing" class="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-dimmed">Housing type</dt>
+            <dd class="text-sm text-highlighted mt-0.5">{{ labelOf(housingOptions, housingType) }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-dimmed">Household size</dt>
+            <dd class="text-sm text-highlighted mt-0.5">{{ householdSize }} {{ householdSize === 1 ? 'person' : 'people' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-dimmed">Electricity contract</dt>
+            <dd class="text-sm text-highlighted mt-0.5">{{ labelOf(contractOptions, contractType) }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-dimmed">Primary heating</dt>
+            <dd class="text-sm text-highlighted mt-0.5">{{ labelOf(heatingOptions, primaryHeating) }}</dd>
+          </div>
+          <div class="sm:col-span-2">
+            <dt class="text-xs uppercase tracking-wide text-dimmed">Appliances</dt>
+            <dd class="flex flex-wrap gap-1.5 mt-1.5">
+              <UBadge v-for="a in selectedAppliances" :key="a" color="neutral" variant="subtle">{{ a }}</UBadge>
+              <span v-if="!selectedAppliances.length" class="text-sm text-muted">—</span>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-dimmed">Active hours</dt>
+            <dd class="text-sm text-highlighted mt-0.5 font-mono">{{ activeHoursStart }} – {{ activeHoursEnd }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-dimmed">Peak usage times</dt>
+            <dd class="text-sm text-highlighted mt-0.5">{{ selectedPeakTimes.map(v => labelOf(peakTimeOptions, v)).join(', ') || '—' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-dimmed">Preferred alert times</dt>
+            <dd class="text-sm text-highlighted mt-0.5 font-mono">{{ selectedNotifTimes.join(', ') || '—' }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-dimmed">Primary goal</dt>
+            <dd class="text-sm text-highlighted mt-0.5">{{ labelOf(goalOptions, energyGoal) }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-dimmed">Notification style</dt>
+            <dd class="text-sm text-highlighted mt-0.5">{{ notifStyleLabel }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-dimmed">Follows prices</dt>
+            <dd class="text-sm text-highlighted mt-0.5">{{ labelOf(followsPricesOptions, followsPrices) }}</dd>
+          </div>
+        </dl>
+
+        <!-- Edit: all sections stacked (no stepper) -->
+        <div v-else class="flex flex-col gap-8">
+          <!-- Your Home -->
+          <div class="flex flex-col gap-5">
           <div>
             <p class="text-base font-semibold text-highlighted">Your home</p>
             <p class="text-sm text-muted mt-0.5">Helps us tailor recommendations to your setup</p>
@@ -260,8 +340,8 @@ async function save() {
           </div>
         </div>
 
-        <!-- Step 2: Your Habits -->
-        <div v-else-if="currentStep === 1" class="flex flex-col gap-5">
+          <!-- Your Habits -->
+          <div class="flex flex-col gap-5">
           <div>
             <p class="text-base font-semibold text-highlighted">Your habits & appliances</p>
             <p class="text-sm text-muted mt-0.5">We use this to find flexible loads and ideal alert windows</p>
@@ -347,8 +427,8 @@ async function save() {
           </div>
         </div>
 
-        <!-- Step 3: Your Goals -->
-        <div v-else class="flex flex-col gap-5">
+          <!-- Your Goals -->
+          <div class="flex flex-col gap-5">
           <div>
             <p class="text-base font-semibold text-highlighted">What do you want to achieve?</p>
             <p class="text-sm text-muted mt-0.5">Shapes the tone and focus of your recommendations</p>
@@ -423,41 +503,22 @@ async function save() {
           </div>
         </div>
 
-        <!-- Footer nav -->
-        <template #footer>
-          <div class="flex items-center justify-between">
-            <UButton
-              v-if="currentStep > 0"
-              variant="ghost"
-              color="neutral"
-              leading-icon="i-lucide-arrow-left"
-              @click="stepperRef?.prev()"
-            >
-              Back
+          <!-- Save / cancel -->
+          <div class="flex items-center justify-end gap-2 pt-4 border-t border-default">
+            <UButton variant="ghost" color="neutral" :disabled="saving" @click="cancelEdit">
+              Cancel
             </UButton>
-            <div v-else />
-
             <UButton
-              v-if="currentStep < 2"
               color="primary"
-              trailing-icon="i-lucide-arrow-right"
-              :disabled="!canContinue()"
-              @click="stepperRef?.next()"
-            >
-              Continue
-            </UButton>
-            <UButton
-              v-else
-              color="success"
-              leading-icon="i-lucide-check"
+              icon="i-lucide-check"
               :loading="saving"
-              :disabled="!step3Valid"
+              :disabled="!allValid"
               @click="save"
             >
               Save changes
             </UButton>
           </div>
-        </template>
+        </div>
       </UCard>
     </template>
   </div>

@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, real, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -89,6 +89,35 @@ export const smartAlertRuns = sqliteTable('smart_alert_runs', {
   windowEnd: text('window_end'), // "HH:MM", null if no window
   recipientCount: integer('recipient_count').notNull().default(0)
 })
+
+// Structured context for one sent smart-alert message, captured at send time so a
+// user's "I shifted it" confirmation can estimate the CO2 avoided. 1:1 with a
+// smart-alert messages row (only smart alerts carry a window + suggested appliance).
+export const smartAlertContext = sqliteTable('smart_alert_context', {
+  messageId: text('message_id').primaryKey(),
+  suggestedApplianceSlug: text('suggested_appliance_slug'),
+  windowStart: text('window_start'), // "HH:MM" display
+  windowEnd: text('window_end'),
+  windowMinutes: integer('window_minutes'), // clean-window length, caps credited run time
+  carbonIntensity: real('carbon_intensity'), // gCO₂/kWh at the window
+  avg24h: real('avg_24h'), // 24h grid average at send time
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+})
+export type SmartAlertContext = typeof smartAlertContext.$inferSelect
+
+// A user's self-reported "I shifted a load for this alert". One per (user, message);
+// estimatedSavingG is snapshotted at confirm time so later catalog edits don't rewrite it.
+export const messageActions = sqliteTable('message_actions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  messageId: text('message_id').notNull(),
+  applianceSlug: text('appliance_slug'), // the appliance they say they shifted (catalog slug)
+  estimatedSavingG: integer('estimated_saving_g').notNull().default(0),
+  confirmedAt: integer('confirmed_at', { mode: 'timestamp' }).notNull()
+}, t => ([
+  uniqueIndex('message_actions_user_message_unique').on(t.userId, t.messageId)
+]))
+export type MessageAction = typeof messageActions.$inferSelect
 
 export const auditLogs = sqliteTable('audit_logs', {
   id: text('id').primaryKey(),
