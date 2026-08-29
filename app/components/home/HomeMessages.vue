@@ -11,7 +11,7 @@ const props = defineProps<{
 type RecentMessage = {
   id: string
   subject: string
-  type: 'broadcast' | 'targeted'
+  type: 'broadcast' | 'targeted' | 'smart-alert' | 'forecast'
   sentAt: string | null
   createdAt: string
   recipients: number
@@ -69,7 +69,7 @@ const columns: TableColumn<RecentMessage>[] = [
         Recent Messages
       </p>
       <UButton
-        to="/admin/notifications"
+        to="/admin/messages"
         variant="ghost"
         color="neutral"
         size="xs"

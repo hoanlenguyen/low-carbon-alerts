@@ -9,6 +9,8 @@ interface SendOptions {
   type: 'broadcast' | 'targeted' | 'smart-alert' | 'forecast'
   sentById: string
   targetUserIds?: string[]
+  // Set by runSmartAlert so all per-consumer messages from one run share a run id.
+  smartAlertRunId?: string
 }
 
 // D1/SQLite caps bound variables per statement (~999) — chunk large writes and
@@ -62,6 +64,7 @@ export async function sendNotification(event: H3Event, opts: SendOptions) {
     body: opts.body,
     type: opts.type,
     sentById: opts.sentById,
+    smartAlertRunsId: opts.smartAlertRunId ?? null,
     sentAt: now,
     createdAt: now
   })

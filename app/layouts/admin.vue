@@ -36,6 +36,13 @@ const links = [[{
     open.value = false
   }
 }, {
+  label: 'Sent messages',
+  icon: 'i-lucide-send',
+  to: '/admin/messages',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Energy consumers',
   icon: 'i-lucide-users',
   to: '/admin/customers',

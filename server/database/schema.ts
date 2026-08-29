@@ -28,6 +28,11 @@ export const messages = sqliteTable('messages', {
   body: text('body').notNull(),
   type: text('type', { enum: ['broadcast', 'targeted', 'smart-alert', 'forecast'] }).notNull(),
   sentById: text('sent_by_id').notNull(),
+  // Groups the per-consumer smart-alert messages produced by one runSmartAlert tick
+  // back to their smart_alert_runs row, so message lists can collapse a run into a
+  // single entry (recipient count = messages in the run, sent time = run.ranAt).
+  // Null for non-smart-alert messages.
+  smartAlertRunsId: text('smart_alert_runs_id'),
   sentAt: integer('sent_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })

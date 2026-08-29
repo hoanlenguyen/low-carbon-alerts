@@ -87,6 +87,9 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
   let sent = 0
   let anyWindow = false
 
+  // Run id created up front so every per-consumer message can reference it (grouping).
+  const runId = crypto.randomUUID()
+
   for (const user of users) {
     const profile = profileByUser.get(user.id)
     if (!profile) continue
@@ -141,7 +144,8 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
       body,
       type: 'smart-alert',
       sentById: SYSTEM_SENDER_ID,
-      targetUserIds: [user.id]
+      targetUserIds: [user.id],
+      smartAlertRunId: runId
     })
     sent++
   }
@@ -149,7 +153,7 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
   // One run row per tick. Windows differ per consumer, so the window columns stay
   // null; windowFound marks whether any consumer had a qualifying window.
   await db.insert(schema.smartAlertRuns).values({
-    id: crypto.randomUUID(),
+    id: runId,
     ranAt: now,
     windowFound: anyWindow,
     recipientCount: sent
