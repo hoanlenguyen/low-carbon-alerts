@@ -19,7 +19,7 @@ interface ScheduledJob {
 }
 
 // Users list for targeted jobs
-const { data: users } = await useFetch<{ id: string, name: string | null, email: string }[]>('/api/admin/users', { lazy: true })
+const { data: users } = await useFetch<{ id: string, name: string | null, email: string }[]>('/api/admin/users', { lazy: true, query: { active: 1 } })
 
 // Scheduled jobs
 const { data: jobs, refresh: refreshJobs } = await useFetch<ScheduledJob[]>('/api/admin/notifications/scheduled', { lazy: true })

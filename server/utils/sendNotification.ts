@@ -1,4 +1,4 @@
-import { eq, inArray } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { useDrizzle, schema } from '../database'
 import { getFcmAccessToken } from './getFcmAccessToken'
@@ -71,12 +71,14 @@ export async function sendNotification(event: H3Event, opts: SendOptions) {
 
   let recipientIds: string[]
   if (opts.type === 'broadcast' || opts.type === 'forecast') {
+    // Broadcasts resolve their own recipients — only active consumers.
     const allUsers = await db.query.users.findMany({
-      where: eq(schema.users.role, 'user'),
+      where: and(eq(schema.users.role, 'user'), eq(schema.users.status, 'active')),
       columns: { id: true }
     })
     recipientIds = allUsers.map(u => u.id)
   } else {
+    // Targeted: ids are chosen by the caller from the active-consumer list.
     recipientIds = opts.targetUserIds ?? []
   }
 

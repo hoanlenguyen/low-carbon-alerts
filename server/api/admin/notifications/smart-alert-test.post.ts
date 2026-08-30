@@ -23,12 +23,12 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const db = useDrizzle(event)
 
-  // Only end-users (role 'user') can be alert targets — never admins.
+  // Only active end-users (role 'user') can be alert targets — never admins or inactive accounts.
   const user = await db.query.users.findFirst({
-    where: and(eq(schema.users.id, userId), eq(schema.users.role, 'user'))
+    where: and(eq(schema.users.id, userId), eq(schema.users.role, 'user'), eq(schema.users.status, 'active'))
   })
   if (!user) {
-    throw createError({ statusCode: 404, statusMessage: 'End-user not found' })
+    throw createError({ statusCode: 404, statusMessage: 'Active end-user not found' })
   }
   const profile = await db.query.userProfiles.findFirst({ where: eq(schema.userProfiles.userId, userId) })
 

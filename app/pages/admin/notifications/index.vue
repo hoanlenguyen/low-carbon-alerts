@@ -7,7 +7,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth' })
 const toast = useToast()
 
 // ── Users list for targeted sends ──
-const { data: users } = await useFetch<{ id: string, name: string | null, email: string }[]>('/api/admin/users', { lazy: true })
+const { data: users } = await useFetch<{ id: string, name: string | null, email: string }[]>('/api/admin/users', { lazy: true, query: { active: 1 } })
 
 // ── Templates ──
 const { data: templates, refresh: refreshTemplates } = await useFetch('/api/admin/notifications/templates', { lazy: true })

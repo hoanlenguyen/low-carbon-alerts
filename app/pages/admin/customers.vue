@@ -89,6 +89,31 @@ function copyToClipboard(text: string, description: string) {
   navigator.clipboard.writeText(text)
   toast.add({ title: 'Copied', description })
 }
+
+// Toggle a consumer active/inactive (behind a confirm dialog). Inactive consumers
+// stop receiving any messages.
+const statusTarget = ref<Customer | null>(null)
+const togglingStatus = ref(false)
+const nextStatus = computed(() => (statusTarget.value?.status === 'active' ? 'inactive' : 'active'))
+
+async function confirmToggleStatus() {
+  const customer = statusTarget.value
+  if (!customer) return
+  const next = nextStatus.value
+  togglingStatus.value = true
+  try {
+    await $fetch(`/api/admin/users/${customer.id}`, { method: 'PATCH', body: { status: next } })
+    toast.add({ title: next === 'active' ? 'Consumer activated' : 'Consumer deactivated', color: 'success' })
+    statusTarget.value = null
+    await refresh() // reload so the row reflects the change (and respects the status filter)
+  } catch (e: unknown) {
+    const err = e as { data?: { statusMessage?: string } }
+    toast.add({ title: err?.data?.statusMessage || 'Update failed', color: 'error' })
+    await refresh()
+  } finally {
+    togglingStatus.value = false
+  }
+}
 </script>
 
 <template>
@@ -159,7 +184,9 @@ function copyToClipboard(text: string, description: string) {
                   {{ sortDir === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th class="border-b border-default w-10" />
+              <th class="text-right px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-28">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -226,23 +253,38 @@ function copyToClipboard(text: string, description: string) {
 
               <!-- Actions -->
               <td class="px-3 py-3 border-b border-default">
-                <UDropdownMenu
-                  :content="{ align: 'end' }"
-                  :items="[
-                    { type: 'label', label: customer.email },
-                    { label: 'Copy ID', icon: 'i-lucide-copy', onSelect: () => copyToClipboard(customer.id, 'User ID copied') },
-                    { label: 'Copy email', icon: 'i-lucide-mail', onSelect: () => copyToClipboard(customer.email, 'Email copied') }
-                  ]"
-                >
-                  <UButton
-                    icon="i-lucide-ellipsis-vertical"
-                    color="neutral"
-                    variant="ghost"
-                    size="xs"
-                    class="opacity-0 group-hover:opacity-100 transition-opacity"
-                    aria-label="Consumer actions"
-                  />
-                </UDropdownMenu>
+                <div class="flex items-center justify-end gap-1">
+                  <UTooltip text="Copy ID">
+                    <UButton
+                      icon="i-lucide-copy"
+                      color="neutral"
+                      variant="ghost"
+                      size="xs"
+                      aria-label="Copy user ID"
+                      @click="copyToClipboard(customer.id, 'User ID copied')"
+                    />
+                  </UTooltip>
+                  <UTooltip text="Copy email">
+                    <UButton
+                      icon="i-lucide-mail"
+                      color="neutral"
+                      variant="ghost"
+                      size="xs"
+                      aria-label="Copy email"
+                      @click="copyToClipboard(customer.email, 'Email copied')"
+                    />
+                  </UTooltip>
+                  <UTooltip :text="customer.status === 'active' ? 'Deactivate' : 'Activate'">
+                    <UButton
+                      :icon="customer.status === 'active' ? 'i-lucide-user-x' : 'i-lucide-user-check'"
+                      :color="customer.status === 'active' ? 'error' : 'success'"
+                      variant="ghost"
+                      size="xs"
+                      :aria-label="customer.status === 'active' ? 'Deactivate consumer' : 'Activate consumer'"
+                      @click="statusTarget = customer"
+                    />
+                  </UTooltip>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -268,6 +310,28 @@ function copyToClipboard(text: string, description: string) {
           @update:page="(p: number) => { pageIndex = p - 1 }"
         />
       </div>
+
+      <!-- Activate / deactivate confirmation -->
+      <UModal
+        :open="!!statusTarget"
+        :title="`${nextStatus === 'inactive' ? 'Deactivate' : 'Activate'} ${statusTarget?.name || statusTarget?.email || 'consumer'}?`"
+        :description="nextStatus === 'inactive'
+          ? 'They will stop receiving all messages — broadcasts, forecasts, targeted sends, and smart alerts — until reactivated.'
+          : 'They will start receiving messages again and reappear in send/target pickers.'"
+        @update:open="(v: boolean) => { if (!v) statusTarget = null }"
+      >
+        <template #body>
+          <div class="flex justify-end gap-2">
+            <UButton label="Cancel" color="neutral" variant="subtle" :disabled="togglingStatus" @click="statusTarget = null" />
+            <UButton
+              :label="nextStatus === 'inactive' ? 'Deactivate' : 'Activate'"
+              :color="nextStatus === 'inactive' ? 'error' : 'success'"
+              :loading="togglingStatus"
+              @click="confirmToggleStatus"
+            />
+          </div>
+        </template>
+      </UModal>
     </template>
   </UDashboardPanel>
 </template>
