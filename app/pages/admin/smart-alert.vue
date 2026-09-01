@@ -134,7 +134,7 @@ const auditTotal = computed(() => auditResponse.value?.total ?? 0)
 const auditPageSize = computed(() => auditResponse.value?.pageSize ?? AUDIT_LOG_PAGE_SIZE)
 
 // ── Test smart alert (send a personalized alert to one user, verify content) ────
-const { data: users } = useFetch<{ id: string, name: string | null, email: string }[]>('/api/admin/users', { server: false })
+const { data: users } = useFetch<{ id: string, userName: string, name: string | null, email: string | null }[]>('/api/admin/users', { server: false, query: { active: 1 } })
 const testAlertUserId = ref<string>()
 const testAlertLoading = ref(false)
 const testAlertResult = ref<{ to: string, subject: string, body: string } | null>(null)
@@ -418,7 +418,7 @@ const keyLabel: Record<string, string> = {
               <UFormField class="flex-1">
                 <USelectMenu
                   v-model="testAlertUserId"
-                  :items="(users ?? []).map(u => ({ label: u.name ? `${u.name} · ${u.email}` : u.email, value: u.id }))"
+                  :items="(users ?? []).map(u => ({ label: u.name ? `${u.userName} · ${u.name}` : u.userName, value: u.id }))"
                   value-key="value"
                   placeholder="Select a consumer"
                   class="w-full"

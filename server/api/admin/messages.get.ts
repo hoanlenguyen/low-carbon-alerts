@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
   // list them (e.g. first few + "+N more", or a dedicated per-recipient drill-down)
   // instead of only resolving the single-recipient case.
   const singleIds = ids.filter(id => (countById.get(id) ?? 0) === 1)
-  const recipientById = new Map<string, { name: string | null, email: string }>()
+  const recipientById = new Map<string, { name: string | null, email: string | null }>()
   if (singleIds.length) {
     const recs = await db
       .select({

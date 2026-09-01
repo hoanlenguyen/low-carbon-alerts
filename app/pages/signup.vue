@@ -8,7 +8,8 @@ definePageMeta({
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email'),
+  userName: z.string().min(3, 'Username must be at least 3 characters').max(60),
+  email: z.string().email('Invalid email').optional().or(z.literal('')),
   password: z.string().min(8, 'Must be at least 8 characters')
 })
 
@@ -16,6 +17,7 @@ type Schema = z.output<typeof schema>
 
 const state = reactive<Partial<Schema>>({
   name: undefined,
+  userName: undefined,
   email: undefined,
   password: undefined
 })
@@ -81,12 +83,16 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           <UInput v-model="state.name" class="w-full" autocomplete="name" />
         </UFormField>
 
-        <UFormField label="Email" name="email">
+        <UFormField label="Username" name="userName">
+          <UInput v-model="state.userName" class="w-full" autocomplete="username" />
+        </UFormField>
+
+        <UFormField label="Email" name="email" hint="Optional">
           <UInput
             v-model="state.email"
             type="email"
             class="w-full"
-            autocomplete="username"
+            autocomplete="email"
           />
         </UFormField>
 

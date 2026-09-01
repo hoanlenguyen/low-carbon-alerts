@@ -1,10 +1,10 @@
 import { z } from 'zod'
-import { eq, ne, and } from 'drizzle-orm'
+import { and, eq, ne } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../database'
 
 const bodySchema = z.object({
   name: z.string().min(2),
-  email: z.string().email()
+  email: z.string().email().optional().or(z.literal(''))
 })
 
 export default defineEventHandler(async (event) => {
@@ -14,26 +14,26 @@ export default defineEventHandler(async (event) => {
   }
 
   const data = await readValidatedBody(event, bodySchema.parse)
+  const email = data.email ? data.email.toLowerCase() : '' // optional (blank allowed)
   const db = useDrizzle(event)
 
-  if (data.email !== session.user.email) {
-    const existing = await db.query.users.findFirst({
-      where: and(
-        eq(schema.users.email, data.email),
-        ne(schema.users.id, session.user.id)
-      )
+  // Only enforce uniqueness when an email is actually provided — blank/empty is skipped.
+  if (email) {
+    const clash = await db.query.users.findFirst({
+      where: and(eq(schema.users.email, email), ne(schema.users.id, session.user.id)),
+      columns: { id: true }
     })
-    if (existing) {
+    if (clash) {
       throw createError({ statusCode: 409, statusMessage: 'Email already in use' })
     }
   }
 
   await db.update(schema.users)
-    .set({ name: data.name, email: data.email })
+    .set({ name: data.name, email })
     .where(eq(schema.users.id, session.user.id))
 
   await replaceUserSession(event, {
-    user: { ...session.user, name: data.name, email: data.email },
+    user: { ...session.user, name: data.name, email },
     loggedInAt: session.loggedInAt
   })
 

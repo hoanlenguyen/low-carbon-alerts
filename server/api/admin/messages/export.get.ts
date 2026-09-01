@@ -1,13 +1,8 @@
-import { desc, inArray, count, eq } from 'drizzle-orm'
+import { desc } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../../database'
 
-// CSV export of every sent message (view-only log), newest first. One row per message
-// with its recipient count and — when a single recipient — their name + email. Admin-only.
-//
-// NOTE (future change): this is message-level — broadcasts leave name/email blank and
-// rely on the Recipients count. If a recipient-level export is wanted later, switch to
-// one row per recipient (join messages × user_messages × users, no single-recipient
-// filter) so every recipient's name + email is listed. Larger output for broadcasts.
+// CSV export of every sent message (view-only log), newest first. Plain dump of the
+// message rows plus a recipient count — no filtering, no per-recipient lookup. Admin-only.
 const TZ = 'Europe/Helsinki'
 const sentFmt = new Intl.DateTimeFormat('sv-SE', {
   dateStyle: 'short', timeStyle: 'short', timeZone: TZ
@@ -31,41 +26,14 @@ export default defineEventHandler(async (event) => {
     orderBy: [desc(schema.messages.sentAt), desc(schema.messages.createdAt)]
   })
 
-  const ids = rows.map(r => r.id)
-  const countById = new Map<string, number>()
-  const recipientById = new Map<string, { name: string | null, email: string }>()
-
-  if (ids.length) {
-    const counts = await db
-      .select({ messageId: schema.userMessages.messageId, c: count() })
-      .from(schema.userMessages)
-      .where(inArray(schema.userMessages.messageId, ids))
-      .groupBy(schema.userMessages.messageId)
-    for (const row of counts) countById.set(row.messageId, row.c)
-
-    const singleIds = ids.filter(id => (countById.get(id) ?? 0) === 1)
-    if (singleIds.length) {
-      const recs = await db
-        .select({ messageId: schema.userMessages.messageId, name: schema.users.name, email: schema.users.email })
-        .from(schema.userMessages)
-        .innerJoin(schema.users, eq(schema.users.id, schema.userMessages.userId))
-        .where(inArray(schema.userMessages.messageId, singleIds))
-      for (const r of recs) recipientById.set(r.messageId, { name: r.name, email: r.email })
-    }
-  }
-
-  const header = ['Sent', 'Type', 'Subject', 'Content', 'Recipients', 'Recipient name', 'Recipient email']
+  const header = ['Sent', 'Type', 'Subject', 'Content']
   const lines = [header.map(csv).join(',')]
   for (const r of rows) {
-    const rec = recipientById.get(r.id)
     lines.push([
       r.sentAt ? sentFmt.format(new Date(r.sentAt)) : '',
       r.type,
       r.subject,
-      r.body,
-      countById.get(r.id) ?? 0,
-      rec?.name ?? '',
-      rec?.email ?? ''
+      r.body
     ].map(csv).join(','))
   }
 

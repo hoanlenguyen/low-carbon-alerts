@@ -24,14 +24,23 @@ const LONG = 120
 const expanded = ref<Set<string>>(new Set())
 function toggle(id: string) {
   const next = new Set(expanded.value)
-  next.has(id) ? next.delete(id) : next.add(id)
+
+  if (next.has(id)) {
+    next.delete(id)
+  } else {
+    next.add(id)
+  }
+
   expanded.value = next
 }
 
 const typeColor = (t: SentMessageRow['type']) =>
-  t === 'broadcast' ? 'primary'
-    : t === 'forecast' ? 'info'
-      : t === 'smart-alert' ? 'warning'
+  t === 'broadcast'
+    ? 'primary'
+    : t === 'forecast'
+      ? 'info'
+      : t === 'smart-alert'
+        ? 'warning'
         : 'neutral'
 
 const timeFmt = new Intl.DateTimeFormat('en-GB', {
@@ -73,19 +82,33 @@ function fmtTime(val: string | Date | null) {
         <table class="w-full text-sm border-separate border-spacing-0">
           <thead>
             <tr class="bg-elevated/50">
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-52">Subject</th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">Content</th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-28">Type</th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-56">Recipient</th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-40">Sent</th>
+              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-52">
+                Subject
+              </th>
+              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+                Content
+              </th>
+              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-28">
+                Type
+              </th>
+              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-56">
+                Recipient
+              </th>
+              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-40">
+                Sent
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="fetchStatus === 'pending'">
-              <td colspan="5" class="px-4 py-8 text-center text-sm text-muted">Loading…</td>
+              <td colspan="5" class="px-4 py-8 text-center text-sm text-muted">
+                Loading…
+              </td>
             </tr>
             <tr v-else-if="rows.length === 0">
-              <td colspan="5" class="px-4 py-8 text-center text-sm text-muted">No messages sent yet.</td>
+              <td colspan="5" class="px-4 py-8 text-center text-sm text-muted">
+                No messages sent yet.
+              </td>
             </tr>
             <tr
               v-for="m in rows"
@@ -95,7 +118,9 @@ function fmtTime(val: string | Date | null) {
             >
               <!-- Subject -->
               <td class="px-4 py-3 border-b border-default">
-                <p class="font-medium text-highlighted">{{ m.subject }}</p>
+                <p class="font-medium text-highlighted">
+                  {{ m.subject }}
+                </p>
               </td>
               <!-- Content -->
               <td class="px-4 py-3 border-b border-default max-w-md">
@@ -116,13 +141,19 @@ function fmtTime(val: string | Date | null) {
               </td>
               <!-- Type -->
               <td class="px-4 py-3 border-b border-default">
-                <UBadge :color="typeColor(m.type)" variant="subtle" class="capitalize">{{ m.type }}</UBadge>
+                <UBadge :color="typeColor(m.type)" variant="subtle" class="capitalize">
+                  {{ m.type }}
+                </UBadge>
               </td>
               <!-- Recipient -->
               <td class="px-4 py-3 border-b border-default">
                 <div v-if="m.recipient" class="min-w-0">
-                  <p class="text-highlighted truncate">{{ m.recipient.name || '—' }}</p>
-                  <p class="text-xs text-muted truncate">{{ m.recipient.email }}</p>
+                  <p class="text-highlighted truncate">
+                    {{ m.recipient.name || '—' }}
+                  </p>
+                  <p class="text-xs text-muted truncate">
+                    {{ m.recipient.email }}
+                  </p>
                 </div>
                 <span v-else class="text-muted tabular-nums">
                   {{ m.recipients.toLocaleString() }} recipients

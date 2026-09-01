@@ -28,7 +28,9 @@ export interface ActionContext {
 export function useShiftActions() {
   const { data: ctx, refresh } = useFetch<ActionContext>('/api/actions/context', {
     key: 'shift-actions-context',
+    server: false, // authed route; avoid the SSR 401 → client-only fetch
     lazy: true,
+    dedupe: 'defer', // shared across ShiftActionRow instances; reuse in-flight, don't cancel
     default: () => ({ applianceChoices: [], actions: [] })
   })
 

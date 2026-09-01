@@ -57,9 +57,16 @@ const EMPTY: Impact = { week: { count: 0, grams: 0 }, month: { count: 0, grams: 
 
 export function useAchievements() {
   // Shared key so ImpactCard / AchievementsCard / header all reuse one request.
+  // Client-only: the session cookie isn't forwarded to this authed route during SSR,
+  // which caused a 401 on the server render before the client refetch succeeded.
   const { data, refresh } = useFetch<Impact>('/api/impact', {
     key: 'impact',
+    server: false,
     lazy: true,
+    // Multiple consumers (layout + cards) share this key; 'defer' makes the later
+    // ones reuse the in-flight request instead of cancelling it (the default 'cancel'
+    // caused the first request to error while the second succeeded).
+    dedupe: 'defer',
     default: () => ({ ...EMPTY })
   })
 

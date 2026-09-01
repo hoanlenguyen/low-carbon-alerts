@@ -7,7 +7,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth' })
 const toast = useToast()
 
 // ── Users list for targeted sends ──
-const { data: users } = await useFetch<{ id: string, name: string | null, email: string }[]>('/api/admin/users', { lazy: true })
+const { data: users } = await useFetch<{ id: string, userName: string, name: string | null, email: string | null }[]>('/api/admin/users', { lazy: true, query: { active: 1 } })
 
 // ── Templates ──
 const { data: templates, refresh: refreshTemplates } = await useFetch('/api/admin/notifications/templates', { lazy: true })
@@ -298,7 +298,7 @@ async function deleteTemplate(id: string) {
             <UFormField v-if="sendState.type === 'targeted'" label="Select users" name="targetUserIds">
               <USelectMenu
                 v-model="sendState.targetUserIds"
-                :items="(users ?? []).map(u => ({ label: u.name ? `${u.name} · ${u.email}` : u.email, value: u.id }))"
+                :items="(users ?? []).map(u => ({ label: u.name ? `${u.userName} · ${u.name}` : u.userName, value: u.id }))"
                 value-key="value"
                 multiple
                 class="w-full"

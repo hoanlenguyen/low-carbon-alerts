@@ -2,8 +2,9 @@ import { sqliteTable, text, integer, real, uniqueIndex } from 'drizzle-orm/sqlit
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
-  email: text('email').notNull().unique(),
-  name: text('name'),
+  userName: text('user_name').notNull().unique(), // login key (username or email); lowercased
+  email: text('email').notNull().default(''), // optional (''); no longer unique
+  name: text('name'), // display name
   passwordHash: text('password_hash'),
   role: text('role', { enum: ['admin', 'user'] }).notNull().default('user'),
   googleId: text('google_id').unique(),

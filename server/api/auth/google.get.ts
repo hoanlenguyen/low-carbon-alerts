@@ -19,6 +19,7 @@ export default defineOAuthGoogleEventHandler({
     if (!user) {
       const newUser = {
         id: crypto.randomUUID(),
+        userName: email, // OAuth users use their email as username
         email,
         name: googleUser.name ?? null,
         passwordHash: null,
@@ -27,7 +28,8 @@ export default defineOAuthGoogleEventHandler({
         avatarUrl: googleUser.picture ?? null,
         status: 'active' as const,
         createdAt: new Date(),
-        lastLoginAt: null
+        lastLoginAt: null,
+        onboardingCompletedAt: null
       }
       await db.insert(schema.users).values(newUser)
       user = newUser
@@ -46,6 +48,7 @@ export default defineOAuthGoogleEventHandler({
     await setUserSession(event, {
       user: {
         id: user.id,
+        userName: user.userName,
         email: user.email,
         name: user.name,
         role: user.role,

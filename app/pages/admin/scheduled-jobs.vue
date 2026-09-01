@@ -19,7 +19,7 @@ interface ScheduledJob {
 }
 
 // Users list for targeted jobs
-const { data: users } = await useFetch<{ id: string, name: string | null, email: string }[]>('/api/admin/users', { lazy: true })
+const { data: users } = await useFetch<{ id: string, userName: string, name: string | null, email: string | null }[]>('/api/admin/users', { lazy: true, query: { active: 1 } })
 
 // Scheduled jobs
 const { data: jobs, refresh: refreshJobs } = await useFetch<ScheduledJob[]>('/api/admin/notifications/scheduled', { lazy: true })
@@ -157,7 +157,7 @@ function formatRunDate(val: string | null) {
             <UFormField v-if="jobState.targetType === 'targeted'" label="Select users" name="targetUserIds">
               <USelectMenu
                 v-model="jobState.targetUserIds"
-                :items="(users ?? []).map(u => ({ label: u.name || u.email, value: u.id }))"
+                :items="(users ?? []).map(u => ({ label: u.name ? `${u.userName} · ${u.name}` : u.userName, value: u.id }))"
                 value-key="value"
                 multiple
                 class="w-full"

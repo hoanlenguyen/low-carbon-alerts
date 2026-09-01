@@ -21,13 +21,14 @@ const appearances = [
 // ── Profile ──
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email')
+  email: z.string()
 })
 type ProfileSchema = z.output<typeof profileSchema>
 
 const profile = reactive<ProfileSchema>({
   name: user.value?.name ?? '',
-  email: user.value?.email ?? ''
+  email: user.value?.email ?? '',
+  userName: user.value?.userName ?? ''
 })
 const profileLoading = ref(false)
 
@@ -137,7 +138,7 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
           Profile
         </h2>
         <p class="text-sm text-muted">
-          Update your display name.
+          Update your display name and email.
         </p>
       </div>
 
@@ -149,6 +150,15 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
           class="space-y-4"
           @submit="onSaveProfile"
         >
+          <UFormField name="name" label="Username">
+            <UInput
+              v-model="profile.userName"
+              placeholder="Your username"
+              class="w-full"
+              disabled
+            />
+          </UFormField>
+
           <UFormField name="name" label="Name">
             <UInput
               v-model="profile.name"
@@ -164,7 +174,6 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
               type="email"
               class="w-full"
               autocomplete="email"
-              disabled
             />
           </UFormField>
 
