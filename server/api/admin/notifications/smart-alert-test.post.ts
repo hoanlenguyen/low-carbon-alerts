@@ -55,12 +55,28 @@ export default defineEventHandler(async (event) => {
   )
   const subject = `Clean energy window ${display.start} – ${display.end}`
 
+  // Record this as a one-consumer smart-alert run so it reads as a smart alert
+  // everywhere (Sent messages list + grouped in the dashboard), like the cron.
+  const runId = crypto.randomUUID()
+  const now = new Date()
+
   const { messageId } = await sendNotification(event, {
     subject,
     body,
-    type: 'targeted',
+    type: 'smart-alert',
     sentById: session.user.id,
-    targetUserIds: [userId]
+    targetUserIds: [userId],
+    smartAlertRunId: runId
+  })
+
+  await db.insert(schema.smartAlertRuns).values({
+    id: runId,
+    ranAt: now,
+    windowFound: true,
+    carbonIntensity: win.intensity,
+    windowStart: win.start,
+    windowEnd: win.end,
+    recipientCount: 1
   })
 
   // Persist context so the consumer can confirm "I shifted it" on this test alert.
@@ -79,7 +95,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     sent: true,
-    to: user.name || user.email,
+    to: user.name || user.userName,
     subject,
     body,
     meta: { appliances: options, windowStart: win.start, windowEnd: win.end, carbonIntensity: win.intensity, urgency }

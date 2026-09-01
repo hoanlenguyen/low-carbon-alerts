@@ -26,7 +26,7 @@ export default defineEventHandler(async (event): Promise<ActivityEvent[]> => {
     }),
     db.query.users.findMany({
       where: eq(schema.users.role, 'user'),
-      columns: { id: true, name: true, email: true, createdAt: true },
+      columns: { id: true, userName: true, name: true, createdAt: true },
       orderBy: [desc(schema.users.createdAt)],
       limit: 5
     }),
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event): Promise<ActivityEvent[]> => {
     events.push({
       id: `user-${user.id}`,
       type: 'user_joined',
-      title: user.name ?? user.email,
+      title: user.name ?? user.userName,
       body: 'New user registered',
       date: createdAt.toISOString(),
       unread: isRecent

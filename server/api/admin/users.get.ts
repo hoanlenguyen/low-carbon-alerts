@@ -16,6 +16,7 @@ export default defineEventHandler(async (event) => {
     where,
     columns: {
       id: true,
+      userName: true,
       name: true,
       email: true,
       avatarUrl: true,

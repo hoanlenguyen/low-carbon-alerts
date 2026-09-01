@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
   await db.insert(schema.auditLogs).values({
     id: crypto.randomUUID(),
     userId: session.user.id,
-    userEmail: session.user.email,
+    userEmail: session.user.email || session.user.userName,
     action: 'smart_alert.settings.update',
     before: JSON.stringify({ enabled: before?.enabled, threshold: before?.threshold, debounceHours: before?.debounceHours, horizonHours: before?.horizonHours }),
     after: JSON.stringify(data),

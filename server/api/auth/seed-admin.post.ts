@@ -30,6 +30,7 @@ export default defineEventHandler(async (event) => {
   const passwordHash = await hashPassword(password)
   await db.insert(schema.users).values({
     id: crypto.randomUUID(),
+    userName: normalizedEmail, // first admin logs in with their email as username
     email: normalizedEmail,
     name: name ?? null,
     passwordHash,

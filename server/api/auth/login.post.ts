@@ -1,18 +1,19 @@
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
+import { eq, or } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../database'
 
 const bodySchema = z.object({
-  email: z.string().email(),
+  identity: z.string().min(1), // username or email
   password: z.string().min(1)
 })
 
 export default defineEventHandler(async (event) => {
-  const { email, password } = await readValidatedBody(event, bodySchema.parse)
+  const { identity, password } = await readValidatedBody(event, bodySchema.parse)
+  const key = identity.trim().toLowerCase()
 
   const db = useDrizzle(event)
   const user = await db.query.users.findFirst({
-    where: eq(schema.users.email, email.toLowerCase())
+    where: or(eq(schema.users.userName, key), eq(schema.users.email, key))
   })
 
   if (!user || !user.passwordHash) {
@@ -30,6 +31,7 @@ export default defineEventHandler(async (event) => {
   await setUserSession(event, {
     user: {
       id: user.id,
+      userName: user.userName,
       email: user.email,
       name: user.name,
       role: user.role,

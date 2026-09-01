@@ -43,7 +43,7 @@ function isActive(to: string) {
       </NuxtLink>
 
       <div class="flex items-center gap-2">
-        <span class="hidden sm:block text-sm text-muted">{{ user?.name || user?.email }}</span>
+        <span class="hidden sm:block text-sm text-muted">{{ user?.name || user?.userName }}</span>
 
         <!-- Earned achievement badges (each in its own color, hover for the name) -->
         <div v-if="earned.length" class="hidden sm:flex items-center gap-1">

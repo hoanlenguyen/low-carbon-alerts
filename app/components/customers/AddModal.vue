@@ -6,7 +6,8 @@ const emit = defineEmits<{ created: [] }>()
 
 const schema = z.object({
   name: z.string().min(2, 'Too short'),
-  email: z.string().email('Invalid email'),
+  userName: z.string().min(3, 'Min 3 characters').max(60),
+  email: z.string().email('Invalid email').optional().or(z.literal('')),
   password: z.string().min(8, 'Min 8 characters')
 })
 const open = ref(false)
@@ -15,6 +16,7 @@ type Schema = z.output<typeof schema>
 
 const state = reactive<Partial<Schema>>({
   name: '',
+  userName: '',
   email: '',
   password: ''
 })
@@ -43,9 +45,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   creating.value = true
   try {
     await $fetch('/api/admin/users', { method: 'POST', body: event.data })
-    toast.add({ title: 'Consumer added', description: event.data.email, color: 'success' })
+    toast.add({ title: 'Consumer added', description: event.data.userName, color: 'success' })
     open.value = false
     state.name = ''
+    state.userName = ''
     state.email = ''
     state.password = ''
     showPassword.value = false
@@ -73,7 +76,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <UFormField label="Name" name="name">
           <UInput v-model="state.name" placeholder="Jane Smith" class="w-full" />
         </UFormField>
-        <UFormField label="Email" name="email">
+        <UFormField label="Username" name="userName" hint="Login identity">
+          <UInput v-model="state.userName" placeholder="jane01" class="w-full" />
+        </UFormField>
+        <UFormField label="Email" name="email" hint="Optional">
           <UInput v-model="state.email" placeholder="jane@example.com" class="w-full" />
         </UFormField>
         <UFormField label="Password" name="password">

@@ -6,8 +6,9 @@ definePageMeta({
 
 type Customer = {
   id: string
+  userName: string
   name: string | null
-  email: string
+  email: string | null
   avatarUrl: string | null
   status: 'active' | 'inactive'
   createdAt: string
@@ -26,7 +27,7 @@ const searchQuery = ref('')
 const statusFilter = ref('all')
 
 // ── Sort ──
-const sortKey = ref<'email' | 'createdAt' | 'lastLoginAt'>('createdAt')
+const sortKey = ref<'userName' | 'createdAt' | 'lastLoginAt'>('createdAt')
 const sortDir = ref<'asc' | 'desc'>('desc')
 
 function toggleSort(key: typeof sortKey.value) {
@@ -49,8 +50,9 @@ const filtered = computed(() => {
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     rows = rows.filter(r =>
-      r.email.toLowerCase().includes(q) ||
-      (r.name ?? '').toLowerCase().includes(q)
+      r.userName.toLowerCase().includes(q) ||
+      (r.name ?? '').toLowerCase().includes(q) ||
+      (r.email ?? '').toLowerCase().includes(q)
     )
   }
   if (statusFilter.value !== 'all') {
@@ -85,7 +87,8 @@ function formatJoined(val: string) {
   return new Date(val).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Europe/Helsinki' })
 }
 
-function copyToClipboard(text: string, description: string) {
+function copyToClipboard(text: string | null | undefined, description: string) {
+  if (!text) return
   navigator.clipboard.writeText(text)
   toast.add({ title: 'Copied', description })
 }
@@ -156,10 +159,10 @@ async function confirmToggleStatus() {
             <tr class="bg-elevated/50">
               <th
                 class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default cursor-pointer select-none hover:text-muted transition-colors"
-                @click="toggleSort('email')"
+                @click="toggleSort('userName')"
               >
                 User
-                <span v-if="sortKey === 'email'" class="ml-1 text-primary">
+                <span v-if="sortKey === 'userName'" class="ml-1 text-primary">
                   {{ sortDir === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
@@ -211,15 +214,15 @@ async function confirmToggleStatus() {
                 <div class="flex items-center gap-3">
                   <UAvatar
                     :src="customer.avatarUrl ?? undefined"
-                    :alt="customer.name ?? customer.email"
+                    :alt="customer.name ?? customer.userName"
                     size="sm"
                   />
                   <div class="min-w-0">
                     <p class="font-medium text-highlighted truncate">
-                      {{ customer.name || '—' }}
+                      {{ customer.name || customer.userName }}
                     </p>
                     <p class="text-xs text-muted truncate">
-                      {{ customer.email }}
+                      {{ customer.userName }}<span v-if="customer.email"> · {{ customer.email }}</span>
                     </p>
                   </div>
                 </div>
@@ -264,7 +267,7 @@ async function confirmToggleStatus() {
                       @click="copyToClipboard(customer.id, 'User ID copied')"
                     />
                   </UTooltip>
-                  <UTooltip text="Copy email">
+                  <UTooltip v-if="customer.email" text="Copy email">
                     <UButton
                       icon="i-lucide-mail"
                       color="neutral"

@@ -1,4 +1,4 @@
-import { desc, count } from 'drizzle-orm'
+import { desc } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../../database'
 
 // CSV export of every sent message (view-only log), newest first. Plain dump of the
@@ -26,23 +26,14 @@ export default defineEventHandler(async (event) => {
     orderBy: [desc(schema.messages.sentAt), desc(schema.messages.createdAt)]
   })
 
-  // Recipient count per message in one grouped scan (no IN() list → no D1 limit).
-  const countById = new Map<string, number>()
-  const counts = await db
-    .select({ messageId: schema.userMessages.messageId, c: count() })
-    .from(schema.userMessages)
-    .groupBy(schema.userMessages.messageId)
-  for (const row of counts) countById.set(row.messageId, row.c)
-
-  const header = ['Sent', 'Type', 'Subject', 'Content', 'Recipients']
+  const header = ['Sent', 'Type', 'Subject', 'Content']
   const lines = [header.map(csv).join(',')]
   for (const r of rows) {
     lines.push([
       r.sentAt ? sentFmt.format(new Date(r.sentAt)) : '',
       r.type,
       r.subject,
-      r.body,
-      countById.get(r.id) ?? 0
+      r.body
     ].map(csv).join(','))
   }
 

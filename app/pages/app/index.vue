@@ -34,7 +34,7 @@ function timeLabel(val: string) {
   <div class="space-y-6">
     <div>
       <h1 class="text-xl font-semibold text-highlighted">
-        Welcome back, {{ user?.name?.split(' ')[0] || user?.email }}
+        Welcome back, {{ user?.name?.split(' ')[0] || user?.userName }}
       </h1>
     </div>
 

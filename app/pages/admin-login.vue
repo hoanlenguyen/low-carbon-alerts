@@ -7,14 +7,14 @@ definePageMeta({
 })
 
 const schema = z.object({
-  email: z.string().email('Invalid email'),
+  identity: z.string().min(1, 'Username or email is required'),
   password: z.string().min(1, 'Password is required')
 })
 
 type Schema = z.output<typeof schema>
 
 const state = reactive<Partial<Schema>>({
-  email: undefined,
+  identity: undefined,
   password: undefined
 })
 
@@ -35,7 +35,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     await refreshSession()
     await navigateTo('/admin')
   } catch {
-    error.value = 'Invalid email or password'
+    error.value = 'Invalid username or password'
   } finally {
     loading.value = false
   }
@@ -59,10 +59,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       class="space-y-4"
       @submit="onSubmit"
     >
-      <UFormField label="Email" name="email">
+      <UFormField label="Username or email" name="identity">
         <UInput
-          v-model="state.email"
-          type="email"
+          v-model="state.identity"
           class="w-full"
           autocomplete="username"
         />

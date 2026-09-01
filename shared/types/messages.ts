@@ -7,6 +7,6 @@ export interface SentMessageRow {
   body: string
   type: 'broadcast' | 'targeted' | 'smart-alert' | 'forecast'
   recipients: number // total recipient count for this message
-  recipient: { name: string | null, email: string } | null // set only when there is exactly one
+  recipient: { name: string | null, email: string | null } | null // set only when there is exactly one
   sentAt: string | Date | null
 }
