@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
+import { and, eq, ne } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../database'
 
 const bodySchema = z.object({
@@ -14,8 +14,19 @@ export default defineEventHandler(async (event) => {
   }
 
   const data = await readValidatedBody(event, bodySchema.parse)
-  const email = data.email ? data.email.toLowerCase() : '' // optional; no longer unique
+  const email = data.email ? data.email.toLowerCase() : '' // optional (blank allowed)
   const db = useDrizzle(event)
+
+  // Only enforce uniqueness when an email is actually provided — blank/empty is skipped.
+  if (email) {
+    const clash = await db.query.users.findFirst({
+      where: and(eq(schema.users.email, email), ne(schema.users.id, session.user.id)),
+      columns: { id: true }
+    })
+    if (clash) {
+      throw createError({ statusCode: 409, statusMessage: 'Email already in use' })
+    }
+  }
 
   await db.update(schema.users)
     .set({ name: data.name, email })
