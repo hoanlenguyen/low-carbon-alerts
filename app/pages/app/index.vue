@@ -81,7 +81,7 @@ function timeLabel(val: string) {
         No alerts yet. You'll be notified when low-carbon windows are detected.
       </div>
 
-      <ul v-else class="divide-y divide-default -mx-1">
+      <ul v-else class="min-w-0 divide-y divide-default -mx-1">
         <li
           v-for="msg in recentMessages"
           :key="msg.id"

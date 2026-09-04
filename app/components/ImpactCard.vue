@@ -1,6 +1,16 @@
 <script setup lang="ts">
-// End-user "Your impact" card — estimated CO2 avoided from self-reported load shifts.
+// End-user "Your impact" card — estimated CO2 avoided from self-reported load shifts,
+// plus the whole community's running total.
 const { impact } = useAchievements()
+
+// Community total across all users (global aggregate). Client-only; shared key so it can
+// be refreshed after the user saves a schedule.
+const { data: community } = useFetch<{ totalSavingG: number, userCount: number }>('/api/impact/community', {
+  key: 'impact-community',
+  server: false,
+  lazy: true,
+  default: () => ({ totalSavingG: 0, userCount: 0 })
+})
 
 function fmtG(g: number) {
   return g >= 1000 ? `${(g / 1000).toFixed(1)} kg` : `${Math.round(g)} g`
@@ -32,13 +42,14 @@ const stats = computed(() => [
               <div class="p-3 max-w-xs space-y-2">
                 <p class="text-xs font-semibold text-highlighted">How the estimate works</p>
                 <div class="rounded-md bg-elevated/60 px-2.5 py-2 text-[11px] leading-relaxed text-muted font-mono">
-                  CO₂ saved ≈ power (kW) × run time (h)<br>× (24h-average − window intensity)
+                  CO₂ saved ≈ power (kW)<br>× Σ hours × (24h-average − carbon at that hour)
                 </div>
                 <p class="text-[11px] text-muted leading-relaxed">
-                  We estimate the carbon avoided by running a flexible appliance during a
-                  cleaner window instead of an average hour: the appliance's typical energy
-                  use (its catalog power × run time) times how much lower the grid's carbon
-                  intensity is in that window versus the day's average.
+                  We estimate the carbon avoided by running a flexible appliance in cleaner
+                  hours instead of an average one. Each hour of the run is priced with that
+                  hour's forecast carbon: the appliance's power times how much lower the
+                  grid's intensity is that hour versus the day's 24h average, summed across
+                  the run.
                 </p>
                 <p class="text-[11px] text-dimmed leading-relaxed">
                   It never goes below zero, and it's an estimate from grid data — we don't
@@ -71,6 +82,18 @@ const stats = computed(() => [
         <p class="text-lg font-semibold text-highlighted tabular-nums mt-0.5">{{ fmtG(s.b.grams) }}</p>
         <p class="text-xs text-muted">{{ loads(s.b.count) }} shifted</p>
       </div>
+    </div>
+
+    <!-- Community total across all members -->
+    <div
+      v-if="(community?.totalSavingG ?? 0) > 0"
+      class="mt-3 flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2">
+      <UIcon name="i-lucide-users" class="size-4 text-primary shrink-0" />
+      <p class="text-xs text-muted">
+        <span class="font-semibold text-highlighted">Community total:</span>
+        ≈ {{ fmtG(community!.totalSavingG) }} CO₂ saved by
+        {{ community!.userCount }} member{{ community!.userCount === 1 ? '' : 's' }}
+      </p>
     </div>
 
     <template v-if="hasAny" #footer>

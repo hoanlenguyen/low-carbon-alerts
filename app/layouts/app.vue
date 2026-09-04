@@ -17,6 +17,7 @@ useHead({
 const navItems = [
   { label: 'Home', icon: 'i-lucide-zap', to: '/app' },
   { label: 'Alerts', icon: 'i-lucide-bell', to: '/app/alerts' },
+  { label: 'Schedule', icon: 'i-lucide-calendar-clock', to: '/app/schedule' },
   { label: 'Forecast', icon: 'i-lucide-trending-up', to: '/app/forecast' },
   { label: 'Energy Profile', icon: 'i-lucide-house-plug', to: '/app/energy-consumption' },
   { label: 'Settings', icon: 'i-lucide-settings', to: '/app/settings' }

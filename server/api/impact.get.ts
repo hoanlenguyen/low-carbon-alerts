@@ -36,10 +36,13 @@ export default defineEventHandler(async (event) => {
   if (!session.user) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
 
   const db = useDrizzle(event)
-  const acts = await db.query.messageActions.findMany({
-    where: eq(schema.messageActions.userId, session.user.id),
-    orderBy: [desc(schema.messageActions.confirmedAt)]
+  // Appliance-schedule runs are grouped by `day` ('YYYY-MM-DD' Helsinki); anchor each at
+  // UTC noon so the calendar date is stable when bucketing into weeks/months.
+  const acts = await db.query.applianceShifts.findMany({
+    where: eq(schema.applianceShifts.userId, session.user.id),
+    orderBy: [desc(schema.applianceShifts.createdAt)]
   })
+  const dayToDate = (day: string) => new Date(`${day}T12:00:00Z`)
 
   const now = new Date()
   const today = helsinkiYmd(now)
@@ -55,10 +58,11 @@ export default defineEventHandler(async (event) => {
     const g = a.estimatedSavingG
     allTime.count++; allTime.grams += g
 
-    const p = helsinkiYmd(a.confirmedAt)
+    const d = dayToDate(a.day)
+    const p = helsinkiYmd(d)
     if (p.y === today.y && p.m === today.m) { month.count++; month.grams += g }
 
-    const wk = mondayKey(a.confirmedAt)
+    const wk = mondayKey(d)
     if (wk === thisMonday) { week.count++; week.grams += g }
     activeWeeks.add(wk)
   }
@@ -77,6 +81,6 @@ export default defineEventHandler(async (event) => {
     month,
     allTime,
     streakWeeks,
-    lastActionAt: acts[0]?.confirmedAt ?? null
+    lastActionAt: acts[0]?.createdAt ?? null
   }
 })
