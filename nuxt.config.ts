@@ -15,6 +15,14 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
+    // nuxt-auth-utils session: persistent 1-year cookie so users stay logged in
+    // (email + Google both use this) until they explicitly log out. The password
+    // comes from NUXT_SESSION_PASSWORD. Without maxAge it defaults to a browser-
+    // session cookie that expires on close — the cause of frequent re-logins.
+    session: {
+      password: '', // filled from NUXT_SESSION_PASSWORD at runtime
+      maxAge: 60 * 60 * 24 * 365 // 1 year (seconds)
+    },
     setupToken: '',
     cronSecret: '',
     automationSecret: '', // bearer secret for external automation (n8n) endpoints
