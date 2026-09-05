@@ -151,15 +151,11 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
       smartAlertRunId: runId
     })
 
-    // Persist structured context so the user's "I shifted it" can estimate savings.
+    // Mark this as a smart alert + remember the suggested appliance so /app/alerts can
+    // offer to schedule it.
     await db.insert(schema.smartAlertContext).values({
       messageId,
       suggestedApplianceSlug: slugByName.get(options[0]!.toLowerCase()) ?? null,
-      windowStart: win.start,
-      windowEnd: win.end,
-      windowMinutes: Math.round((window.endMs - window.startMs) / 60_000),
-      carbonIntensity: window.intensity,
-      avg24h,
       createdAt: now
     })
     sent++

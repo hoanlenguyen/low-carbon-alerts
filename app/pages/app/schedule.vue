@@ -7,11 +7,15 @@ definePageMeta({
 const route = useRoute()
 const toast = useToast()
 const {
-  entries, totalG, hasToday, applianceChoices, clearSchedule, fmtG, status
+  entries, totalG, hasToday, applianceChoices, iconBySlug, clearSchedule, fmtG, status
 } = useSchedule()
+const { avg24h } = useEmissionsForecast()
+const fmtCarbon = (n: number) => String(Number(n.toFixed(2)))
 
 const suggest = computed(() => (typeof route.query.suggest === 'string' ? route.query.suggest : null))
 const nameOf = (slug: string) => applianceChoices.value.find(c => c.slug === slug)?.name ?? slug
+const iconOf = (slug: string) => iconBySlug.value.get(slug) ?? 'i-lucide-plug'
+const powerOf = (slug: string) => applianceChoices.value.find(c => c.slug === slug)?.powerKw ?? null
 const hhmm = (ms: number) => new Date(ms).toLocaleTimeString('en-GB', {
   hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Helsinki'
 })
@@ -66,13 +70,23 @@ const dayLabel = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateStrin
 
     <!-- Forecast carbon by hour -->
     <section>
-      <div class="mb-4">
-        <h2 class="text-sm font-semibold text-highlighted">
-          Forecast carbon by hour (gCO₂/kWh)
-        </h2>
-        <p class="text-sm text-muted">
-          Lower is cleaner — schedule flexible loads into the green hours.
-        </p>
+      <div class="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-sm font-semibold text-highlighted">
+            Forecast carbon by hour (gCO₂/kWh)
+          </h2>
+          <p class="text-sm text-muted">
+            Lower is cleaner — schedule flexible loads into the green hours.
+          </p>
+        </div>
+        <UBadge
+          v-if="avg24h != null"
+          color="neutral"
+          variant="subtle"
+          size="sm"
+          class="shrink-0">
+          24h average · {{ fmtCarbon(avg24h) }} gCO₂/kWh
+        </UBadge>
       </div>
 
       <UPageCard variant="subtle">
@@ -97,10 +111,20 @@ const dayLabel = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateStrin
           </p>
         </div>
         <div v-if="hasToday && !editing" class="flex items-center gap-2">
-          <UButton size="xs" variant="soft" icon="i-lucide-pencil" @click="editing = true">
+          <UButton
+            size="xs"
+            variant="soft"
+            icon="i-lucide-pencil"
+            @click="editing = true">
             Edit
           </UButton>
-          <UButton size="xs" variant="ghost" color="neutral" icon="i-lucide-trash-2" :loading="clearing" @click="onClear">
+          <UButton
+            size="xs"
+            variant="ghost"
+            color="neutral"
+            icon="i-lucide-trash-2"
+            :loading="clearing"
+            @click="onClear">
             Clear
           </UButton>
         </div>
@@ -112,19 +136,23 @@ const dayLabel = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateStrin
           v-if="editing"
           :initial="entries"
           :suggest="suggest"
-          @saved="editing = false"
-          @cancel="editing = false" />
+          @saved="editing = false" />
 
         <!-- Read-only list -->
         <ul v-else-if="hasToday" class="min-w-0 divide-y divide-default">
-          <li v-for="e in entries" :key="e.id" class="flex items-center justify-between gap-3 py-2.5">
-            <div class="min-w-0">
+          <li v-for="e in entries" :key="e.id" class="flex items-center gap-3 py-2.5">
+            <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <UIcon :name="iconOf(e.applianceSlug)" class="size-5" />
+            </span>
+            <div class="min-w-0 flex-1">
               <p class="text-sm font-medium text-highlighted truncate">
                 {{ nameOf(e.applianceSlug) }}
+                <span v-if="powerOf(e.applianceSlug) != null" class="font-normal text-muted">· {{ powerOf(e.applianceSlug) }} kW</span>
               </p>
               <p class="text-xs text-muted">
-                {{ hhmm(e.startAtMs) }} · {{ fmtH(e.runTimeMin) }} h
-                <span v-if="e.carbonAtStart != null" class="text-dimmed">· {{ e.carbonAtStart }} gCO₂/kWh</span>
+                Start at: <strong>{{ hhmm(e.startAtMs) }}</strong>
+                · Run time: <strong>{{ fmtH(e.runTimeMin) }}</strong> h
+                <span v-if="e.carbonAtStart != null" class="text-dimmed">· Carbon emissions: <strong>{{ e.carbonAtStart }}</strong> gCO₂/kWh</span>
               </p>
             </div>
             <span class="text-sm font-medium text-success shrink-0">≈ {{ fmtG(e.estimatedSavingG) }}</span>

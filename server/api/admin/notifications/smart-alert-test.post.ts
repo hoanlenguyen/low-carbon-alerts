@@ -79,17 +79,13 @@ export default defineEventHandler(async (event) => {
     recipientCount: 1
   })
 
-  // Persist context so the consumer can confirm "I shifted it" on this test alert.
+  // Mark this test send as a smart alert + remember the suggested appliance so the
+  // consumer can schedule it from /app/alerts.
   const catalog = await getApplianceCatalog(event)
   const slugByName = new Map(catalog.map(a => [a.name.toLowerCase(), a.slug]))
   await db.insert(schema.smartAlertContext).values({
     messageId,
     suggestedApplianceSlug: slugByName.get(options[0]!.toLowerCase()) ?? null,
-    windowStart: display.start,
-    windowEnd: display.end,
-    windowMinutes: Math.round((win.endMs - win.startMs) / 60_000),
-    carbonIntensity: win.intensity,
-    avg24h: next24hAverage(carbon.points),
     createdAt: new Date()
   })
 

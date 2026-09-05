@@ -91,17 +91,14 @@ export const smartAlertRuns = sqliteTable('smart_alert_runs', {
   recipientCount: integer('recipient_count').notNull().default(0)
 })
 
-// Structured context for one sent smart-alert message, captured at send time so a
-// user's "I shifted it" confirmation can estimate the CO2 avoided. 1:1 with a
-// smart-alert messages row (only smart alerts carry a window + suggested appliance).
+// Marks a sent message as a smart alert and remembers which appliance it suggested, so
+// the /app/alerts gateway can offer to schedule it (prefilling ?suggest=). 1:1 with a
+// smart-alert messages row. The saving estimate now lives in the daily Appliance
+// Schedule (baseline recomputed from the live forecast), so no window/carbon snapshot
+// is kept here anymore.
 export const smartAlertContext = sqliteTable('smart_alert_context', {
   messageId: text('message_id').primaryKey(),
   suggestedApplianceSlug: text('suggested_appliance_slug'),
-  windowStart: text('window_start'), // "HH:MM" display
-  windowEnd: text('window_end'),
-  windowMinutes: integer('window_minutes'), // clean-window length, caps credited run time
-  carbonIntensity: real('carbon_intensity'), // gCO₂/kWh at the window
-  avg24h: real('avg_24h'), // 24h grid average at send time
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
 export type SmartAlertContext = typeof smartAlertContext.$inferSelect

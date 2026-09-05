@@ -13,6 +13,7 @@ export interface ScheduleEntry {
 export interface ApplianceChoice {
   slug: string
   name: string
+  icon: string
   powerKw: number | null
   durationMin: number | null
 }
@@ -53,8 +54,11 @@ export function useSchedule() {
   const applianceChoices = computed<ApplianceChoice[]>(() => data.value?.applianceChoices ?? [])
   const applianceItems = computed(() => applianceChoices.value.map(c => ({
     label: c.powerKw != null ? `${c.name} · ${c.powerKw} kW` : c.name,
-    value: c.slug
+    value: c.slug,
+    icon: c.icon
   })))
+  // slug → lucide icon, for rendering icons outside the select (e.g. the schedule list).
+  const iconBySlug = computed(() => new Map(applianceChoices.value.map(c => [c.slug, c.icon])))
   // messageId → suggested appliance slug, for the smart-alert gateway on today's messages.
   const suggestionByMsg = computed(() => new Map((data.value?.messages ?? []).map(m => [m.messageId, m.suggestedApplianceSlug])))
 
@@ -73,7 +77,7 @@ export function useSchedule() {
 
   return {
     data, refresh, status,
-    entries, totalG, hasToday, applianceChoices, applianceItems, suggestionByMsg,
+    entries, totalG, hasToday, applianceChoices, applianceItems, iconBySlug, suggestionByMsg,
     saveSchedule, clearSchedule, fmtG
   }
 }

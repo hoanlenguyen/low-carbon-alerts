@@ -5,6 +5,7 @@ import { useDrizzle, schema } from '../database'
 export interface ApplianceChoice {
   slug: string
   name: string
+  icon: string
   powerKw: number | null
   durationMin: number | null
 }
@@ -36,7 +37,13 @@ export async function getUserApplianceChoices(event: H3Event, userId: string): P
 
   return choiceSlugs.map((slug) => {
     const a = bySlug.get(slug)
-    return { slug, name: a?.name ?? slug, powerKw: a?.typicalPowerKw ?? null, durationMin: a?.typicalDurationMin ?? null }
+    return {
+      slug,
+      name: a?.name ?? slug,
+      icon: a?.icon ?? 'i-lucide-plug',
+      powerKw: a?.typicalPowerKw ?? null,
+      durationMin: a?.typicalDurationMin ?? null
+    }
   })
 }
 

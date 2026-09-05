@@ -64,5 +64,13 @@ export function useEmissionsForecast() {
       })
   })
 
-  return { points, hourOptions, refresh, status }
+  // 24h grid average across the selectable forecast hours — the baseline a shift's
+  // saving is measured against (mirrors the server's forecastAvg24h). 2-decimal, unrounded.
+  const avg24h = computed<number | null>(() => {
+    const vals = hourOptions.value.map(h => h.intensity)
+    if (!vals.length) return null
+    return Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 100) / 100
+  })
+
+  return { points, hourOptions, avg24h, refresh, status }
 }
