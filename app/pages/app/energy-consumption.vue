@@ -184,6 +184,9 @@ async function save() {
     </div>
 
     <template v-else>
+      <!-- Your impact — estimated CO₂ saved this week / month / all time -->
+      <ImpactCard />
+
       <!-- Achievements — milestone badges derived from your shift impact -->
       <AchievementsCard />
 
