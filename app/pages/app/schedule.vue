@@ -70,10 +70,10 @@ const dayLabel = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateStrin
 
     <!-- Forecast carbon by hour -->
     <section>
-      <div class="mb-4 flex items-start justify-between gap-3">
+      <div class="mb-4 flex flex-col md:flex-row justify-between gap-3">
         <div>
           <h2 class="text-sm font-semibold text-highlighted">
-            Forecast carbon by hour (gCO₂/kWh)
+            Forecast carbon by hour (gCO₂/kWh) in 24 hours
           </h2>
           <p class="text-sm text-muted">
             Lower is cleaner — schedule flexible loads into the green hours.
@@ -81,10 +81,9 @@ const dayLabel = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateStrin
         </div>
         <UBadge
           v-if="avg24h != null"
-          color="neutral"
-          variant="subtle"
-          size="sm"
-          class="shrink-0">
+          color="primary"
+          variant="soft"
+          size="sm">
           24h average · {{ fmtCarbon(avg24h) }} gCO₂/kWh
         </UBadge>
       </div>
@@ -103,7 +102,9 @@ const dayLabel = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateStrin
           </h2>
           <p class="text-sm text-muted">
             <template v-if="hasToday">
-              {{ entries.length }} run{{ entries.length === 1 ? '' : 's' }} · ≈ {{ fmtG(totalG) }} CO₂ saved
+              <UBadge color="success" variant="soft">
+                {{ entries.length }} run{{ entries.length === 1 ? '' : 's' }} ≈ {{ fmtG(totalG) }} CO₂ saved
+              </UBadge>
             </template>
             <template v-else>
               Nothing scheduled yet.
@@ -141,19 +142,38 @@ const dayLabel = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateStrin
         <!-- Read-only list -->
         <ul v-else-if="hasToday" class="min-w-0 divide-y divide-default">
           <li v-for="e in entries" :key="e.id" class="flex items-center gap-3 py-2.5">
-            <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <UIcon :name="iconOf(e.applianceSlug)" class="size-5" />
-            </span>
             <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-highlighted truncate">
+              <UBadge
+                :icon="iconOf(e.applianceSlug)"
+                color="neutral"
+                variant="soft"
+                size="md">
                 {{ nameOf(e.applianceSlug) }}
-                <span v-if="powerOf(e.applianceSlug) != null" class="font-normal text-muted">· {{ powerOf(e.applianceSlug) }} kW</span>
-              </p>
-              <p class="text-xs text-muted">
-                Start at: <strong>{{ hhmm(e.startAtMs) }}</strong>
-                · Run time: <strong>{{ fmtH(e.runTimeMin) }}</strong> h
-                <span v-if="e.carbonAtStart != null" class="text-dimmed">· Carbon emissions: <strong>{{ e.carbonAtStart }}</strong> gCO₂/kWh</span>
-              </p>
+              </UBadge>
+              <div class="flex flex-wrap gap-2 mt-1">
+                <UBadge
+                  v-if="powerOf(e.applianceSlug) != null"
+                  color="neutral"
+                  variant="soft">
+                  Power Consumption: {{ powerOf(e.applianceSlug) }} kW
+                </UBadge>
+                <UBadge
+                  color="neutral"
+                  variant="soft">
+                  Start at:  {{ hhmm(e.startAtMs) }}
+                </UBadge>
+                <UBadge
+                  color="neutral"
+                  variant="soft">
+                  Run time: {{ fmtH(e.runTimeMin) }} h
+                </UBadge>
+                <UBadge
+                  v-if="e.carbonAtStart != null"
+                  color="neutral"
+                  variant="soft">
+                  Carbon emissions: {{ e.carbonAtStart }} gCO₂/kWh
+                </UBadge>
+              </div>
             </div>
             <span class="text-sm font-medium text-success shrink-0">≈ {{ fmtG(e.estimatedSavingG) }}</span>
           </li>
