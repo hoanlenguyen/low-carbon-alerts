@@ -18,6 +18,7 @@ export type ActiveAppliance = {
 export type ApplianceMeta = {
   slug: string
   name: string
+  icon: string
   typicalPowerKw: number | null
   typicalDurationMin: number | null
 }
@@ -72,7 +73,7 @@ export async function getApplianceCatalog(event: H3Event): Promise<ApplianceMeta
 
   const db = useDrizzle(event)
   const data = await db.query.appliances.findMany({
-    columns: { slug: true, name: true, typicalPowerKw: true, typicalDurationMin: true }
+    columns: { slug: true, name: true, icon: true, typicalPowerKw: true, typicalDurationMin: true }
   })
 
   catalogCache = { data, expires: Date.now() + TTL_MS }

@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, real, uniqueIndex, index } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -91,34 +91,39 @@ export const smartAlertRuns = sqliteTable('smart_alert_runs', {
   recipientCount: integer('recipient_count').notNull().default(0)
 })
 
-// Structured context for one sent smart-alert message, captured at send time so a
-// user's "I shifted it" confirmation can estimate the CO2 avoided. 1:1 with a
-// smart-alert messages row (only smart alerts carry a window + suggested appliance).
+// Marks a sent message as a smart alert and remembers which appliance it suggested, so
+// the /app/alerts gateway can offer to schedule it (prefilling ?suggest=). 1:1 with a
+// smart-alert messages row. The saving estimate now lives in the daily Appliance
+// Schedule (baseline recomputed from the live forecast), so no window/carbon snapshot
+// is kept here anymore.
 export const smartAlertContext = sqliteTable('smart_alert_context', {
   messageId: text('message_id').primaryKey(),
   suggestedApplianceSlug: text('suggested_appliance_slug'),
-  windowStart: text('window_start'), // "HH:MM" display
-  windowEnd: text('window_end'),
-  windowMinutes: integer('window_minutes'), // clean-window length, caps credited run time
-  carbonIntensity: real('carbon_intensity'), // gCO₂/kWh at the window
-  avg24h: real('avg_24h'), // 24h grid average at send time
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
 export type SmartAlertContext = typeof smartAlertContext.$inferSelect
 
-// A user's self-reported "I shifted a load for this alert". One per (user, message);
-// estimatedSavingG is snapshotted at confirm time so later catalog edits don't rewrite it.
-export const messageActions = sqliteTable('message_actions', {
+// A user's daily "Appliance Schedule": one row per shifted run. An appliance can run
+// several times a day, so there's NO per-appliance uniqueness — each run (its own start
+// hour + run time) is a separate row, grouped by `day` (Helsinki YYYY-MM-DD). Saving is
+// snapshotted at save time (per-hour forecast carbon vs the day's grid average) so later
+// catalog/forecast changes don't rewrite it.
+export const applianceShifts = sqliteTable('appliance_shifts', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull(),
-  messageId: text('message_id').notNull(),
-  applianceSlug: text('appliance_slug'), // the appliance they say they shifted (catalog slug)
+  day: text('day').notNull(), // 'YYYY-MM-DD' in Europe/Helsinki — the schedule this run belongs to
+  applianceSlug: text('appliance_slug').notNull(), // catalog slug
+  startAtMs: integer('start_at_ms').notNull(), // chosen start time (epoch ms)
+  runTimeMin: integer('run_time_min').notNull(), // run duration entered by the user
+  carbonAtStart: real('carbon_at_start'), // time-weighted avg forecast carbon over the run (gCO₂/kWh)
+  avg24h: real('avg_24h'), // grid 24h-average baseline snapshotted at save time
   estimatedSavingG: integer('estimated_saving_g').notNull().default(0),
-  confirmedAt: integer('confirmed_at', { mode: 'timestamp' }).notNull()
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
 }, t => ([
-  uniqueIndex('message_actions_user_message_unique').on(t.userId, t.messageId)
+  index('appliance_shifts_user_day_idx').on(t.userId, t.day)
 ]))
-export type MessageAction = typeof messageActions.$inferSelect
+export type ApplianceShift = typeof applianceShifts.$inferSelect
 
 export const auditLogs = sqliteTable('audit_logs', {
   id: text('id').primaryKey(),

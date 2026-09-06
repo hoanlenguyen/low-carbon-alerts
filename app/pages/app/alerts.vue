@@ -101,8 +101,10 @@ function timeLabel(val: string) {
         </p>
       </div>
 
-      <!-- Alert list -->
-      <ul v-else class="divide-y divide-default">
+      <!-- Alert list (min-w-0 so the grid column can shrink and inner horizontal
+           scrollers — e.g. the shift picker's hourly carbon strip — clip instead of
+           stretching the card) -->
+      <ul v-else class="min-w-0 divide-y divide-default">
         <li
           v-for="msg in paged"
           :key="msg.id"
