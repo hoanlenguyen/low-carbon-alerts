@@ -84,10 +84,12 @@ An **array** of recommendation objects:
 
 ## Status in codebase
 
-🔴 **Not built.** This is the full-history successor to
-[Prompt 2 — Cold Start](02_cold_start.md). It depends on three unbuilt pieces: consumption logging
-(for `{consumption_summary}`), the RAG layer (for `{rag_retrieved_chunks}`), and a renewable-share
-data feed (for `renewable_pct` — currently only `consumption_emissions` is proxied via
-[`/api/carbon`](../server/api/carbon.get.ts); the renewable series exists behind
-[`/api/grid/[series]`](../server/api/grid/[series].get.ts) but isn't wired into recommendations).
-Unlike cold-start, this returns an **array** (multiple ranked suggestions).
+🟢 **Built.** [`generateRecommendation.ts`](../server/utils/generateRecommendation.ts) produces
+the recommendation: it rewrites the query ([Prompt 3](03_rag_query_rewriting.md)), retrieves
+knowledge-base chunks, and calls the LLM with the profile + live-forecast facts, storing the result in
+the `recommendations` table and serving it via
+[`/api/recommendation`](../server/api/recommendation.get.ts) (+
+[`refresh`](../server/api/recommendation/refresh.post.ts)). Caveat: `{consumption_summary}` is not yet
+wired — there is no metered consumption history (see [Prompt 4](04_consumption_summarization.md)) — so
+the recommendation is currently grounded in the profile, the live forecast, and retrieved tips rather
+than the user's own usage history.

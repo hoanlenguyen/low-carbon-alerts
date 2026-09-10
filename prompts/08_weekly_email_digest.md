@@ -76,8 +76,10 @@ Return JSON only, no preamble:
 
 ## Status in codebase
 
-🔴 **Not built.** There is no email integration in the project (the plan suggests Resend or
-Nodemailer). Email is intended for the **weekly digest only** — real-time carbon alerts stay on
-push (FCM), because an email might be read after the low-carbon window has passed. Requires action
-tracking (`actions_taken`, `co2_saved`) which depends on the feedback loop
-([Prompt 9](09_feedback_interpretation.md)) and consumption/action logging.
+🟡 **Partial — the email channel now exists, the weekly digest does not.** Transactional email is
+built on the Gmail API ([`sendEmail.ts`](../server/utils/sendEmail.ts) +
+[`getGmailAccessToken.ts`](../server/utils/getGmailAccessToken.ts)) and is already used for the daily
+forecast ([Prompt 10](10_24h_forecast_message.md)). No **weekly** digest job or content generator is
+built yet. It also depends on action tracking (`actions_taken`, `co2_saved`) — now partly available
+via the self-reported Appliance Schedule (`appliance_shifts`), though not a metered/feedback loop.
+Real-time carbon alerts stay on push (FCM) by design.

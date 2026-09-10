@@ -47,7 +47,11 @@ dishwasher washing machine off-peak low carbon evening scheduling
 
 ## Status in codebase
 
-🔴 **Not built.** There is no vector store, embeddings, or retrieval layer in the project yet
-(confirmed via the graphify graph — no RAG-related nodes). This prompt is the first step of the
-Sprint 3 RAG pipeline: its output feeds the vector search whose chunks are injected into
-[Prompt 5 — Core Recommendation](05_core_recommendation.md) as `{rag_retrieved_chunks}`.
+🟢 **Built.** [`rewriteRagQuery.ts`](../server/utils/rewriteRagQuery.ts) rewrites the user's
+context into a retrieval query, and [`retrieveKnowledge.ts`](../server/utils/retrieveKnowledge.ts)
+searches the knowledge base (`kb_chunks` / `kb_meta`, indexed by
+[`indexKnowledgeBase.ts`](../server/utils/indexKnowledgeBase.ts) and managed by
+[`/api/admin/knowledge/reindex`](../server/api/admin/knowledge/reindex.post.ts) +
+[`search`](../server/api/admin/knowledge/search.post.ts)). The rewritten query and retrieved chunks
+feed [Prompt 5 — Core Recommendation](05_core_recommendation.md) (see
+[`generateRecommendation.ts`](../server/utils/generateRecommendation.ts)).

@@ -51,4 +51,8 @@ covers the no-LLM-key case.
 
 ## Status
 
-🟢 **Built (in-app).** Email channel pending.
+🟢 **Built.** In-app, cached once per Helsinki day via
+[`getDailyForecast.ts`](../server/utils/getDailyForecast.ts) +
+[`generateForecastMessage.ts`](../server/utils/generateForecastMessage.ts) (one LLM call/day), and
+delivered by email through the Gmail API ([`sendEmail.ts`](../server/utils/sendEmail.ts)); see
+[`/api/daily-forecast`](../server/api/daily-forecast.get.ts).

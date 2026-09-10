@@ -1,6 +1,6 @@
 # Prompt Library — Low Carbon Alerts
 
-The AI-assisted feedback system is driven by **9 prompts**, each with a defined trigger,
+The AI-assisted feedback system is driven by **10 prompts**, each with a defined trigger,
 a strict output contract, and a place in the 8-sprint build plan. This folder is the
 canonical reference for every prompt: the exact template, its input variables, its output
 schema, and its current status in the codebase.
@@ -13,14 +13,15 @@ schema, and its current status in the codebase.
 | # | Prompt | Sprint | Trigger | Output format | Status in codebase |
 |---|---|---|---|---|---|
 | 1 | [Onboarding extraction](01_onboarding_extraction.md) | 2 | User completes onboarding | JSON profile | ⚠️ N/A — onboarding is a typed form, not free-text |
-| 2 | [Cold start defaults](02_cold_start.md) | 2 | New user, first app open after onboarding | JSON recommendation | 🟡 Designed, not built |
-| 3 | [RAG query rewriting](03_rag_query_rewriting.md) | 3 | Before vector store retrieval | Plain text query | 🔴 Not built (no RAG layer) |
+| 2 | [Cold start defaults](02_cold_start.md) | 2 | New user, first app open after onboarding | JSON recommendation | 🟢 Built — cold-start at onboarding (`buildColdStartRecommendation.ts`) |
+| 3 | [RAG query rewriting](03_rag_query_rewriting.md) | 3 | Before vector store retrieval | Plain text query | 🟢 Built — `rewriteRagQuery.ts` + `retrieveKnowledge.ts` (kb_chunks) |
 | 4 | [Consumption summarization](04_consumption_summarization.md) | 3 | Before recommendation, 7+ days history | Plain text summary | 🔴 Not built (no consumption history) |
-| 5 | [Core recommendation](05_core_recommendation.md) | 3 | User opens app | JSON recommendation array | 🔴 Not built |
-| 6 | [Notification decision](06_notification_decision.md) | 4 | Every cron run, per user | JSON decision object | 🟡 Partial — deterministic broadcast alert in `_cron.ts` |
-| 7 | [Push notification message](07_push_notification_message.md) | 5 | `should_notify = true` | Plain text message | 🟡 Partial — `generateAlertMessage.ts` (grid-context, broadcast) |
-| 8 | [Weekly email digest](08_weekly_email_digest.md) | 5 | Every Monday cron | JSON email content | 🔴 Not built (no email service) |
+| 5 | [Core recommendation](05_core_recommendation.md) | 3 | User opens app | JSON recommendation array | 🟢 Built — `generateRecommendation.ts` (+ RAG); no consumption summary yet |
+| 6 | [Notification decision](06_notification_decision.md) | 4 | Every cron run, per user | JSON decision object | 🟡 Partial — deterministic per-user check in `runSmartAlert.ts` |
+| 7 | [Push notification message](07_push_notification_message.md) | 5 | `should_notify = true` | Plain text message | 🟢 Built — `generatePushMessage.ts` (smart alert) |
+| 8 | [Weekly email digest](08_weekly_email_digest.md) | 5 | Every Monday cron | JSON email content | 🟡 Partial — Gmail email built; weekly digest job not |
 | 9 | [Feedback interpretation](09_feedback_interpretation.md) | 6 | User responds to a recommendation | JSON constraint object | 🔴 Not built (no feedback capture) |
+| 10 | [24h forecast message](10_24h_forecast_message.md) | — | Daily (in-app + email) | Plain text (subject + body) | 🟢 Built — `getDailyForecast.ts` + `generateForecastMessage.ts` |
 
 **Legend:** 🟢 built · 🟡 partial / in progress · 🔴 not built · ⚠️ approach differs from spec
 
@@ -33,7 +34,7 @@ Onboarding ─▶ [1] extract profile ─▶ [2] cold-start recommendation (no h
                                               ▼
         [3] rewrite query ─▶ RAG retrieve ─▶ [4] summarize consumption ─▶ [5] core recommendation
                                               │
-   cron (every 3h) ─▶ [6] notify? ──(yes)──▶ [7] push message ─▶ FCM delivery
+   cron (hourly) ─▶ [6] notify? ──(yes)──▶ [7] push message ─▶ FCM delivery
                                               │
    Monday cron ─────────────────────────────▶ [8] weekly email digest
                                               │
