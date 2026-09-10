@@ -47,7 +47,7 @@ export async function generateForecastMessage(
   const subject = FORECAST_SUBJECT
   if (!apiKey) return { subject, body: fallbackBody(summary) }
 
-  const prompt = renderPrompt('weekly-forecast-message', { facts: factsText(summary) })
+  const prompt = renderPrompt('24h_forecast_message', { facts: factsText(summary) })
 
   try {
     const res = await fetch(`${baseUrl}/chat/completions`, {
