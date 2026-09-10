@@ -75,19 +75,11 @@ Return JSON only, no preamble:
 
 ## Status in codebase
 
-🟡 **Designed, not yet built.** Agreed design (this project):
-
-- **Deterministic core + LLM prose.** Compute the exact window / appliance / intensity from the
-  real forecast; the LLM only phrases it warmly; a deterministic template is the fallback when
-  `openaiApiKey` is empty or JSON parsing fails (mirrors
-  [`generateAlertMessage.ts`](../server/utils/generateAlertMessage.ts)).
-- **Best time prefers active hours**, falls back to the global lowest window (with an honest note)
-  if nothing meaningfully low falls inside active hours.
-- **Appliance priority:** EV charger → dishwasher → washing machine → tumble dryer → sauna →
-  hot tub → heat pump (oven is not shiftable and is skipped).
-- **Trigger & persistence:** generated at onboarding completion in
-  [`onboarding.post.ts`](../server/api/auth/onboarding.post.ts) (non-fatal on failure), stored as
-  one active row in a new `recommendations` table, surfaced by a `RecommendationCard` on the
-  `/app` home page. `is_cold_start` is always `true` until consumption history exists (Sprint 3+).
-- **Data source:** [`/api/carbon`](../server/api/carbon.get.ts) (`consumption_emissions`, 24h
-  history + forecast, Helsinki time).
+🟢 **Built.** Cold-start recommendations are generated at onboarding completion in
+[`onboarding.post.ts`](../server/api/auth/onboarding.post.ts) (non-fatal on failure) via
+[`buildColdStartRecommendation.ts`](../server/utils/buildColdStartRecommendation.ts) — deterministic
+core (exact window / appliance / intensity from the real forecast) — and
+[`generateColdStartMessage.ts`](../server/utils/generateColdStartMessage.ts) for the LLM prose, with a
+deterministic template fallback when `openaiApiKey` is empty or JSON parsing fails. The result is
+stored in the `recommendations` table and surfaced on the `/app` home page. Forecast data comes from the
+cached `consumption_emissions` series ([`/api/forecast/[series]`](../server/api/forecast/[series].get.ts)).

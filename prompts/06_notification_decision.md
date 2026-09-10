@@ -79,15 +79,14 @@ Return JSON only, no preamble:
 
 ## Status in codebase
 
-🟡 **Partial.** [`server/routes/_cron.ts`](../server/routes/_cron.ts) already runs a smart-alert
-check, but it differs from this spec:
+🟡 **Partial.** The hourly smart-alert pipeline
+[`runSmartAlert.ts`](../server/utils/runSmartAlert.ts) (triggered by
+[`server/routes/_cron.ts`](../server/routes/_cron.ts)) already decides whether to alert, but it differs
+from this spec:
 
-- It is **deterministic** (threshold + debounce from the `smart_alert_settings` singleton), not an
-  LLM decision per user.
-- It sends a **broadcast** to all users, not a per-user decision respecting each user's active
-  hours and personal `min_interval_h`.
-- Default threshold is **20 gCO₂/kWh** and debounce **3 h** (this prompt uses **< 80** within the
-  next 6 h).
+- The decision is **deterministic** (clean-window detection + per-user debounce), not an LLM decision.
+- It now runs **per eligible user**, finding the cleanest window inside that user's own active hours
+  (no longer a single broadcast) and suggesting an appliance from the admin catalog ranking.
+- Thresholds and debounce come from the `smart_alert_settings` singleton.
 
-Adopting this prompt means iterating over eligible users and running the decision per user before
-delivery. Its `true` output feeds [Prompt 7 — Push Message](07_push_notification_message.md).
+Its "should notify" result feeds [Prompt 7 — Push Message](07_push_notification_message.md).
