@@ -1,4 +1,4 @@
-# Prompt 10 — Weekly Forecast Message (general)
+# Prompt 10 — 24h Forecast Message (general)
 
 | | |
 |---|---|
@@ -24,7 +24,7 @@ max (with times) and how they compare to the past-week average; the cleanest and
 
 ## Prompt
 
-Template `weekly-forecast-message` in [`server/prompts/templates.ts`](../server/prompts/templates.ts).
+Template `24h_forecast_message` in [`server/prompts/templates.ts`](../server/prompts/templates.ts).
 The LLM writes the body only (subject is fixed) from a `{facts}` block, in this structure:
 
 ```

@@ -50,7 +50,8 @@ Return plain text only, no JSON, no explanation.
 Example output:
 "dishwasher washing machine off-peak low carbon evening scheduling"`,
 
-  //  (prompts/07_push_notification_message.md)
+  // Prompt 7 — Push notification message (prompts/07_push_notification_message.md)
+  // Notification style: Simple
   'push-message-simple': `You are a friendly energy assistant writing a mobile push notification for a Finnish energy app.
 
 ## Context
@@ -73,6 +74,8 @@ Example output:
 Example good output:
 "Great wind tonight! Run your washing machine after 22:00 for a clean green load."`,
 
+  // Prompt 7 — Push notification message (prompts/07_push_notification_message.md)
+  // Notification style: Data-rich
   'push-message-detailed': `You are writing a data-rich mobile push notification for a Finnish energy app.
 The user prefers informative, number-led notifications with real detail — not a one-liner.
 
@@ -94,7 +97,7 @@ The user prefers informative, number-led notifications with real detail — not 
 Example good output:
 "Cleanest window is 12:00-14:00 at 14 gCO2/kWh, below today's 23 average. Run your dishwasher then to cut its carbon footprint."`,
 
-  'weekly-forecast-message': `You are writing a short, clear, professional electricity-forecast update for a Finnish energy app, sent to all users.
+  '24h_forecast_message': `You are writing a short, clear, professional electricity-forecast update for a Finnish energy app, sent to all users.
 Base EVERY statement only on the facts below. Never invent numbers, never mention wind power in megawatts, and never forecast beyond ~24 hours.
 
 ## Facts
