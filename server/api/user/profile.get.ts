@@ -17,7 +17,6 @@ export default defineEventHandler(async (event) => {
   return {
     ...profile,
     appliances: JSON.parse(profile.appliances) as string[],
-    peakTimes: JSON.parse(profile.peakTimes) as string[],
-    notifTimes: JSON.parse(profile.notifTimes) as string[]
+    applianceRuntimes: JSON.parse(profile.applianceRuntimes) as Record<string, number>
   }
 })

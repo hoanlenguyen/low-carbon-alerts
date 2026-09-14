@@ -16,6 +16,9 @@ export interface RecommendationProfileInput {
   activeHoursEnd: string
   householdSize: number
   energyGoal: string
+  housingType?: string
+  contractType?: string
+  primaryHeating?: string
 }
 
 function helsinkiTimeOfDay(): string {
@@ -85,6 +88,9 @@ export async function generateRecommendation(
       householdSize: profile.householdSize,
       energyGoal: profile.energyGoal,
       appliances: profile.appliances,
+      housingType: profile.housingType,
+      contractType: profile.contractType,
+      primaryHeating: profile.primaryHeating,
       knowledge
     },
     config.openaiApiKey,
