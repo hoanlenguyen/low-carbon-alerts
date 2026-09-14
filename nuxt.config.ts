@@ -36,6 +36,8 @@ export default defineNuxtConfig({
     emailFrom: 'lowcarbonalertadmin@gmail.com',
     emailFromName: 'Low Carbon Alerts',
     public: {
+      // Canonical public origin (no trailing slash). Override with NUXT_PUBLIC_SITE_URL.
+      siteUrl: 'https://hiilivahti.fi',
       // Google Search Console site-verification token (for OAuth domain verification).
       googleSiteVerification: '',
       firebaseApiKey: '',

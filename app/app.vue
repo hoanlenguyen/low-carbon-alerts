@@ -6,6 +6,14 @@ const color = computed(() => colorMode.value === 'dark' ? '#1b1718' : 'white')
 // Google Search Console domain verification (set NUXT_PUBLIC_GOOGLE_SITE_VERIFICATION).
 const siteVerification = useRuntimeConfig().public.googleSiteVerification
 
+// Canonical origin (NUXT_PUBLIC_SITE_URL) — used for canonical + OpenGraph URLs so they
+// don't depend on the request host. Trailing slash trimmed; falls back to the request
+// origin when unset.
+const route = useRoute()
+const requestUrl = useRequestURL()
+const siteUrl = (useRuntimeConfig().public.siteUrl || requestUrl.origin).replace(/\/$/, '')
+const canonicalUrl = computed(() => siteUrl + route.path)
+
 useHead({
   meta: [
     { charset: 'utf-8' },
@@ -23,7 +31,8 @@ useHead({
     { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
     { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
     { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
-    { rel: 'manifest', href: '/manifest.webmanifest' }
+    { rel: 'manifest', href: '/manifest.webmanifest' },
+    { key: 'canonical', rel: 'canonical', href: canonicalUrl }
   ],
   htmlAttrs: {
     lang: 'en'
@@ -38,6 +47,7 @@ useSeoMeta({
   description,
   ogTitle: title,
   ogDescription: description,
+  ogUrl: canonicalUrl,
   ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png',
   twitterCard: 'summary_large_image'
 })
