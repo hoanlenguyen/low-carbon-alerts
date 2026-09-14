@@ -9,13 +9,12 @@ const bodySchema = z.object({
   contractType: z.string().min(1),
   primaryHeating: z.string().min(1),
   appliances: z.array(z.string()),
+  applianceRuntimes: z.record(z.string(), z.number().int().positive().max(1440)).default({}),
   activeHoursStart: z.string().regex(/^\d{2}:\d{2}$/),
   activeHoursEnd: z.string().regex(/^\d{2}:\d{2}$/),
-  peakTimes: z.array(z.string()),
-  notifTimes: z.array(z.string()),
   energyGoal: z.string().min(1),
   notifStyle: z.enum(['detailed', 'simple']),
-  followsPrices: z.string().min(1)
+  maxAlertsPerDay: z.number().int().min(1).max(20).default(1)
 })
 
 export default defineEventHandler(async (event) => {
@@ -36,13 +35,12 @@ export default defineEventHandler(async (event) => {
       contractType: data.contractType,
       primaryHeating: data.primaryHeating,
       appliances: JSON.stringify(data.appliances),
+      applianceRuntimes: JSON.stringify(data.applianceRuntimes),
       activeHoursStart: data.activeHoursStart,
       activeHoursEnd: data.activeHoursEnd,
-      peakTimes: JSON.stringify(data.peakTimes),
-      notifTimes: JSON.stringify(data.notifTimes),
       energyGoal: data.energyGoal,
       notifStyle: data.notifStyle,
-      followsPrices: data.followsPrices,
+      maxAlertsPerDay: data.maxAlertsPerDay,
       createdAt: now
     })
     .onConflictDoUpdate({
@@ -53,13 +51,12 @@ export default defineEventHandler(async (event) => {
         contractType: data.contractType,
         primaryHeating: data.primaryHeating,
         appliances: JSON.stringify(data.appliances),
+        applianceRuntimes: JSON.stringify(data.applianceRuntimes),
         activeHoursStart: data.activeHoursStart,
         activeHoursEnd: data.activeHoursEnd,
-        peakTimes: JSON.stringify(data.peakTimes),
-        notifTimes: JSON.stringify(data.notifTimes),
         energyGoal: data.energyGoal,
         notifStyle: data.notifStyle,
-        followsPrices: data.followsPrices
+        maxAlertsPerDay: data.maxAlertsPerDay
       }
     })
 
@@ -79,7 +76,10 @@ export default defineEventHandler(async (event) => {
       activeHoursStart: data.activeHoursStart,
       activeHoursEnd: data.activeHoursEnd,
       householdSize: data.householdSize,
-      energyGoal: data.energyGoal
+      energyGoal: data.energyGoal,
+      housingType: data.housingType,
+      contractType: data.contractType,
+      primaryHeating: data.primaryHeating
     })
   } catch { /* non-fatal — first recommendation will be generated later if this fails */ }
 

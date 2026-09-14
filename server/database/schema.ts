@@ -142,13 +142,12 @@ export const userProfiles = sqliteTable('user_profiles', {
   contractType: text('contract_type').notNull(),
   primaryHeating: text('primary_heating').notNull(),
   appliances: text('appliances').notNull(), // JSON string[]
+  applianceRuntimes: text('appliance_runtimes').notNull().default('{}'), // JSON { [applianceName]: minutes }
   activeHoursStart: text('active_hours_start').notNull(),
   activeHoursEnd: text('active_hours_end').notNull(),
-  peakTimes: text('peak_times').notNull(), // JSON string[]
-  notifTimes: text('notif_times').notNull(), // JSON string[]
   energyGoal: text('energy_goal').notNull(),
   notifStyle: text('notif_style', { enum: ['detailed', 'simple'] }).notNull(),
-  followsPrices: text('follows_prices').notNull(),
+  maxAlertsPerDay: integer('max_alerts_per_day').notNull().default(1), // per-user daily cap on smart alerts
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
 

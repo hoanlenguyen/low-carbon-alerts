@@ -56,20 +56,14 @@ const { data: applianceOptions } = await useFetch<ApplianceOption[]>('/api/appli
   default: () => [] as ApplianceOption[]
 })
 const selectedAppliances = ref<string[]>([])
+const applianceRuntimeH = reactive<Record<string, number>>({}) // appliance name → hours
 
 const activeHoursStart = ref('07:00')
 const activeHoursEnd = ref('22:00')
 
-const peakTimeOptions = [
-  { value: 'morning', label: 'Morning 6–9' },
-  { value: 'midday', label: 'Midday 11–14' },
-  { value: 'evening', label: 'Evening 17–21' },
-  { value: 'night', label: 'Night 22+' }
-]
-const selectedPeakTimes = ref<string[]>([])
-
-const notifTimeOptions = ['07:00', '12:00', '18:00', '21:00']
-const selectedNotifTimes = ref<string[]>(['07:00', '18:00'])
+function buildRuntimesMin() {
+  return Object.fromEntries(selectedAppliances.value.map(n => [n, Math.round((applianceRuntimeH[n] ?? 1.5) * 60)]))
+}
 
 // ── Step 3 state ──
 const goalOptions = [
@@ -81,23 +75,17 @@ const goalOptions = [
 const energyGoal = ref<string>('')
 
 const notifStyle = ref<'detailed' | 'simple'>('detailed')
-
-const followsPricesOptions = [
-  { value: 'yes', label: 'Yes, actively' },
-  { value: 'sometimes', label: 'Sometimes' },
-  { value: 'no', label: 'No' }
-]
-const followsPrices = ref<string>('')
+const maxAlertsPerDay = ref(1)
 
 // ── Validation ──
 const step1Valid = computed(() =>
   !!housingType.value && !!contractType.value && !!primaryHeating.value
 )
 const step2Valid = computed(() =>
-  selectedAppliances.value.length > 0 && selectedNotifTimes.value.length > 0
+  selectedAppliances.value.length > 0
 )
 const step3Valid = computed(() =>
-  !!energyGoal.value && !!followsPrices.value
+  !!energyGoal.value
 )
 
 function canContinue() {
@@ -120,19 +108,10 @@ function goBack() {
 function toggleAppliance(item: string) {
   const i = selectedAppliances.value.indexOf(item)
   if (i >= 0) selectedAppliances.value.splice(i, 1)
-  else selectedAppliances.value.push(item)
-}
-
-function togglePeakTime(val: string) {
-  const i = selectedPeakTimes.value.indexOf(val)
-  if (i >= 0) selectedPeakTimes.value.splice(i, 1)
-  else selectedPeakTimes.value.push(val)
-}
-
-function toggleNotifTime(val: string) {
-  const i = selectedNotifTimes.value.indexOf(val)
-  if (i >= 0) selectedNotifTimes.value.splice(i, 1)
-  else selectedNotifTimes.value.push(val)
+  else {
+    selectedAppliances.value.push(item)
+    if (applianceRuntimeH[item] == null) applianceRuntimeH[item] = 1.5
+  }
 }
 
 // ── Submit ──
@@ -150,13 +129,12 @@ async function finish() {
         contractType: contractType.value,
         primaryHeating: primaryHeating.value,
         appliances: selectedAppliances.value,
+        applianceRuntimes: buildRuntimesMin(),
         activeHoursStart: activeHoursStart.value,
         activeHoursEnd: activeHoursEnd.value,
-        peakTimes: selectedPeakTimes.value,
-        notifTimes: selectedNotifTimes.value,
         energyGoal: energyGoal.value,
         notifStyle: notifStyle.value,
-        followsPrices: followsPrices.value
+        maxAlertsPerDay: maxAlertsPerDay.value
       }
     })
     await refreshSession()
@@ -335,47 +313,19 @@ async function finish() {
           </p>
         </div>
 
-        <div class="flex flex-col gap-1.5">
+        <div v-if="selectedAppliances.length" class="flex flex-col gap-1.5">
           <p class="text-xs font-semibold uppercase tracking-wide text-muted">
-            Peak usage times
-            <span class="normal-case font-normal tracking-normal ml-1">(can pick several)</span>
+            Typical run time
+            <span class="normal-case font-normal tracking-normal ml-1">(hours, per appliance)</span>
           </p>
-          <div class="flex flex-wrap gap-2">
-            <button
-              v-for="opt in peakTimeOptions"
-              :key="opt.value"
-              type="button"
-              class="rounded-full border px-3.5 py-1.5 text-xs transition cursor-pointer"
-              :class="selectedPeakTimes.includes(opt.value)
-                ? 'border-primary text-primary bg-primary/10'
-                : 'border-default text-muted hover:border-default/80'"
-              @click="togglePeakTime(opt.value)"
-            >
-              {{ opt.label }}
-            </button>
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-          <p class="text-xs font-semibold uppercase tracking-wide text-muted">
-            Preferred alert times
-          </p>
-          <div class="flex flex-wrap gap-2">
-            <button
-              v-for="t in notifTimeOptions"
-              :key="t"
-              type="button"
-              class="rounded-full border px-3.5 py-1.5 text-xs font-mono transition cursor-pointer"
-              :class="selectedNotifTimes.includes(t)
-                ? 'border-primary text-primary bg-primary/10'
-                : 'border-default text-muted hover:border-default/80'"
-              @click="toggleNotifTime(t)"
-            >
-              {{ t }}
-            </button>
+          <div class="flex flex-col gap-2">
+            <div v-for="name in selectedAppliances" :key="name" class="flex items-center justify-between gap-3">
+              <span class="text-sm text-muted">{{ name }}</span>
+              <UInputNumber v-model="applianceRuntimeH[name]" :min="0.25" :step="0.25" size="xs" class="w-24" />
+            </div>
           </div>
           <p class="text-xs text-muted">
-            We'll check the carbon forecast around these times
+            Used to estimate the CO₂ you save when you shift a load.
           </p>
         </div>
       </div>
@@ -455,22 +405,29 @@ async function finish() {
 
         <div class="flex flex-col gap-1.5">
           <p class="text-xs font-semibold uppercase tracking-wide text-muted">
-            Do you follow electricity prices?
+            Max alerts per day
           </p>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex items-center gap-3 w-fit bg-elevated rounded-lg border border-default px-4 py-2">
             <button
-              v-for="opt in followsPricesOptions"
-              :key="opt.value"
               type="button"
-              class="rounded-full border px-3.5 py-1.5 text-xs transition cursor-pointer"
-              :class="followsPrices === opt.value
-                ? 'border-primary text-primary bg-primary/10'
-                : 'border-default text-muted hover:border-default/80'"
-              @click="followsPrices = opt.value"
+              class="size-7 rounded-full border border-default flex items-center justify-center text-muted hover:text-default transition cursor-pointer"
+              @click="maxAlertsPerDay = Math.max(1, maxAlertsPerDay - 1)"
             >
-              {{ opt.label }}
+              <UIcon name="i-lucide-minus" class="size-3.5" />
             </button>
+            <span class="text-xl font-bold text-highlighted w-5 text-center">{{ maxAlertsPerDay }}</span>
+            <button
+              type="button"
+              class="size-7 rounded-full border border-default flex items-center justify-center text-muted hover:text-default transition cursor-pointer"
+              @click="maxAlertsPerDay = Math.min(10, maxAlertsPerDay + 1)"
+            >
+              <UIcon name="i-lucide-plus" class="size-3.5" />
+            </button>
+            <span class="text-xs text-muted ml-1">per day</span>
           </div>
+          <p class="text-xs text-muted">
+            We'll never send more smart alerts than this in a day.
+          </p>
         </div>
       </div>
 

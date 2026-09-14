@@ -87,6 +87,19 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
     )
   const recentlyAlerted = new Set(recentRows.map(r => r.userId))
 
+  // Per-user daily cap: count today's (Helsinki) smart-alerts already delivered.
+  const hp = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Helsinki', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    .formatToParts(now).reduce((a, x) => { a[x.type] = x.value; return a }, {} as Record<string, string>)
+  const secsIntoDay = (+(hp.hour ?? '0')) * 3600 + (+(hp.minute ?? '0')) * 60 + (+(hp.second ?? '0'))
+  const todayStart = new Date(now.getTime() - secsIntoDay * 1000)
+  const todayRows = await db
+    .select({ userId: schema.userMessages.userId })
+    .from(schema.userMessages)
+    .innerJoin(schema.messages, eq(schema.messages.id, schema.userMessages.messageId))
+    .where(and(eq(schema.messages.type, 'smart-alert'), gte(schema.userMessages.createdAt, todayStart)))
+  const sentTodayByUser = new Map<string, number>()
+  for (const r of todayRows) sentTodayByUser.set(r.userId, (sentTodayByUser.get(r.userId) ?? 0) + 1)
+
   let sent = 0
   let anyWindow = false
 
@@ -96,6 +109,9 @@ export async function runSmartAlert(event: H3Event): Promise<SmartAlertResult> {
   for (const user of users) {
     const profile = profileByUser.get(user.id)
     if (!profile) continue
+
+    // Skip users who have already hit their daily smart-alert cap.
+    if ((sentTodayByUser.get(user.id) ?? 0) >= (profile.maxAlertsPerDay ?? 1)) continue
 
     // The best low-carbon window inside THIS consumer's active hours.
     // TODO: window length is fixed by MIN_WINDOW_HOURS / the horizon. Later, size it

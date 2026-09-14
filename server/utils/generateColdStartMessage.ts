@@ -7,6 +7,9 @@ export interface ColdStartContext {
   householdSize: number
   energyGoal: string
   appliances: string[]
+  housingType?: string
+  contractType?: string
+  primaryHeating?: string
   knowledge?: RetrievedChunk[] // RAG-retrieved tips to ground the prose (prompts/03–05)
 }
 
@@ -33,6 +36,9 @@ export async function generateColdStartMessage(
   const prompt = renderPrompt('cold-start', {
     name: firstName ?? 'unknown',
     household_size: ctx.householdSize,
+    housing_type: ctx.housingType ?? 'unknown',
+    contract_type: ctx.contractType ?? 'unknown',
+    primary_heating: ctx.primaryHeating ?? 'unknown',
     appliances: ctx.appliances.join(', ') || 'not specified',
     energy_goal: ctx.energyGoal,
     appliance: facts.appliance,

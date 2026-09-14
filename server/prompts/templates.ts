@@ -15,6 +15,9 @@ export const promptTemplates: Record<string, string> = {
 ## User (just onboarded)
 - Name: {name}
 - Household size: {household_size}
+- Housing type: {housing_type}
+- Electricity contract: {contract_type}
+- Primary heating: {primary_heating}
 - Appliances: {appliances}
 - Energy goal: {energy_goal}
 

@@ -21,10 +21,13 @@ export async function getUserApplianceChoices(event: H3Event, userId: string): P
 
   const profile = await db.query.userProfiles.findFirst({
     where: eq(schema.userProfiles.userId, userId),
-    columns: { appliances: true }
+    columns: { appliances: true, applianceRuntimes: true }
   })
   let names: string[] = []
   try { names = profile ? (JSON.parse(profile.appliances) as string[]) : [] } catch { names = [] }
+  // The user's typical run time per appliance (name → minutes); overrides the catalog default.
+  let runtimes: Record<string, number> = {}
+  try { runtimes = profile ? (JSON.parse(profile.applianceRuntimes) as Record<string, number>) : {} } catch { runtimes = {} }
 
   let choiceSlugs = names
     .map(n => byName.get(n.toLowerCase())?.slug)
@@ -37,12 +40,14 @@ export async function getUserApplianceChoices(event: H3Event, userId: string): P
 
   return choiceSlugs.map((slug) => {
     const a = bySlug.get(slug)
+    const name = a?.name ?? slug
     return {
       slug,
-      name: a?.name ?? slug,
+      name,
       icon: a?.icon ?? 'i-lucide-plug',
       powerKw: a?.typicalPowerKw ?? null,
-      durationMin: a?.typicalDurationMin ?? null
+      // Prefer the user's own typical run time, falling back to the catalog default.
+      durationMin: runtimes[name] ?? a?.typicalDurationMin ?? null
     }
   })
 }
