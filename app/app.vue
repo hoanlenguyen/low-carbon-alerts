@@ -16,7 +16,7 @@ useHead({
     { name: 'mobile-web-app-capable', content: 'yes' },
     { name: 'apple-mobile-web-app-capable', content: 'yes' },
     { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
-    { name: 'apple-mobile-web-app-title', content: 'Low Carbon Alerts' }
+    { name: 'apple-mobile-web-app-title', content: 'Hiilivahti' }
   ],
   link: [
     { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
@@ -30,7 +30,7 @@ useHead({
   }
 })
 
-const title = 'Low Carbon Alerts'
+const title = 'Hiilivahti — Low Carbon Alerts'
 const description = 'A full-stack web app that tracks Finland\'s real-time electricity grid carbon intensity and notifies users when clean energy windows open.'
 
 useSeoMeta({

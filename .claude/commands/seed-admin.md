@@ -16,7 +16,7 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/auth/seed-admin" `
 ## Production
 
 ```powershell
-Invoke-RestMethod -Uri "https://low-carbon-alerts.pages.dev/api/auth/seed-admin" `
+Invoke-RestMethod -Uri "https://hiilivahti.fi/api/auth/seed-admin" `
   -Method POST `
   -ContentType "application/json" `
   -Body '{"token":"<NUXT_SETUP_TOKEN>","email":"<email>","password":"<password>","name":"<name>"}'

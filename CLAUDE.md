@@ -7,7 +7,7 @@ A fullstack dashboard application for managing low-carbon alerts. It has two dis
 - **Admin section** (`/admin/**`) — authenticated dashboard for administrators (customers, inbox, settings). Login via email + password only at `/admin-login`. No public signup.
 - **End-user section** (`/app/**`) — view-only personal dashboard for registered end-users. Login at `/login`, signup at `/signup` (email + password or Google OAuth).
 
-**Deployed to:** Cloudflare Pages (`https://low-carbon-alerts.pages.dev`)  
+**Deployed to:** Cloudflare Pages (`https://hiilivahti.fi`)  
 **Auto-deploy:** GitHub Actions on push to `main`
 
 ---

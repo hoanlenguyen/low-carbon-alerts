@@ -5,8 +5,8 @@ const updated = '14 August 2026'
 const contact = 'lowcarbonalertadmin@gmail.com'
 
 useSeoMeta({
-  title: 'Terms of Service — Low Carbon Alerts',
-  description: 'The terms that govern your use of the Low Carbon Alerts application.'
+  title: 'Terms of Service — Hiilivahti',
+  description: 'The terms that govern your use of the Hiilivahti application.'
 })
 </script>
 
@@ -14,7 +14,7 @@ useSeoMeta({
   <div class="min-h-screen bg-default text-default">
     <div class="max-w-2xl mx-auto px-4 py-12">
       <NuxtLink to="/" class="text-sm text-primary hover:underline">
-        ← Low Carbon Alerts
+        ← Hiilivahti
       </NuxtLink>
 
       <h1 class="mt-6 text-2xl font-semibold text-highlighted">
@@ -27,7 +27,7 @@ useSeoMeta({
       <div class="mt-8 space-y-8 text-sm leading-relaxed text-muted">
         <section>
           <p>
-            These terms govern your use of Low Carbon Alerts (“the Service”). By creating an account or
+            These terms govern your use of Hiilivahti — Low Carbon Alerts (“the Service”). By creating an account or
             using the Service, you agree to these terms. If you do not agree, please do not use the Service.
           </p>
         </section>
@@ -37,7 +37,7 @@ useSeoMeta({
             The Service
           </h2>
           <p>
-            Low Carbon Alerts is an educational application that provides information about electricity-grid
+            Hiilivahti is an educational application that provides information about electricity-grid
             carbon intensity and sends notifications about lower-carbon energy windows. The information is
             provided for general guidance only, may be inaccurate or delayed, and is not professional
             energy, financial, or legal advice. You are responsible for any decisions you make based on it.

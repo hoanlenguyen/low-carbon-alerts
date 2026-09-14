@@ -5,8 +5,8 @@ const updated = '14 August 2026'
 const contact = 'lowcarbonalertadmin@gmail.com'
 
 useSeoMeta({
-  title: 'Privacy Policy — Low Carbon Alerts',
-  description: 'How Low Carbon Alerts collects, uses, and protects your personal data.'
+  title: 'Privacy Policy — Hiilivahti',
+  description: 'How Hiilivahti collects, uses, and protects your personal data.'
 })
 </script>
 
@@ -14,7 +14,7 @@ useSeoMeta({
   <div class="min-h-screen bg-default text-default">
     <div class="max-w-2xl mx-auto px-4 py-12">
       <NuxtLink to="/" class="text-sm text-primary hover:underline">
-        ← Low Carbon Alerts
+        ← Hiilivahti
       </NuxtLink>
 
       <h1 class="mt-6 text-2xl font-semibold text-highlighted">
@@ -27,7 +27,7 @@ useSeoMeta({
       <div class="mt-8 space-y-8 text-sm leading-relaxed text-muted">
         <section>
           <p>
-            Low Carbon Alerts (“the Service”, “we”, “us”) is an educational application that tracks the
+            Hiilivahti — Low Carbon Alerts (“the Service”, “we”, “us”) is an educational application that tracks the
             carbon intensity of the electricity grid and notifies registered users when lower-carbon
             energy windows are available. This policy explains what personal data we collect, why, and
             the choices you have. If you have questions, contact us at

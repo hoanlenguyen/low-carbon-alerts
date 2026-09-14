@@ -35,11 +35,11 @@ const features = [
       <div class="flex items-center gap-2">
         <img
           src="/android-chrome-192x192.png"
-          alt="Low Carbon Alerts"
+          alt="Hiilivahti"
           width="28"
           height="28"
           class="size-7 rounded-md">
-        <span class="font-semibold text-highlighted">Low Carbon Alerts</span>
+        <span class="font-semibold text-highlighted">Hiilivahti</span>
       </div>
       <div class="flex items-center gap-2">
         <UButton
@@ -55,10 +55,10 @@ const features = [
     <main class="flex-1">
       <section class="max-w-3xl mx-auto px-4 pt-16 pb-12 text-center">
         <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-highlighted">
-          Low Carbon Alerts
+          Hiilivahti — Low Carbon Alerts
         </h1>
         <p class="mt-5 text-lg text-muted leading-relaxed">
-          Low Carbon Alerts tracks Finland’s real-time electricity-grid carbon intensity and
+          Hiilivahti tracks Finland’s real-time electricity-grid carbon intensity and
           tells you when clean-energy windows open — so you can run your appliances when the
           grid is greenest and cut your carbon footprint.
         </p>
@@ -102,7 +102,7 @@ const features = [
     <!-- Footer -->
     <footer class="border-t border-default">
       <div class="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted">
-        <span>© {{ new Date().getFullYear() }} Low Carbon Alerts</span>
+        <span>© {{ new Date().getFullYear() }} Hiilivahti</span>
         <div class="flex items-center gap-4">
           <NuxtLink to="/privacy" class="hover:text-highlighted transition-colors">
             Privacy

@@ -11,7 +11,7 @@ onMounted(init)
 // Reflect the unread count in the browser tab title, so a new message is
 // noticeable even when the app is in a background tab (e.g. "(2) Low Carbon Alerts").
 useHead({
-  title: computed(() => (unreadCount.value > 0 ? `(${unreadCount.value}) ` : '') + 'Low Carbon Alerts')
+  title: computed(() => (unreadCount.value > 0 ? `(${unreadCount.value}) ` : '') + 'Hiilivahti')
 })
 
 const navItems = [
@@ -36,11 +36,11 @@ function isActive(to: string) {
       <NuxtLink to="/app" class="flex items-center gap-2 font-semibold text-highlighted hover:text-primary transition-colors">
         <img
           src="/android-chrome-192x192.png"
-          alt="Low Carbon Alerts"
+          alt="Hiilivahti"
           width="28"
           height="28"
           class="size-7 rounded-md">
-        <span>Low Carbon Alerts</span>
+        <span>Hiilivahti</span>
       </NuxtLink>
 
       <div class="flex items-center gap-2">
