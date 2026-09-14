@@ -6,10 +6,10 @@ defineProps<{
 }>()
 
 const teams = ref([{
-  label: 'Low Carbon Alerts',
+  label: 'Hiilivahti',
   avatar: {
     src: '/android-chrome-192x192.png',
-    alt: 'Low Carbon Alerts'
+    alt: 'Hiilivahti'
   }
 }])
 const selectedTeam = ref(teams.value[0])
