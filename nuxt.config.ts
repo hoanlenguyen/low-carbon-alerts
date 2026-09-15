@@ -31,11 +31,14 @@ export default defineNuxtConfig({
     openaiApiKey: '',
     openaiBaseUrl: 'https://api.openai.com/v1',
     openaiLlmModel: 'gpt-4o-mini',
-    // Gmail API sending (reuses the Google OAuth client id/secret from oauth.google).
-    gmailRefreshToken: '',
-    emailFrom: 'lowcarbonalertadmin@gmail.com',
-    emailFromName: 'Low Carbon Alerts',
+    // Transactional email via Resend (set NUXT_RESEND_API_KEY).
+    resendApiKey: '',
+    emailFrom: 'noreply@hiilivahti.fi',
+    emailFromName: 'Hiilivahti',
+    emailReplyTo: 'support@hiilivahti.fi',
     public: {
+      // Canonical public origin (no trailing slash). Override with NUXT_PUBLIC_SITE_URL.
+      siteUrl: 'https://hiilivahti.fi',
       // Google Search Console site-verification token (for OAuth domain verification).
       googleSiteVerification: '',
       firebaseApiKey: '',

@@ -38,7 +38,7 @@ Two audiences share one **Nuxt 4** app deployed to **Cloudflare Pages**:
 - **Nitro server API** (Pages Functions) backed by **Cloudflare D1** (SQLite) through **Drizzle ORM**.
 - **Session auth** via `nuxt-auth-utils` (sealed cookies) with optional Google OAuth.
 - A separate **Cloudflare Cron Worker** (`workers/cron/`) pings an internal `/_cron` endpoint hourly to run the smart-alert pipeline (Cloudflare Pages has no native cron).
-- **External services**, called server-side with held secrets: the Flip API / Sähköjälki (grid forecast), an OpenAI-compatible **LLM** for message copy, **FCM** for push, and the **Gmail API** for email digests.
+- **External services**, called server-side with held secrets: the Flip API / Sähköjälki (grid forecast), an OpenAI-compatible **LLM** for message copy, **FCM** for push, and **Resend** for email (weekly forecast digest).
 
 📊 **Diagram:** an interactive, explorable runtime diagram is in [`docs/architecture.html`](docs/architecture.html) (open in a browser). A static preview:
 
@@ -73,7 +73,7 @@ Users act on an alert via **"I shifted it"**, which opens the Appliance Schedule
 | Charts | Unovis (`@unovis/vue`) |
 | Database | Cloudflare D1 (SQLite) via Drizzle ORM |
 | Auth | `nuxt-auth-utils` (sealed cookies) + Google OAuth |
-| Push / email | Firebase Cloud Messaging (FCM) · Gmail API |
+| Push / email | Firebase Cloud Messaging (FCM) · Resend |
 | LLM | OpenAI-compatible endpoint (e.g. OpenRouter, `gpt-4o-mini`) for message copy |
 | Scheduling | Cloudflare Cron Worker (`workers/cron/`) → `/_cron` |
 | Data source | [Flip API / Sähköjälki](https://flipapi.net) (Fingrid) |
@@ -159,8 +159,8 @@ NUXT_OPENAI_API_KEY=
 NUXT_OPENAI_BASE_URL=
 NUXT_OPENAI_LLM_MODEL=
 
-# Email digests (Gmail API) — optional
-NUXT_GMAIL_REFRESH_TOKEN=
+# Email (Resend) — optional
+NUXT_RESEND_API_KEY=
 ```
 
 The first admin is seeded via `POST /api/auth/seed-admin` (requires `NUXT_SETUP_TOKEN`).

@@ -3,6 +3,7 @@ import { CronExpressionParser } from 'cron-parser'
 import { useDrizzle, schema } from '../database'
 import { sendNotification } from '../utils/sendNotification'
 import { runSmartAlert } from '../utils/runSmartAlert'
+import { runWeeklyDigest } from '../utils/runWeeklyDigest'
 
 export default defineEventHandler(async (event) => {
   // Only the scheduler (the standalone cron Worker) may trigger job processing.
@@ -34,6 +35,14 @@ export default defineEventHandler(async (event) => {
       const result = await runSmartAlert(event)
       smartAlertRan = true
       smartAlertSent = result.sent
+    } else if (job.targetType === 'weeklyDigest') {
+      // Only actually send at Monday 08:00 Helsinki; other ticks just re-schedule
+      // (covers the seeded next_run_at=0 so the first tick doesn't send off-schedule).
+      const hp = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Helsinki', weekday: 'short', hour: '2-digit', hour12: false })
+        .formatToParts(now).reduce((a, x) => { a[x.type] = x.value; return a }, {} as Record<string, string>)
+      if (hp.weekday === 'Mon' && hp.hour === '08') {
+        await runWeeklyDigest(event)
+      }
     } else {
       const targetUserIds = job.targetUserIds ? JSON.parse(job.targetUserIds) as string[] : undefined
       await sendNotification(event, {
@@ -45,7 +54,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const nextRunAt = CronExpressionParser.parse(job.cronExpression).next().toDate()
+    const nextRunAt = CronExpressionParser.parse(job.cronExpression, { tz: 'Europe/Helsinki' }).next().toDate()
     await db.update(schema.scheduledJobs)
       .set({ lastRunAt: now, nextRunAt })
       .where(eq(schema.scheduledJobs.id, job.id))

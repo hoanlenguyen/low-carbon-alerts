@@ -121,6 +121,33 @@ async function onDisablePush() {
 
 const pushEnabled = computed(() => pushPermission.value === 'granted' && !!fcmToken.value)
 const pushDenied = computed(() => pushPermission.value === 'denied')
+
+// ── Weekly email summary ──
+const hasEmail = computed(() => !!user.value?.email)
+const weeklyOptIn = ref(true)
+const weeklyLoading = ref(false)
+
+const { data: profileData } = useFetch<{ weeklyEmailOptIn?: boolean } | null>('/api/user/profile', {
+  server: false,
+  default: () => null
+})
+watch(profileData, (p) => {
+  if (p && typeof p.weeklyEmailOptIn === 'boolean') weeklyOptIn.value = p.weeklyEmailOptIn
+}, { immediate: true })
+
+async function onToggleWeekly(value: boolean) {
+  weeklyLoading.value = true
+  try {
+    await $fetch('/api/user/email-prefs', { method: 'PATCH', body: { weeklyEmailOptIn: value } })
+    weeklyOptIn.value = value
+    toast.add({ title: value ? 'Weekly summary on' : 'Weekly summary off', color: value ? 'success' : 'neutral' })
+  } catch {
+    weeklyOptIn.value = !value // revert on failure
+    toast.add({ title: 'Could not update preference', color: 'error' })
+  } finally {
+    weeklyLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -280,6 +307,40 @@ const pushDenied = computed(() => pushPermission.value === 'denied')
             </UButton>
           </div>
         </UForm>
+      </UPageCard>
+    </section>
+
+    <!-- Weekly email summary -->
+    <section>
+      <div class="mb-4">
+        <h2 class="text-sm font-semibold text-highlighted">
+          Email
+        </h2>
+        <p class="text-sm text-muted">
+          A weekly summary of your impact and the cleanest hours ahead.
+        </p>
+      </div>
+
+      <UPageCard variant="subtle">
+        <div class="flex items-start justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-mail" class="size-4 shrink-0" :class="weeklyOptIn && hasEmail ? 'text-primary' : 'text-dimmed'" />
+              <span class="text-sm font-medium text-highlighted">Weekly summary email</span>
+            </div>
+            <p v-if="hasEmail" class="text-xs text-muted">
+              Sent every Monday morning to <strong>{{ user?.email }}</strong>.
+            </p>
+            <p v-else class="text-xs text-warning">
+              Add an email to your profile above to receive the weekly summary.
+            </p>
+          </div>
+          <USwitch
+            :model-value="weeklyOptIn"
+            :disabled="!hasEmail || weeklyLoading"
+            @update:model-value="onToggleWeekly"
+          />
+        </div>
       </UPageCard>
     </section>
 
