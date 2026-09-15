@@ -59,7 +59,7 @@ export const scheduledJobs = sqliteTable('scheduled_jobs', {
   name: text('name').notNull(),
   subject: text('subject').notNull(),
   body: text('body').notNull(),
-  targetType: text('target_type', { enum: ['broadcast', 'targeted', 'smartAlert'] }).notNull(),
+  targetType: text('target_type', { enum: ['broadcast', 'targeted', 'smartAlert', 'weeklyDigest'] }).notNull(),
   targetUserIds: text('target_user_ids'),
   cronExpression: text('cron_expression').notNull(),
   nextRunAt: integer('next_run_at', { mode: 'timestamp' }).notNull(),
@@ -148,6 +148,7 @@ export const userProfiles = sqliteTable('user_profiles', {
   energyGoal: text('energy_goal').notNull(),
   notifStyle: text('notif_style', { enum: ['detailed', 'simple'] }).notNull(),
   maxAlertsPerDay: integer('max_alerts_per_day').notNull().default(1), // per-user daily cap on smart alerts
+  weeklyEmailOptIn: integer('weekly_email_opt_in', { mode: 'boolean' }).notNull().default(true), // weekly digest email
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
 

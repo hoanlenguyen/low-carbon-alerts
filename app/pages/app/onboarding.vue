@@ -76,6 +76,7 @@ const energyGoal = ref<string>('')
 
 const notifStyle = ref<'detailed' | 'simple'>('detailed')
 const maxAlertsPerDay = ref(1)
+const weeklyEmailOptIn = ref(true)
 
 // ── Validation ──
 const step1Valid = computed(() =>
@@ -134,7 +135,8 @@ async function finish() {
         activeHoursEnd: activeHoursEnd.value,
         energyGoal: energyGoal.value,
         notifStyle: notifStyle.value,
-        maxAlertsPerDay: maxAlertsPerDay.value
+        maxAlertsPerDay: maxAlertsPerDay.value,
+        weeklyEmailOptIn: weeklyEmailOptIn.value
       }
     })
     await refreshSession()
@@ -428,6 +430,24 @@ async function finish() {
           <p class="text-xs text-muted">
             We'll never send more smart alerts than this in a day.
           </p>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+            Weekly email summary
+          </p>
+          <button
+            type="button"
+            class="flex items-start justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition cursor-pointer"
+            :class="weeklyEmailOptIn ? 'border-primary bg-primary/10' : 'border-default hover:border-default/80'"
+            @click="weeklyEmailOptIn = !weeklyEmailOptIn"
+          >
+            <span class="flex-1">
+              <span class="text-xs font-semibold text-highlighted block">Send me a weekly summary email</span>
+              <span class="text-[11px] text-muted">Every Monday: your CO₂ saved, streak, and the cleanest hours ahead.</span>
+            </span>
+            <USwitch v-model="weeklyEmailOptIn" @click.stop />
+          </button>
         </div>
       </div>
 

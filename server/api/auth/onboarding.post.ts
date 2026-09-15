@@ -14,7 +14,8 @@ const bodySchema = z.object({
   activeHoursEnd: z.string().regex(/^\d{2}:\d{2}$/),
   energyGoal: z.string().min(1),
   notifStyle: z.enum(['detailed', 'simple']),
-  maxAlertsPerDay: z.number().int().min(1).max(20).default(1)
+  maxAlertsPerDay: z.number().int().min(1).max(20).default(1),
+  weeklyEmailOptIn: z.boolean().default(true)
 })
 
 export default defineEventHandler(async (event) => {
@@ -41,6 +42,7 @@ export default defineEventHandler(async (event) => {
       energyGoal: data.energyGoal,
       notifStyle: data.notifStyle,
       maxAlertsPerDay: data.maxAlertsPerDay,
+      weeklyEmailOptIn: data.weeklyEmailOptIn,
       createdAt: now
     })
     .onConflictDoUpdate({
@@ -56,7 +58,8 @@ export default defineEventHandler(async (event) => {
         activeHoursEnd: data.activeHoursEnd,
         energyGoal: data.energyGoal,
         notifStyle: data.notifStyle,
-        maxAlertsPerDay: data.maxAlertsPerDay
+        maxAlertsPerDay: data.maxAlertsPerDay,
+        weeklyEmailOptIn: data.weeklyEmailOptIn
       }
     })
 
