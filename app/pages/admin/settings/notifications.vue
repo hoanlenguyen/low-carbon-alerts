@@ -5,23 +5,31 @@ definePageMeta({
 })
 
 const toast = useToast()
-const { user } = useUserSession()
 
-// ── Send test email (verifies Resend delivery end-to-end) ──
-const testTo = ref(user.value?.email || '')
-const sending = ref(false)
+// ── Weekly report master switch (drives the scheduled 'weekly-digest' job) ──
+type Job = { id: string, targetType: string, enabled: boolean }
+const { data: jobs } = await useFetch<Job[]>('/api/admin/notifications/scheduled', { default: () => [] })
+const weeklyJob = computed(() =>
+  (jobs.value ?? []).find(j => j.id === 'weekly-digest' || j.targetType === 'weeklyDigest')
+)
+const weeklyEnabled = ref(false)
+watch(weeklyJob, (j) => { if (j) weeklyEnabled.value = j.enabled }, { immediate: true })
+const savingToggle = ref(false)
 
-async function sendTestEmail() {
-  if (!testTo.value) return
-  sending.value = true
+async function onToggleWeekly(value: boolean) {
+  const id = weeklyJob.value?.id
+  if (!id) return
+  savingToggle.value = true
   try {
-    await $fetch('/api/admin/email-test', { method: 'POST', body: { to: testTo.value } })
-    toast.add({ title: 'Test email sent', description: `Sent to ${testTo.value} via Resend.`, color: 'success' })
+    await $fetch(`/api/admin/notifications/scheduled/${id}`, { method: 'PATCH', body: { enabled: value } })
+    weeklyEnabled.value = value
+    toast.add({ title: value ? 'Weekly report enabled' : 'Weekly report disabled', color: value ? 'success' : 'neutral' })
   } catch (e: unknown) {
-    const msg = (e as { data?: { statusMessage?: string } })?.data?.statusMessage ?? 'Failed to send'
-    toast.add({ title: 'Send failed', description: msg, color: 'error' })
+    weeklyEnabled.value = !value // revert on failure
+    const msg = (e as { data?: { statusMessage?: string } })?.data?.statusMessage ?? 'Failed to update'
+    toast.add({ title: 'Could not update', description: msg, color: 'error' })
   } finally {
-    sending.value = false
+    savingToggle.value = false
   }
 }
 
@@ -59,73 +67,52 @@ async function sendWeeklyDigest() {
     sendingDigest.value = false
   }
 }
-
-const state = reactive<Record<string, boolean>>({
-  email_digest: true,
-  push_browser: false,
-  alert_low_carbon: true,
-  alert_job_failure: true,
-  weekly_report: false
-})
-
-const sections = [{
-  title: 'Delivery channels',
-  description: 'How you receive alerts as an admin.',
-  fields: [{
-    name: 'email_digest',
-    label: 'Email digest',
-    description: 'Daily summary of sent notifications and unread counts.'
-  }, {
-    name: 'push_browser',
-    label: 'Browser push',
-    description: 'Real-time browser notifications when a job fires or fails.'
-  }]
-}, {
-  title: 'Alert triggers',
-  description: 'Which events generate an admin alert.',
-  fields: [{
-    name: 'alert_low_carbon',
-    label: 'Low-carbon window detected',
-    description: 'Notify when the grid carbon intensity drops below threshold.'
-  }, {
-    name: 'alert_job_failure',
-    label: 'Scheduled job failure',
-    description: 'Notify when a cron job fails to deliver to its recipients.'
-  }, {
-    name: 'weekly_report',
-    label: 'Weekly delivery report',
-    description: 'Summary of messages sent, open rates, and user growth.'
-  }]
-}]
 </script>
 
 <template>
   <div class="space-y-8">
-    <!-- Test email -->
+    <!-- Weekly report (master switch) -->
     <div>
       <UPageCard
-        title="Test email"
-        description="Send a test email to verify Resend delivery is configured correctly."
+        title="Weekly report"
+        description="A weekly summary email sent to opted-in users every Monday morning."
         variant="naked"
         class="mb-4"
       />
       <UPageCard variant="subtle">
-        <div class="flex flex-col sm:flex-row sm:items-end gap-3">
-          <UFormField label="Recipient" name="testTo" class="flex-1">
-            <UInput v-model="testTo" type="email" placeholder="you@example.com" class="w-full" />
-          </UFormField>
-          <UButton icon="i-lucide-send" :loading="sending" :disabled="!testTo" @click="sendTestEmail">
-            Send test email
-          </UButton>
+        <div class="flex items-start justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-mail" class="size-4 shrink-0" :class="weeklyEnabled ? 'text-primary' : 'text-dimmed'" />
+              <span class="text-sm font-medium text-highlighted">Send the weekly report</span>
+              <UBadge
+                :label="weeklyEnabled ? 'On' : 'Off'"
+                :color="weeklyEnabled ? 'success' : 'neutral'"
+                variant="subtle"
+                size="xs"
+              />
+            </div>
+            <p class="text-xs text-muted">
+              When on, the scheduled job emails the weekly digest to opted-in users every Monday at 08:00 (Helsinki time).
+            </p>
+            <p v-if="!weeklyJob" class="text-xs text-warning">
+              The weekly-report job isn't set up yet — run the database migrations.
+            </p>
+          </div>
+          <USwitch
+            :model-value="weeklyEnabled"
+            :disabled="!weeklyJob || savingToggle"
+            @update:model-value="onToggleWeekly"
+          />
         </div>
       </UPageCard>
     </div>
 
-    <!-- Weekly digest (test) -->
+    <!-- Send weekly report now (test) -->
     <div>
       <UPageCard
-        title="Weekly digest (test)"
-        description="Send the weekly summary email now to selected users (bypasses their opt-in)."
+        title="Send now (test)"
+        description="Send the weekly report immediately to selected users (bypasses their opt-in)."
         variant="naked"
         class="mb-4"
       />
@@ -147,30 +134,9 @@ const sections = [{
             :disabled="!selectedUserIds.length"
             @click="sendWeeklyDigest"
           >
-            Send weekly digest now
+            Send weekly report now
           </UButton>
         </div>
-      </UPageCard>
-    </div>
-
-    <div v-for="section in sections" :key="section.title">
-      <UPageCard
-        :title="section.title"
-        :description="section.description"
-        variant="naked"
-        class="mb-4"
-      />
-      <UPageCard variant="subtle" :ui="{ container: 'divide-y divide-default' }">
-        <UFormField
-          v-for="field in section.fields"
-          :key="field.name"
-          :name="field.name"
-          :label="field.label"
-          :description="field.description"
-          class="flex items-center justify-between not-last:pb-4 gap-4"
-        >
-          <USwitch v-model="state[field.name]" />
-        </UFormField>
       </UPageCard>
     </div>
   </div>
