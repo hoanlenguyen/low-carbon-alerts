@@ -76,6 +76,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         />
       </UFormField>
 
+      <div class="-mt-2 text-right">
+        <ULink to="/forgot-password" class="text-sm text-primary">Forgot password?</ULink>
+      </div>
+
       <UAlert
         v-if="error"
         color="error"

@@ -135,6 +135,53 @@ export const auditLogs = sqliteTable('audit_logs', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
 
+// Pending email invitations to create an ADMIN account. Token-based: only the SHA-256
+// hash of the invite token is stored here; the raw token travels once in the emailed
+// accept link. Accepting creates the admin user (see /api/invites/accept) and flips the
+// invite to 'accepted'. Single-use, 7-day expiry.
+export const adminInvites = sqliteTable('admin_invites', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull(), // lowercased; the fixed email for the new admin
+  tokenHash: text('token_hash').notNull(), // SHA-256 hex of the raw token
+  invitedById: text('invited_by_id').notNull(),
+  status: text('status', { enum: ['pending', 'accepted', 'revoked'] }).notNull().default('pending'),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  acceptedAt: integer('accepted_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+}, t => ([
+  index('admin_invites_email_idx').on(t.email)
+]))
+export type AdminInvite = typeof adminInvites.$inferSelect
+
+// Single-use password-reset tokens (both admin and end-user). Only the SHA-256 hash of
+// the token is stored; the raw token travels once in the emailed reset link. Bound to a
+// specific user (email is non-unique, so one request may mint a token per matching user).
+export const passwordResetTokens = sqliteTable('password_reset_tokens', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  tokenHash: text('token_hash').notNull(), // SHA-256 hex of the raw token
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  usedAt: integer('used_at', { mode: 'timestamp' }), // set when redeemed (single-use)
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+}, t => ([
+  index('password_reset_tokens_hash_idx').on(t.tokenHash),
+  index('password_reset_tokens_user_idx').on(t.userId)
+]))
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect
+
+// Throttle log for password-reset requests: one row per attempt (whether or not an account
+// matched), so requests can be rate-limited per email and per IP. Pruned opportunistically.
+export const passwordResetRequests = sqliteTable('password_reset_requests', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull(), // lowercased, as typed by the requester
+  ip: text('ip').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+}, t => ([
+  index('password_reset_requests_email_idx').on(t.email),
+  index('password_reset_requests_ip_idx').on(t.ip)
+]))
+export type PasswordResetRequest = typeof passwordResetRequests.$inferSelect
+
 export const userProfiles = sqliteTable('user_profiles', {
   userId: text('user_id').primaryKey(),
   housingType: text('housing_type').notNull(),
