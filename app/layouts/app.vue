@@ -5,6 +5,7 @@ const { logout } = useLogout()
 const { messages, unreadCount, markAsRead, markAllAsRead, init } = useNotifications()
 const { earned } = useAchievements()
 const showInbox = ref(false)
+const feedbackOpen = ref(false)
 
 onMounted(init)
 
@@ -120,6 +121,14 @@ function isActive(to: string) {
         <UButton
           color="neutral"
           variant="ghost"
+          icon="i-lucide-message-circle"
+          size="sm"
+          aria-label="Send feedback"
+          @click="feedbackOpen = true" />
+
+        <UButton
+          color="neutral"
+          variant="ghost"
           icon="i-lucide-log-out"
           size="sm"
           aria-label="Log out"
@@ -172,5 +181,7 @@ function isActive(to: string) {
         />
       </button>
     </nav>
+
+    <FeedbackDialog v-model:open="feedbackOpen" />
   </div>
 </template>

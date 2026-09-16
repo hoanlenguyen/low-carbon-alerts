@@ -5,6 +5,7 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 // const toast = useToast()
 
 const open = ref(false)
+const feedbackOpen = ref(false)
 
 const links = [[{
   label: 'Dashboard',
@@ -98,14 +99,18 @@ const links = [[{
 }], [{
   label: 'Feedback',
   icon: 'i-lucide-message-circle',
-  to: 'https://hoanlenguyen.github.io/my-profile',
-  target: '_blank'
-}, {
-  label: 'Help & Support',
-  icon: 'i-lucide-info',
-  to: 'https://github.com/hoanlenguyen',
-  target: '_blank'
-}]] satisfies NavigationMenuItem[][]
+  onSelect: () => {
+    feedbackOpen.value = true
+    open.value = false
+  }
+}
+// , {
+//   label: 'Help & Support',
+//   icon: 'i-lucide-info',
+//   to: 'https://github.com/hoanlenguyen',
+//   target: '_blank'
+// }
+]] satisfies NavigationMenuItem[][]
 
 const groups = computed(() => [{
   id: 'links',
@@ -206,5 +211,6 @@ onMounted(async () => {
     <slot />
 
     <NotificationsSlideover />
+    <FeedbackDialog v-model:open="feedbackOpen" />
   </UDashboardGroup>
 </template>
