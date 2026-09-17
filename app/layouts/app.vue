@@ -20,7 +20,7 @@ const navItems = [
   { label: 'Alerts', icon: 'i-lucide-bell', to: '/app/alerts' },
   { label: 'Schedule', icon: 'i-lucide-calendar-clock', to: '/app/schedule' },
   { label: 'Forecast', icon: 'i-lucide-trending-up', to: '/app/forecast' },
-  { label: 'Energy Profile', icon: 'i-lucide-house-plug', to: '/app/energy-consumption' },
+  { label: 'Energy Profile', icon: 'i-lucide-house-plug', to: '/app/energy-profile' },
   { label: 'Settings', icon: 'i-lucide-settings', to: '/app/settings' }
 ]
 
@@ -56,6 +56,15 @@ function isActive(to: string) {
           </UTooltip>
           <span v-if="earned.length > 6" class="text-xs text-dimmed tabular-nums">+{{ earned.length - 6 }}</span>
         </div>
+
+        <UButton
+          color="primary"
+          variant="soft"
+          icon="i-lucide-message-circle"
+          label="Feedback"
+          size="sm"
+          class="rounded-full"
+          @click="feedbackOpen = true" />
 
         <!-- Bell popover -->
         <UPopover v-model:open="showInbox">
@@ -117,14 +126,6 @@ function isActive(to: string) {
             </div>
           </template>
         </UPopover>
-
-        <UButton
-          color="neutral"
-          variant="ghost"
-          icon="i-lucide-message-circle"
-          size="sm"
-          aria-label="Send feedback"
-          @click="feedbackOpen = true" />
 
         <UButton
           color="neutral"

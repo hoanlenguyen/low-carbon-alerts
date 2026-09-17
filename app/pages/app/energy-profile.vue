@@ -18,7 +18,7 @@ const primaryHeating = ref('')
 const selectedAppliances = ref<string[]>([])
 const activeHoursStart = ref('07:00')
 const activeHoursEnd = ref('22:00')
-const applianceRuntimeH = reactive<Record<string, number>>({}) // appliance name → hours
+const applianceRuntimeH = reactive<Record<string, number | undefined>>({}) // appliance name → hours
 
 // ── Step 3 ──
 const energyGoal = ref('')
@@ -26,7 +26,7 @@ const notifStyle = ref<'detailed' | 'simple'>('detailed')
 const maxAlertsPerDay = ref(1)
 
 function hydrateRuntimes(names: string[], runtimes: Record<string, number> | undefined) {
-  for (const k of Object.keys(applianceRuntimeH)) delete applianceRuntimeH[k]
+  for (const k of Object.keys(applianceRuntimeH)) applianceRuntimeH[k] = undefined
   for (const n of names) applianceRuntimeH[n] = runtimes?.[n] ? Math.round((runtimes[n] / 60) * 4) / 4 : 1.5
 }
 function buildRuntimesMin() {
