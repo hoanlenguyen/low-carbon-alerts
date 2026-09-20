@@ -4,6 +4,7 @@
   "description": "Track Finland's real-time grid carbon intensity and get alerts when clean-energy windows open.",
   "start_url": "/",
   "scope": "/",
+  "id": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",

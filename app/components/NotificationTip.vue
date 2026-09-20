@@ -18,6 +18,16 @@ const platform = ref<Platform>('desktop')
 const isStandalone = ref(false)
 const permission = ref<NotificationPermission | 'unsupported'>('default')
 const busy = ref(false)
+const { canInstall, promptInstall } = useInstallPrompt()
+const installing = ref(false)
+async function onInstall() {
+  installing.value = true
+  try {
+    await promptInstall()
+  } finally {
+    installing.value = false
+  }
+}
 
 function detect() {
   const ua = navigator.userAgent
@@ -132,7 +142,16 @@ async function enable() {
           <p class="text-[11px] text-dimmed mt-0.5">
             {{ installNote }}
           </p>
-          <ol class="text-xs text-muted mt-2 list-decimal pl-5 space-y-0.5">
+          <div v-if="canInstall" class="mt-2">
+            <UButton
+              size="sm"
+              icon="i-lucide-download"
+              :loading="installing"
+              @click="onInstall">
+              Install app
+            </UButton>
+          </div>
+          <ol v-else class="text-xs text-muted mt-2 list-decimal pl-5 space-y-0.5">
             <li v-for="(step, i) in installSteps" :key="i">
               {{ step }}
             </li>

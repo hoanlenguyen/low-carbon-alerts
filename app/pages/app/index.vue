@@ -96,14 +96,14 @@ function timeLabel(val: string) {
           <div class="flex-1 min-w-0">
             <div class="flex items-baseline justify-between gap-2">
               <p
-                class="text-sm truncate"
+                class="text-sm"
                 :class="msg.read ? 'text-muted font-normal' : 'text-highlighted font-semibold'"
               >
                 {{ msg.subject }}
               </p>
               <span class="text-xs text-dimmed tabular-nums shrink-0">{{ timeLabel(msg.createdAt) }}</span>
             </div>
-            <p class="text-sm text-muted mt-0.5 leading-relaxed line-clamp-2">
+            <p class="text-sm text-muted mt-0.5 leading-relaxed">
               {{ msg.body }}
             </p>
 
