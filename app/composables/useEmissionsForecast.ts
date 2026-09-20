@@ -64,6 +64,30 @@ export function useEmissionsForecast() {
       })
   })
 
+  // Hours to render in the read-only strip: upcoming hours when available; otherwise the
+  // (stale) forecast window, so the data stays visible with a staleness warning. NOT used
+  // for scheduling — the start-hour picker uses hourOptions (upcoming only).
+  const displayHours = computed<HourOption[]>(() => {
+    if (hourOptions.value.length) return hourOptions.value
+    const HOUR = 3_600_000
+    const { lo, hi } = bands.value
+    const forecast = points.value.filter(p => p.isForecast)
+    const src = forecast.length ? forecast : points.value
+    if (!src.length) return []
+    const baseDay = ymd(src[0]!.time) // day boundary relative to the shown window
+    return src.map((p) => {
+      const startMs = Math.floor(p.time / HOUR) * HOUR
+      return {
+        startMs,
+        label: hhmm(startMs),
+        intensity: p.value,
+        isForecast: p.isForecast,
+        band: (p.value <= lo ? 'clean' : p.value >= hi ? 'dirty' : 'mid') as HourOption['band'],
+        isTomorrow: ymd(startMs) !== baseDay
+      }
+    })
+  })
+
   // 24h grid average across the selectable forecast hours — the baseline a shift's
   // saving is measured against (mirrors the server's forecastAvg24h). 2-decimal, unrounded.
   const avg24h = computed<number | null>(() => {
@@ -72,5 +96,14 @@ export function useEmissionsForecast() {
     return Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 100) / 100
   })
 
-  return { points, hourOptions, avg24h, refresh, status }
+  // When the underlying forecast was generated (from the API). Used to surface a
+  // staleness warning when the upstream data hasn't refreshed.
+  const generatedAt = computed<Date | null>(() => {
+    const g = data.value?.generatedAt
+    if (!g) return null
+    const d = new Date(g)
+    return Number.isNaN(d.getTime()) ? null : d
+  })
+
+  return { points, hourOptions, displayHours, avg24h, generatedAt, refresh, status }
 }

@@ -12,7 +12,11 @@ const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
 const { applianceChoices, applianceItems, iconBySlug, saveSchedule, fmtG } = useSchedule()
 const iconOf = (slug: string) => iconBySlug.value.get(slug) ?? 'i-lucide-plug'
-const { points, hourOptions, avg24h } = useEmissionsForecast()
+const { points, hourOptions, avg24h, generatedAt } = useEmissionsForecast()
+const STALE_MS = 24 * 60 * 60 * 1000
+// Saving estimates are priced off the live forecast — block scheduling when the
+// provider's data is stale (>24h old) so we don't record estimates from old data.
+const isStale = computed(() => !!generatedAt.value && Date.now() - generatedAt.value.getTime() > STALE_MS)
 
 const MAX_ROWS = 10
 const choiceBySlug = (slug: string) => applianceChoices.value.find(c => c.slug === slug) ?? null
@@ -26,7 +30,7 @@ const hourItems = computed(() => hourOptions.value.map(h => ({
   value: h.startMs
 })))
 const cleanestHourMs = computed(() => {
-  if (!hourOptions.value.length) return Date.now()
+  if (!hourOptions.value.length) return 0
   return hourOptions.value.reduce((best, h) => (h.intensity < best.intensity ? h : best), hourOptions.value[0]!).startMs
 })
 
@@ -79,7 +83,7 @@ function init() {
 watch([() => props.suggest, () => props.initial, applianceItems], init, { immediate: true })
 
 async function save() {
-  if (!rows.value.length) return
+  if (!rows.value.length || isStale.value) return
   submitting.value = true
   try {
     await saveSchedule(rows.value.map(r => ({
@@ -171,6 +175,7 @@ async function save() {
       variant="soft"
       color="neutral"
       icon="i-lucide-plus"
+      :disabled="isStale"
       class="border border-dashed border-default"
       @click="addRow()">
       Add appliance
@@ -185,13 +190,24 @@ async function save() {
       <span class="text-base font-semibold text-success tabular-nums">≈ {{ fmtG(totalG) }} CO₂</span>
     </div>
 
+    <!-- Stale-forecast notice: scheduling disabled -->
+    <div
+      v-if="isStale"
+      class="flex items-start gap-2 rounded-lg bg-warning/10 px-3 py-2 text-warning">
+      <UIcon name="i-lucide-triangle-alert" class="size-4 shrink-0 mt-0.5" />
+      <p class="text-xs leading-relaxed">
+        The forecast is out of date, so scheduling is paused — saving estimates need current
+        grid data. Please try again once the forecast refreshes.
+      </p>
+    </div>
+
     <!-- Save on its own line -->
     <div class="flex justify-end">
       <UButton
         size="md"
         icon="i-lucide-check"
         :loading="submitting"
-        :disabled="!rows.length"
+        :disabled="!rows.length || isStale"
         @click="save">
         Save schedule
       </UButton>

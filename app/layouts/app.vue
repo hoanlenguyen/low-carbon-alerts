@@ -6,6 +6,7 @@ const { messages, unreadCount, markAsRead, markAllAsRead, init } = useNotificati
 const { earned } = useAchievements()
 const showInbox = ref(false)
 const feedbackOpen = ref(false)
+const { canInstall, promptInstall } = useInstallPrompt()
 
 onMounted(init)
 
@@ -56,6 +57,16 @@ function isActive(to: string) {
           </UTooltip>
           <span v-if="earned.length > 6" class="text-xs text-dimmed tabular-nums">+{{ earned.length - 6 }}</span>
         </div>
+
+        <UButton
+          v-if="canInstall"
+          color="primary"
+          variant="solid"
+          icon="i-lucide-download"
+          label="Install"
+          size="sm"
+          class="rounded-full"
+          @click="() => { promptInstall() }" />
 
         <UButton
           color="primary"
