@@ -1,6 +1,6 @@
 {
-  "name": "Low Carbon Alerts",
-  "short_name": "Low Carbon",
+  "name": "Hiilivahti",
+  "short_name": "Hiilivahti",
   "description": "Track Finland's real-time grid carbon intensity and get alerts when clean-energy windows open.",
   "start_url": "/",
   "scope": "/",
@@ -20,6 +20,18 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-192x192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/android-chrome-512x512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
