@@ -2,7 +2,7 @@
 definePageMeta({ layout: false })
 
 const updated = '14 August 2026'
-const contact = 'lowcarbonalertadmin@gmail.com'
+const contact = 'support@hiilivahti.fi'
 
 useSeoMeta({
   title: 'Privacy Policy — Hiilivahti',
@@ -11,8 +11,8 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="min-h-screen bg-default text-default">
-    <div class="max-w-2xl mx-auto px-4 py-12">
+  <div class="min-h-screen flex flex-col bg-default text-default">
+    <div class="flex-1 w-full max-w-2xl mx-auto px-4 py-12">
       <NuxtLink to="/" class="text-sm text-primary hover:underline">
         ← Hiilivahti
       </NuxtLink>
@@ -139,12 +139,8 @@ useSeoMeta({
           </p>
         </section>
       </div>
-
-      <div class="mt-10 pt-6 border-t border-default text-sm text-muted">
-        <NuxtLink to="/terms" class="text-primary hover:underline">
-          Terms of Service
-        </NuxtLink>
-      </div>
     </div>
+
+    <AppFooter />
   </div>
 </template>

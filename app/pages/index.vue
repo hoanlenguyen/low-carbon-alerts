@@ -100,18 +100,6 @@ const features = [
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-default">
-      <div class="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted">
-        <span>© {{ new Date().getFullYear() }} Hiilivahti</span>
-        <div class="flex items-center gap-4">
-          <NuxtLink to="/privacy" class="hover:text-highlighted transition-colors">
-            Privacy
-          </NuxtLink>
-          <NuxtLink to="/terms" class="hover:text-highlighted transition-colors">
-            Terms
-          </NuxtLink>
-        </div>
-      </div>
-    </footer>
+    <AppFooter />
   </div>
 </template>
