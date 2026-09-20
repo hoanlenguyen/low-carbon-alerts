@@ -51,10 +51,9 @@ async function generateSmartAlert() {
   }
 }
 
-// Weekly electricity-forecast message (general, for all consumers). Generate from
-// live grid data and preview; "Use in Send" drops it into the broadcast form.
+// Weekly electricity-forecast message (general, for all consumers). Generated from live
+// grid data and dropped straight into the Send form as a broadcast for review.
 const generatingForecast = ref(false)
-const forecastPreview = ref<{ subject: string, body: string } | null>(null)
 
 async function generateForecast() {
   generatingForecast.value = true
@@ -63,8 +62,10 @@ async function generateForecast() {
       '/api/admin/notifications/forecast-message',
       { method: 'POST' }
     )
-    forecastPreview.value = { subject: res.subject, body: res.body }
-    toast.add({ title: 'Forecast message generated', color: 'success' })
+    sendState.subject = res.subject
+    sendState.body = res.body
+    sendState.type = 'broadcast'
+    toast.add({ title: 'Forecast message generated', description: 'Review, then Send now to all consumers.', color: 'success' })
   } catch (e: unknown) {
     const err = e as { data?: { statusMessage?: string } }
     toast.add({ title: err?.data?.statusMessage || 'Could not generate the forecast message', color: 'error' })
@@ -73,12 +74,34 @@ async function generateForecast() {
   }
 }
 
-function useForecastInSend() {
-  if (!forecastPreview.value) return
-  sendState.subject = forecastPreview.value.subject
-  sendState.body = forecastPreview.value.body
-  sendState.type = 'broadcast'
-  toast.add({ title: 'Loaded into Send', description: 'Review, then Send now to all consumers.', color: 'success' })
+// Weekly digest - send now (test) to selected users (bypasses opt-in)
+const digestUserItems = computed(() =>
+  (users.value ?? [])
+    .filter(u => !!u.email)
+    .map(u => ({ label: u.name ? `${u.name} · ${u.email}` : (u.email as string), value: u.id }))
+)
+const digestUserIds = ref<string[]>([])
+const sendingDigest = ref(false)
+
+async function sendWeeklyDigest() {
+  if (!digestUserIds.value.length) return
+  sendingDigest.value = true
+  try {
+    const res = await $fetch<{ sent: number, failed: number, recipients: number }>('/api/admin/weekly-digest-test', {
+      method: 'POST',
+      body: { userIds: digestUserIds.value }
+    })
+    toast.add({
+      title: 'Weekly digest sent',
+      description: `Sent ${res.sent}/${res.recipients}${res.failed ? `, ${res.failed} failed` : ''}.`,
+      color: res.failed ? 'warning' : 'success'
+    })
+  } catch (e: unknown) {
+    const msg = (e as { data?: { statusMessage?: string } })?.data?.statusMessage ?? 'Failed to send'
+    toast.add({ title: 'Send failed', description: msg, color: 'error' })
+  } finally {
+    sendingDigest.value = false
+  }
 }
 
 function applyTemplate(t: { subject: string, body: string }) {
@@ -186,38 +209,18 @@ async function deleteTemplate(id: string) {
           </div>
 
           <!-- Weekly forecast message generator (general, all consumers) -->
-          <div class="rounded-lg border border-dashed border-default bg-elevated/30 px-3 py-2.5 space-y-2.5">
-            <div class="flex flex-wrap items-center gap-2">
-              <UButton
-                size="xs"
-                color="primary"
-                variant="soft"
-                icon="i-lucide-newspaper"
-                :loading="generatingForecast"
-                @click="generateForecast"
-              >
-                Generate forecast message
-              </UButton>
-              <span class="text-xs text-dimmed">Weekly electricity forecast for all consumers, from live grid data.</span>
-            </div>
-
-            <div v-if="forecastPreview" class="rounded-md border border-default bg-default p-3 space-y-2">
-              <p class="text-xs font-semibold text-highlighted">
-                {{ forecastPreview.subject }}
-              </p>
-              <p class="text-xs text-muted leading-relaxed whitespace-pre-wrap">
-                {{ forecastPreview.body }}
-              </p>
-              <UButton
-                size="xs"
-                color="neutral"
-                variant="subtle"
-                icon="i-lucide-arrow-down-to-line"
-                @click="useForecastInSend"
-              >
-                Use in Send (broadcast)
-              </UButton>
-            </div>
+          <div class="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-default bg-elevated/30 px-3 py-2.5">
+            <UButton
+              size="xs"
+              color="primary"
+              variant="soft"
+              icon="i-lucide-newspaper"
+              :loading="generatingForecast"
+              @click="generateForecast"
+            >
+              Generate forecast message
+            </UButton>
+            <span class="text-xs text-dimmed">Weekly electricity forecast for all consumers, from live grid data - fills the form as a broadcast.</span>
           </div>
 
           <!-- Templates (click to apply · manage inline) -->
@@ -335,6 +338,40 @@ async function deleteTemplate(id: string) {
               <span>{{ sendState.type === 'broadcast' ? 'All users' : `${sendState.targetUserIds?.length ?? 0} user(s)` }}</span>
               <span>Just now</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly digest - send now (test) -->
+      <div class="mt-8 max-w-xl">
+        <p class="text-xs font-semibold uppercase tracking-wide text-dimmed mb-3">
+          Weekly digest · send now (test)
+        </p>
+        <div class="rounded-xl border border-default bg-elevated/40 p-4 space-y-3">
+          <p class="text-xs text-muted">
+            Send the weekly summary email immediately to selected users (bypasses their opt-in).
+          </p>
+          <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+            <UFormField label="Recipients" name="digestUsers" class="flex-1 min-w-0">
+              <USelectMenu
+                v-model="digestUserIds"
+                :items="digestUserItems"
+                value-key="value"
+                multiple
+                placeholder="Select users (with email)"
+                class="w-full"
+                :ui="{ value: 'truncate' }"
+              />
+            </UFormField>
+            <UButton
+              icon="i-lucide-mail-check"
+              :loading="sendingDigest"
+              :disabled="!digestUserIds.length"
+              class="shrink-0 whitespace-nowrap"
+              @click="sendWeeklyDigest"
+            >
+              Send weekly digest now
+            </UButton>
           </div>
         </div>
       </div>

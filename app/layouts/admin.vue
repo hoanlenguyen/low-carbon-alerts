@@ -84,12 +84,6 @@ const links = [[{
       open.value = false
     }
   }, {
-    label: 'Notifications',
-    to: '/admin/settings/notifications',
-    onSelect: () => {
-      open.value = false
-    }
-  }, {
     label: 'Security',
     to: '/admin/settings/security',
     onSelect: () => {
