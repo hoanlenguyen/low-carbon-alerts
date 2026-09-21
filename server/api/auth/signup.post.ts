@@ -32,7 +32,8 @@ export default defineEventHandler(async (event) => {
     role: 'user' as const,
     googleId: null,
     avatarUrl: null,
-    createdAt: new Date()
+    createdAt: new Date(),
+    lastLoginAt: new Date() // registering logs the user in → count it as their first login
   }
 
   await db.insert(schema.users).values(user)

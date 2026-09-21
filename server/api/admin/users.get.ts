@@ -21,6 +21,7 @@ export default defineEventHandler(async (event) => {
       email: true,
       avatarUrl: true,
       status: true,
+      isGenerated: true,
       createdAt: true,
       lastLoginAt: true
     },

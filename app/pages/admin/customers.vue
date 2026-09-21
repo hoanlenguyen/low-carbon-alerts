@@ -11,6 +11,7 @@ type Customer = {
   email: string | null
   avatarUrl: string | null
   status: 'active' | 'inactive'
+  isGenerated: boolean
   createdAt: string
   lastLoginAt: string | null
 }
@@ -148,6 +149,7 @@ async function confirmToggleStatus() {
             ]"
             class="min-w-32"
           />
+          <CustomersBulkAddModal @created="refresh" />
           <CustomersAddModal @created="refresh" />
         </div>
       </div>
@@ -218,9 +220,18 @@ async function confirmToggleStatus() {
                     size="sm"
                   />
                   <div class="min-w-0">
-                    <p class="font-medium text-highlighted truncate">
-                      {{ customer.name || customer.userName }}
-                    </p>
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <p class="font-medium text-highlighted truncate">
+                        {{ customer.name || customer.userName }}
+                      </p>
+                      <UBadge
+                        v-if="customer.isGenerated"
+                        label="Generated"
+                        color="neutral"
+                        variant="subtle"
+                        size="xs"
+                        class="shrink-0" />
+                    </div>
                     <p class="text-xs text-muted truncate">
                       {{ customer.userName }}<span v-if="customer.email"> · {{ customer.email }}</span>
                     </p>
