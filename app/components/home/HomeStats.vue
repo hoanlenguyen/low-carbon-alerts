@@ -15,7 +15,7 @@ const items = computed(() => [
     title: 'Total Users',
     icon: 'i-lucide-users',
     value: stats.value?.totalUsers ?? 0,
-    to: '/admin/customers'
+    to: '/admin/consumers'
   },
   {
     title: 'Messages Sent',
@@ -33,7 +33,7 @@ const items = computed(() => [
     title: 'Unread',
     icon: 'i-lucide-bell',
     value: stats.value?.unreadMessages ?? 0,
-    to: '/admin/customers'
+    to: '/admin/consumers'
   }
 ])
 </script>

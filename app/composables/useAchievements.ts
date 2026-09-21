@@ -55,6 +55,15 @@ const MILESTONES: Milestone[] = [
 
 const EMPTY: Impact = { week: { count: 0, grams: 0 }, month: { count: 0, grams: 0 }, allTime: { count: 0, grams: 0 }, streakWeeks: 0, lastActionAt: null }
 
+// Pure milestone -> badge evaluation, reusable outside the logged-in user's context
+// (e.g. the admin consumers table computes badges per row from returned metrics).
+export function badgesForMetrics(metrics: { grams: number, count: number, streak: number }): Badge[] {
+  return MILESTONES.map((m) => {
+    const value = m.metric === 'grams' ? metrics.grams : m.metric === 'streak' ? metrics.streak : metrics.count
+    return { ...m, earned: value >= m.target, progress: Math.min(1, m.target ? value / m.target : 0) }
+  })
+}
+
 export function useAchievements() {
   // Shared key so ImpactCard / AchievementsCard / header all reuse one request.
   // Client-only: the session cookie isn't forwarded to this authed route during SSR,
@@ -70,15 +79,10 @@ export function useAchievements() {
     default: () => ({ ...EMPTY })
   })
 
-  function metricValue(m: Metric): number {
-    if (m === 'grams') return data.value?.allTime.grams ?? 0
-    if (m === 'streak') return data.value?.streakWeeks ?? 0
-    return data.value?.allTime.count ?? 0
-  }
-
-  const badges = computed<Badge[]>(() => MILESTONES.map((m) => {
-    const value = metricValue(m.metric)
-    return { ...m, earned: value >= m.target, progress: Math.min(1, m.target ? value / m.target : 0) }
+  const badges = computed<Badge[]>(() => badgesForMetrics({
+    grams: data.value?.allTime.grams ?? 0,
+    count: data.value?.allTime.count ?? 0,
+    streak: data.value?.streakWeeks ?? 0
   }))
   const earned = computed(() => badges.value.filter(b => b.earned))
   const earnedCount = computed(() => earned.value.length)

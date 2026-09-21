@@ -46,7 +46,7 @@ const links = [[{
 }, {
   label: 'Energy consumers',
   icon: 'i-lucide-users',
-  to: '/admin/customers',
+  to: '/admin/consumers',
   onSelect: () => {
     open.value = false
   }
