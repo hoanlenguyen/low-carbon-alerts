@@ -6,7 +6,8 @@ definePageMeta({
 
 const router = useRouter()
 const toast = useToast()
-const { fetch: refreshSession } = useUserSession()
+const { user, fetch: refreshSession } = useUserSession()
+const hasEmail = computed(() => !!user.value?.email)
 
 // ── Stepper ──
 const stepperRef = useTemplateRef('stepper')
@@ -72,7 +73,7 @@ const goalOptions = [
   { value: 'understand_usage', label: 'Understand usage', desc: 'Learn my electricity footprint', icon: 'i-lucide-bar-chart-2' },
   { value: 'all', label: 'All of the above', desc: 'Optimise across every dimension', icon: 'i-lucide-sparkles' }
 ]
-const energyGoal = ref<string>('')
+const energyGoal = ref<string>('all')
 
 const notifStyle = ref<'detailed' | 'simple'>('detailed')
 const maxAlertsPerDay = ref(1)
@@ -438,16 +439,24 @@ async function finish() {
           </p>
           <button
             type="button"
-            class="flex items-start justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition cursor-pointer"
-            :class="weeklyEmailOptIn ? 'border-primary bg-primary/10' : 'border-default hover:border-default/80'"
+            :disabled="!hasEmail"
+            class="flex items-start justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition"
+            :class="[
+              weeklyEmailOptIn ? 'border-primary bg-primary/10' : 'border-default hover:border-default/80',
+              hasEmail ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'
+            ]"
             @click="weeklyEmailOptIn = !weeklyEmailOptIn"
           >
             <span class="flex-1">
               <span class="text-xs font-semibold text-highlighted block">Send me a weekly summary email</span>
               <span class="text-[11px] text-muted">Every Monday: your CO₂ saved, streak, and the cleanest hours ahead.</span>
             </span>
-            <USwitch v-model="weeklyEmailOptIn" @click.stop />
+            <USwitch v-model="weeklyEmailOptIn" :disabled="!hasEmail" @click.stop />
           </button>
+          <p v-if="!hasEmail" class="flex items-start gap-1 text-[11px] text-warning">
+            <UIcon name="i-lucide-triangle-alert" class="size-3.5 shrink-0 mt-px" />
+            <span>You don't have an email on file — add one in Settings to receive the weekly summary.</span>
+          </p>
         </div>
       </div>
 

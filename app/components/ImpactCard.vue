@@ -72,8 +72,19 @@ const stats = computed(() => [
       </div>
     </template>
 
-    <div v-if="!hasAny" class="text-sm text-muted py-6 text-center">
-      Act on a clean-window alert and tap <strong>“I shifted it”</strong> to start tracking your estimated CO₂ savings.
+    <div v-if="!hasAny" class="py-6 text-center">
+      <div class="mx-auto mb-3 flex size-10 items-center justify-center rounded-full bg-primary/10">
+        <UIcon name="i-lucide-sparkles" class="size-5 text-primary" />
+      </div>
+      <p class="text-sm font-medium text-highlighted">
+        No savings yet — let's change that
+      </p>
+      <p class="mx-auto mt-1 max-w-sm text-sm text-muted">
+        Schedule a flexible load (dishwasher, laundry, EV charging…) into a cleaner hour and we'll estimate the CO₂ you avoid.
+      </p>
+      <UButton to="/app/schedule" icon="i-lucide-calendar-clock" class="mt-3">
+        Plan your first shift
+      </UButton>
     </div>
 
     <div v-else class="grid grid-cols-3 gap-3">
