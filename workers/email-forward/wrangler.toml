@@ -1,0 +1,18 @@
+# Email Worker for support@hiilivahti.fi — fans one incoming email out to several
+# inboxes (Cloudflare Email Routing rules only allow ONE destination each).
+#
+# Wire it up:
+#   1. Cloudflare → Email Routing → Destination addresses: add + verify EVERY
+#      address in FORWARD_TO below (message.forward only works to verified ones).
+#   2. Deploy from this directory:  wrangler deploy
+#   3. Email Routing → Routing rules → edit the support@ rule → Action:
+#      "Send to a Worker" → pick "low-carbon-alerts-email-forward".
+#
+# To change recipients, edit FORWARD_TO (comma-separated) and redeploy.
+
+name = "low-carbon-alerts-email-forward"
+main = "index.ts"
+compatibility_date = "2024-07-11"
+
+[vars]
+FORWARD_TO = "charles.derboghossian@oulu.fi,lenguyenhanhoan@gmail.com"

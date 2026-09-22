@@ -3,12 +3,18 @@ import { like } from 'drizzle-orm'
 import { useDrizzle, schema } from '../../../database'
 
 const bodySchema = z.object({
-  prefix: z.string().trim().min(1, 'Prefix is required').max(40).regex(/^[a-z0-9_-]+$/i, 'Use letters, numbers, - or _'),
+  prefix: z
+    .string()
+    .trim()
+    .min(1, 'Prefix is required')
+    .max(40)
+    .regex(/^[a-z0-9_-]+$/i, 'Use letters, numbers, - or _'),
   count: z.number().int().min(1, 'At least 1').max(100, 'Max 100 at a time')
 })
 
 // Avoids look-alike characters (O/0, I/l) and CSV-unsafe ones (comma, quote).
-const PW_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%&*'
+const PW_CHARS
+  = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%&*'
 function randomPassword(len = 14): string {
   const bytes = crypto.getRandomValues(new Uint32Array(len))
   let out = ''
@@ -22,7 +28,8 @@ const pad = (n: number) => String(n).padStart(3, '0')
 // can download a CSV — they can't be retrieved later. Accounts are flagged isGenerated.
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
-  if (session.user?.role !== 'admin') throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  if (session.user?.role !== 'admin')
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
 
   const { prefix, count } = await readValidatedBody(event, bodySchema.parse)
   const normPrefix = prefix.toLowerCase()
@@ -48,7 +55,7 @@ export default defineEventHandler(async (event) => {
   const rows: (typeof schema.users.$inferInsert)[] = []
   let seq = maxSeq
   for (let i = 0; i < count; i++) {
-    let userName = ''
+    let userName: string
     do {
       seq++
       userName = `${normPrefix}${pad(seq)}`
@@ -60,7 +67,7 @@ export default defineEventHandler(async (event) => {
       id: crypto.randomUUID(),
       userName,
       email: '',
-      name: null,
+      name: userName, // generated consumers use their username as the display name
       passwordHash: await hashPassword(password),
       role: 'user',
       googleId: null,
