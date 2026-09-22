@@ -82,19 +82,19 @@ function fmtTime(val: string | Date | null) {
         <table class="w-full text-sm border-separate border-spacing-0">
           <thead>
             <tr class="bg-elevated/50">
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-52">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default w-52">
                 Subject
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                 Content
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-28">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default w-28">
                 Type
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-56">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default w-56">
                 Recipient
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-40">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default w-40">
                 Sent
               </th>
             </tr>

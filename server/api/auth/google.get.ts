@@ -27,6 +27,7 @@ export default defineOAuthGoogleEventHandler({
         googleId: googleUser.sub,
         avatarUrl: googleUser.picture ?? null,
         status: 'active' as const,
+        isGenerated: false,
         createdAt: new Date(),
         lastLoginAt: null,
         onboardingCompletedAt: null

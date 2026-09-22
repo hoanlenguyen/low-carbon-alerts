@@ -183,8 +183,12 @@ function fmtDate(ms: number) {
               {{ inv.email }}
             </p>
             <p class="text-muted text-xs">
-              <template v-if="inv.expired">Expired {{ fmtDate(inv.expiresAt) }}</template>
-              <template v-else>Expires {{ fmtDate(inv.expiresAt) }}</template>
+              <template v-if="inv.expired">
+                Expired {{ fmtDate(inv.expiresAt) }}
+              </template>
+              <template v-else>
+                Expires {{ fmtDate(inv.expiresAt) }}
+              </template>
             </p>
           </div>
           <div class="flex items-center gap-2 shrink-0">

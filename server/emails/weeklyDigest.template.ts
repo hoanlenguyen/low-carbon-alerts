@@ -13,11 +13,11 @@ export const weeklyDigestHtml = `<div style="margin:0;padding:0;background:#f4f5
         </td></tr>
         <tr><td style="padding:28px;">
           <p style="margin:0 0 16px;font-size:16px;color:#111827;">Hi {first},</p>
-          <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#374151;">Here's how your week went shifting flexible loads into cleaner hours.</p>
+          <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#374151;">Here's how last week went shifting flexible loads into cleaner hours.</p>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #dcfce7;border-radius:10px;margin:0 0 20px;">
             <tr><td style="padding:18px 20px;">
-              <p style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#15803d;">Your week</p>
-              <p style="margin:6px 0 0;font-size:26px;font-weight:700;color:#111827;">≈ {savedThisWeek} CO₂ saved</p>
+              <p style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#15803d;">Last week</p>
+              <p style="margin:6px 0 0;font-size:26px;font-weight:700;color:#111827;">≈ {savedLastWeek} CO₂ saved</p>
               <p style="margin:4px 0 0;font-size:13px;color:#374151;">{runsLine}</p>
             </td></tr>
           </table>

@@ -10,6 +10,7 @@ export const users = sqliteTable('users', {
   googleId: text('google_id').unique(),
   avatarUrl: text('avatar_url'),
   status: text('status', { enum: ['active', 'inactive'] }).notNull().default('active'),
+  isGenerated: integer('is_generated', { mode: 'boolean' }).notNull().default(false), // admin bulk-generated consumer
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
   onboardingCompletedAt: integer('onboarding_completed_at', { mode: 'timestamp' })

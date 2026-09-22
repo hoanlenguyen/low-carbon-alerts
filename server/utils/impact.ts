@@ -10,6 +10,7 @@ export interface ShiftRow { estimatedSavingG: number, day: string, createdAt: Da
 export interface ImpactBucket { count: number, grams: number }
 export interface ImpactResult {
   week: ImpactBucket
+  lastWeek: ImpactBucket
   month: ImpactBucket
   allTime: ImpactBucket
   streakWeeks: number
@@ -43,9 +44,11 @@ const dayToDate = (day: string) => new Date(`${day}T12:00:00Z`)
 export function computeImpact(rows: ShiftRow[], now: Date = new Date()): ImpactResult {
   const today = helsinkiYmd(now)
   const thisMonday = mondayKey(now)
+  const lastMonday = prevMondayKey(thisMonday)
 
   const bucket = (): ImpactBucket => ({ count: 0, grams: 0 })
   const week = bucket()
+  const lastWeek = bucket()
   const month = bucket()
   const allTime = bucket()
   const activeWeeks = new Set<string>()
@@ -62,6 +65,7 @@ export function computeImpact(rows: ShiftRow[], now: Date = new Date()): ImpactR
 
     const wk = mondayKey(d)
     if (wk === thisMonday) { week.count++; week.grams += g }
+    if (wk === lastMonday) { lastWeek.count++; lastWeek.grams += g }
     activeWeeks.add(wk)
   }
 
@@ -74,7 +78,7 @@ export function computeImpact(rows: ShiftRow[], now: Date = new Date()): ImpactR
     cursor = prevMondayKey(cursor)
   }
 
-  return { week, month, allTime, streakWeeks, lastActionAt }
+  return { week, lastWeek, month, allTime, streakWeeks, lastActionAt }
 }
 
 export function fmtGrams(g: number): string {

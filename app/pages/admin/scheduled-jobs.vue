@@ -112,7 +112,7 @@ function formatRunDate(val: string | null) {
 
         <!-- Header row -->
         <div class="flex items-center justify-between">
-          <p class="text-xs font-semibold uppercase tracking-wide text-dimmed">
+          <p class="text-xs font-medium text-dimmed">
             {{ jobs?.length ?? 0 }} job{{ jobs?.length === 1 ? '' : 's' }}
           </p>
           <UButton size="xs" icon="i-lucide-plus" @click="showJobForm = !showJobForm">
@@ -179,19 +179,19 @@ function formatRunDate(val: string | null) {
           <table class="w-full text-sm border-separate border-spacing-0">
             <thead>
               <tr class="bg-elevated/50">
-                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+                <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                   Job
                 </th>
-                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default hidden sm:table-cell">
+                <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default hidden sm:table-cell">
                   Schedule
                 </th>
-                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default hidden md:table-cell">
+                <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default hidden md:table-cell">
                   Next run
                 </th>
-                <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default hidden md:table-cell">
+                <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default hidden md:table-cell">
                   Last run
                 </th>
-                <th class="px-4 py-2.5 border-b border-default w-24 text-right text-xs font-semibold uppercase tracking-wide text-dimmed">
+                <th class="px-4 py-2.5 border-b border-default w-24 text-right text-xs font-medium text-dimmed">
                   Active
                 </th>
                 <th class="border-b border-default w-10" />

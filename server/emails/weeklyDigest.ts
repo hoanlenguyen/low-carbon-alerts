@@ -3,7 +3,7 @@ import { weeklyDigestHtml } from './weeklyDigest.template'
 
 export interface WeeklyDigestCtx {
   name: string | null
-  week: { grams: number, count: number }
+  lastWeek: { grams: number, count: number }
   streakWeeks: number
   communityTotalG: number
   communityUsers: number
@@ -33,13 +33,13 @@ function escapeHtml(s: string): string {
 // All conditionals are resolved here; the template only has {tokens}. Deterministic — no LLM.
 export function buildWeeklyDigestEmail(ctx: WeeklyDigestCtx): { subject: string, html: string, text: string } {
   const first = ctx.name?.split(' ')[0] ?? 'there'
-  const savedThisWeek = fmtGrams(ctx.week.grams)
-  const runs = ctx.week.count
+  const savedLastWeek = fmtGrams(ctx.lastWeek.grams)
+  const runs = ctx.lastWeek.count
   const community = fmtGrams(ctx.communityTotalG)
 
-  const subject = ctx.week.grams > 0
-    ? `Your week with Hiilivahti — ≈ ${savedThisWeek} CO₂ saved`
-    : 'Your week with Hiilivahti'
+  const subject = ctx.lastWeek.grams > 0
+    ? `Last week with Hiilivahti — ≈ ${savedLastWeek} CO₂ saved`
+    : 'Last week with Hiilivahti'
 
   const streak = ctx.streakWeeks > 0 ? `🔥 ${ctx.streakWeeks}-week streak — keep it going!` : ''
   const runsLine = `${runs} load${runs === 1 ? '' : 's'} shifted` + (streak ? ` &nbsp;·&nbsp; ${streak}` : '')
@@ -54,7 +54,7 @@ export function buildWeeklyDigestEmail(ctx: WeeklyDigestCtx): { subject: string,
 
   const html = fill(weeklyDigestHtml, {
     first: escapeHtml(first),
-    savedThisWeek,
+    savedLastWeek,
     runsLine,
     community,
     communityUsersLine,
@@ -66,7 +66,7 @@ export function buildWeeklyDigestEmail(ctx: WeeklyDigestCtx): { subject: string,
   const text = [
     `Hi ${first},`,
     '',
-    `Your week: ~${savedThisWeek} CO2 saved, ${runs} load${runs === 1 ? '' : 's'} shifted.`,
+    `Last week: ~${savedLastWeek} CO2 saved, ${runs} load${runs === 1 ? '' : 's'} shifted.`,
     streak ? streak.replace('🔥 ', '') : '',
     `Community total: ~${community} CO2 saved by ${ctx.communityUsers} members.`,
     o && o.cleanestStart
