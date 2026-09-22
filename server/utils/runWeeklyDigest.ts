@@ -79,7 +79,7 @@ export async function runWeeklyDigest(event: H3Event, opts: WeeklyDigestOptions 
       const impact = computeImpact(shiftsByUser.get(u.id) ?? [], now)
       const { subject, html, text } = buildWeeklyDigestEmail({
         name: u.name,
-        week: impact.week,
+        lastWeek: impact.lastWeek,
         streakWeeks: impact.streakWeeks,
         communityTotalG,
         communityUsers,
