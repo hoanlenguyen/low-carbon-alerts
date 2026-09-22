@@ -64,9 +64,12 @@ const period = ref<Period>('daily')
     </template>
 
     <template #body>
-      <HomeStats :period="period" :range="range" />
-      <HomeChart :period="period" :range="range" />
-      <HomeMessages :period="period" :range="range" />
+      <HomeStats :period="period" :range="range" class="shrink-0" />
+      <div class="grid gap-4 sm:gap-6 lg:grid-cols-2 shrink-0">
+        <HomeChart :period="period" :range="range" />
+        <HomeCarbonChart :period="period" :range="range" />
+        <HomeTopSavers />
+      </div>
     </template>
   </UDashboardPanel>
 </template>
