@@ -16,16 +16,23 @@ type DataRecord = {
 
 const { width } = useElementSize(cardRef)
 
-// (labels are pre-formatted in Helsinki time by the endpoint).
-const { data: series } = useFetch('/api/admin/stats/messages-sent', {
-  lazy: true,
-  query: computed(() => ({
-    start: props.range.start.toISOString(),
-    end: props.range.end.toISOString(),
-    period: props.period
-  })),
-  default: () => ({ total: 0, data: [] as DataRecord[] })
-})
+// Load via $fetch in a watcher (client-only component; keeps the series in sync with the
+// date range without useFetch SSR/lifecycle subtleties).
+const series = ref<{ total: number, data: DataRecord[] }>({ total: 0, data: [] })
+async function load() {
+  try {
+    series.value = await $fetch('/api/admin/stats/messages-sent', {
+      query: {
+        start: props.range.start.toISOString(),
+        end: props.range.end.toISOString(),
+        period: props.period
+      }
+    })
+  } catch {
+    series.value = { total: 0, data: [] }
+  }
+}
+watch(() => [props.period, props.range] as const, load, { immediate: true })
 
 const data = computed<DataRecord[]>(() => series.value?.data ?? [])
 
@@ -60,11 +67,14 @@ const template = (d: DataRecord) => `${d.label}: ${formatNumber(d.count)}`
       </div>
     </template>
 
+    <!-- Mount only once data + a measured width exist so bars paint on first render
+         (fixes empty bars on mobile). -->
     <VisXYContainer
+      v-if="data.length"
       :data="data"
       :padding="{ top: 40 }"
       class="h-96"
-      :width="width"
+      :width="width || undefined"
     >
       <VisStackedBar
         :x="x"
@@ -88,6 +98,7 @@ const template = (d: DataRecord) => `${d.label}: ${formatNumber(d.count)}`
 
       <VisTooltip />
     </VisXYContainer>
+    <div v-else class="h-96" />
   </UCard>
 </template>
 

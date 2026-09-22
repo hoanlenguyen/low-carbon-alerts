@@ -10,29 +10,33 @@ const { data: stats, refresh } = await useFetch('/api/admin/stats')
 
 watch([() => props.period, () => props.range], refresh)
 
+function fmtG(g: number) {
+  return g >= 1000 ? `${(g / 1000).toFixed(1)} kg` : `${Math.round(g)} g`
+}
+
 const items = computed(() => [
   {
-    title: 'Total Users',
-    icon: 'i-lucide-users',
-    value: stats.value?.totalUsers ?? 0,
+    title: 'CO₂ saved',
+    icon: 'i-lucide-leaf',
+    value: fmtG(stats.value?.totalSavingG ?? 0),
     to: '/admin/consumers'
   },
   {
-    title: 'Messages Sent',
-    icon: 'i-lucide-send',
-    value: stats.value?.totalMessages ?? 0,
-    to: '/admin/notifications'
+    title: 'Total shifts',
+    icon: 'i-lucide-calendar-clock',
+    value: (stats.value?.totalShifts ?? 0).toLocaleString(),
+    to: '/admin/consumers'
   },
   {
-    title: 'Active Jobs',
-    icon: 'i-lucide-clock',
-    value: stats.value?.activeJobs ?? 0,
-    to: '/admin/notifications'
+    title: 'Active shifters',
+    icon: 'i-lucide-user-check',
+    value: (stats.value?.activeShifters ?? 0).toLocaleString(),
+    to: '/admin/consumers'
   },
   {
-    title: 'Unread',
-    icon: 'i-lucide-bell',
-    value: stats.value?.unreadMessages ?? 0,
+    title: 'Total Users',
+    icon: 'i-lucide-users',
+    value: (stats.value?.totalUsers ?? 0).toLocaleString(),
     to: '/admin/consumers'
   }
 ])
@@ -56,7 +60,7 @@ const items = computed(() => [
       class="lg:rounded-none first:rounded-l-lg last:rounded-r-lg hover:z-1"
     >
       <span class="text-2xl font-semibold text-highlighted tabular-nums">
-        {{ item.value.toLocaleString() }}
+        {{ item.value }}
       </span>
     </UPageCard>
   </UPageGrid>
