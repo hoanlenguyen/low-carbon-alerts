@@ -7,6 +7,22 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 const open = ref(false)
 const feedbackOpen = ref(false)
 
+// On first visit, default the admin sidebar to collapsed on smaller screens (< xl / 1280px).
+// Nuxt UI persists the collapsed state in its own cookie ('dashboard-sidebar-default'), so
+// once the admin toggles it manually their choice is remembered and we don't override it.
+const nuxtApp = useNuxtApp()
+// Dedicated first-visit flag (Nuxt UI writes its own sidebar cookie on init for the panel
+// size, so we can't use that to detect a first visit). We apply the width-based default
+// exactly once; afterwards Nuxt UI's cookie remembers the admin's manual toggles.
+const sidebarDefaulted = useCookie<boolean>('admin-sidebar-defaulted', { default: () => false })
+onMounted(() => {
+  if (sidebarDefaulted.value) return
+  sidebarDefaulted.value = true
+  if (window.innerWidth < 1280) {
+    nuxtApp.callHook('dashboard:sidebar:collapse', true)
+  }
+})
+
 const links = [[{
   label: 'Dashboard',
   icon: 'i-lucide-house',

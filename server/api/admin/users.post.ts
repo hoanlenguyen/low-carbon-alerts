@@ -37,6 +37,7 @@ export default defineEventHandler(async (event) => {
     role: 'user' as const,
     googleId: null,
     avatarUrl: null,
+    isGenerated: true, // admin-created consumer (single add) — flagged like bulk-generated
     createdAt: new Date()
   }
   await db.insert(schema.users).values(user)

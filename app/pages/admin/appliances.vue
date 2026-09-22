@@ -183,28 +183,28 @@ const flexColor = (f: string) => (f === 'high' ? 'success' : f === 'medium' ? 'w
         <table class="w-full text-sm border-separate border-spacing-0">
           <thead>
             <tr class="bg-elevated/50">
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                 Appliance
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                 Category
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                 Flexibility
               </th>
-              <th class="text-right px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-right px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                 Power
               </th>
-              <th class="text-right px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-right px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                 Duration
               </th>
-              <th class="text-right px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-right px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                 Order
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                 Active
               </th>
-              <th class="text-right px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-right px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                 Actions
               </th>
             </tr>

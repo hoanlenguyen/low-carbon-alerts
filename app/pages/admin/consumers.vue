@@ -181,7 +181,7 @@ async function confirmToggleStatus() {
           <thead>
             <tr class="bg-elevated/50">
               <th
-                class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default cursor-pointer select-none hover:text-muted transition-colors"
+                class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default cursor-pointer select-none hover:text-muted transition-colors w-64 max-w-[16rem]"
                 @click="toggleSort('userName')"
               >
                 User
@@ -189,11 +189,11 @@ async function confirmToggleStatus() {
                   {{ sortDir === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                 Status
               </th>
               <th
-                class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default cursor-pointer select-none hover:text-muted transition-colors"
+                class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default cursor-pointer select-none hover:text-muted transition-colors w-32 max-w-[8rem]"
                 @click="toggleSort('createdAt')"
               >
                 Joined
@@ -202,7 +202,7 @@ async function confirmToggleStatus() {
                 </span>
               </th>
               <th
-                class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default cursor-pointer select-none hover:text-muted transition-colors"
+                class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default cursor-pointer select-none hover:text-muted transition-colors"
                 @click="toggleSort('lastLoginAt')"
               >
                 Last login
@@ -210,13 +210,13 @@ async function confirmToggleStatus() {
                   {{ sortDir === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
                 Total carbon saved
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default w-44 max-w-[11rem]">
                 Achievements
               </th>
-              <th class="text-right px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-dimmed border-b border-default w-28">
+              <th class="text-right px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default w-28">
                 Actions
               </th>
             </tr>
@@ -239,7 +239,7 @@ async function confirmToggleStatus() {
               class="group hover:bg-elevated/40 transition-colors"
             >
               <!-- User -->
-              <td class="px-4 py-3 border-b border-default">
+              <td class="px-4 py-3 border-b border-default w-64 max-w-[16rem]">
                 <div class="flex items-center gap-3">
                   <UAvatar
                     :src="customer.avatarUrl ?? undefined"
@@ -248,7 +248,7 @@ async function confirmToggleStatus() {
                   />
                   <div class="min-w-0">
                     <div class="flex items-center gap-1.5 min-w-0">
-                      <p class="font-medium text-highlighted truncate">
+                      <p class="font-medium text-highlighted break-words">
                         {{ customer.name || customer.userName }}
                       </p>
                       <UBadge
@@ -259,7 +259,7 @@ async function confirmToggleStatus() {
                         size="xs"
                         class="shrink-0" />
                     </div>
-                    <p class="text-xs text-muted truncate">
+                    <p class="text-xs text-muted break-words">
                       {{ customer.userName }}<span v-if="customer.email"> · {{ customer.email }}</span>
                     </p>
                   </div>
@@ -278,7 +278,7 @@ async function confirmToggleStatus() {
               </td>
 
               <!-- Joined -->
-              <td class="px-4 py-3 border-b border-default tabular-nums">
+              <td class="px-4 py-3 border-b border-default tabular-nums whitespace-nowrap w-32 max-w-[8rem]">
                 <span class="text-xs">{{ formatJoined(customer.createdAt) }}</span>
               </td>
 
@@ -300,7 +300,7 @@ async function confirmToggleStatus() {
               </td>
 
               <!-- Achievements -->
-              <td class="px-4 py-3 border-b border-default">
+              <td class="px-4 py-3 border-b border-default w-44 max-w-[11rem]">
                 <div v-if="earnedBadges(customer).length" class="flex items-center gap-1">
                   <UTooltip
                     v-for="b in earnedBadges(customer).slice(0, 5)"
@@ -327,21 +327,11 @@ async function confirmToggleStatus() {
                   <UTooltip text="Energy profile">
                     <UButton
                       icon="i-lucide-house-plug"
-                      color="neutral"
+                      color="primary"
                       variant="ghost"
                       size="xs"
                       aria-label="View energy profile"
                       @click="openProfile(customer)"
-                    />
-                  </UTooltip>
-                  <UTooltip text="Copy ID">
-                    <UButton
-                      icon="i-lucide-copy"
-                      color="neutral"
-                      variant="ghost"
-                      size="xs"
-                      aria-label="Copy user ID"
-                      @click="copyToClipboard(customer.id, 'User ID copied')"
                     />
                   </UTooltip>
                   <UTooltip v-if="customer.email" text="Copy email">
@@ -357,7 +347,7 @@ async function confirmToggleStatus() {
                   <UTooltip :text="customer.status === 'active' ? 'Deactivate' : 'Activate'">
                     <UButton
                       :icon="customer.status === 'active' ? 'i-lucide-user-x' : 'i-lucide-user-check'"
-                      :color="customer.status === 'active' ? 'error' : 'success'"
+                      :color="customer.status === 'active' ? 'neutral' : 'success'"
                       variant="ghost"
                       size="xs"
                       :aria-label="customer.status === 'active' ? 'Deactivate consumer' : 'Activate consumer'"
