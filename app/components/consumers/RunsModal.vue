@@ -74,41 +74,57 @@ const totalG = computed(() => runs.value.reduce((s, r) => s + r.estimatedSavingG
         Loading…
       </div>
 
-      <UAlert v-else-if="error" color="error" variant="subtle" :title="error" />
+      <UAlert
+        v-else-if="error"
+        color="error"
+        variant="subtle"
+        :title="error" />
 
       <div v-else-if="!runs.length" class="py-8 text-center text-sm text-muted">
         No appliance runs logged yet.
       </div>
 
-      <div v-else class="space-y-4 max-h-[60vh] overflow-y-auto">
+      <!-- Single scroll area (the modal body); sticky day headers keep context on long lists -->
+      <div v-else class="-mx-4 sm:-mx-6 -my-2 divide-y divide-default">
         <div v-for="g in groups" :key="g.day">
-          <div class="flex items-center justify-between mb-1.5">
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-dimmed">
+          <div class="sticky top-0 z-10 flex items-center justify-between gap-3 bg-default/95 px-4 sm:px-6 py-1.5 backdrop-blur">
+            <span class="text-[11px] font-semibold uppercase tracking-wide text-dimmed">
               {{ dayLabel(g.day) }}
-            </p>
+            </span>
             <span class="text-xs font-medium text-success tabular-nums">≈ {{ fmtG(g.totalG) }}</span>
           </div>
-          <ul class="divide-y divide-default rounded-lg border border-default">
-            <li v-for="r in g.items" :key="r.id" class="flex items-center gap-3 px-3 py-2.5">
-              <UIcon :name="r.icon" class="size-4 shrink-0 text-primary" />
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-highlighted truncate">
-                  {{ r.name }}
-                </p>
-                <p class="text-xs text-muted">
-                  {{ hhmm(r.startAtMs) }} · {{ fmtH(r.runTimeMin) }} h · {{ fmtCarbon(r.carbonAtStart) }} gCO₂/kWh
-                </p>
-              </div>
-              <span class="shrink-0 text-sm font-semibold text-success tabular-nums">
-                ≈ {{ fmtG(r.estimatedSavingG) }}
-              </span>
-            </li>
-          </ul>
+          <div
+            v-for="r in g.items"
+            :key="r.id"
+            class="flex items-center gap-3 px-4 sm:px-6 py-2 hover:bg-elevated/40 transition-colors"
+          >
+            <UIcon :name="r.icon" class="size-4 shrink-0 text-primary" />
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-highlighted truncate">
+                {{ r.name }}
+              </p>
+              <p class="text-xs text-muted tabular-nums">
+                {{ hhmm(r.startAtMs) }} · {{ fmtH(r.runTimeMin) }} h · {{ fmtCarbon(r.carbonAtStart) }} gCO₂/kWh
+              </p>
+            </div>
+            <span class="shrink-0 text-sm font-semibold text-success tabular-nums">
+              ≈ {{ fmtG(r.estimatedSavingG) }}
+            </span>
+          </div>
         </div>
       </div>
+    </template>
 
-      <div class="flex justify-end pt-4">
-        <UButton label="Close" color="neutral" variant="subtle" @click="open = false" />
+    <template v-if="!loading && runs.length" #footer>
+      <div class="flex w-full items-center justify-between gap-3">
+        <span class="text-xs text-muted tabular-nums">
+          {{ runs.length }} run{{ runs.length === 1 ? '' : 's' }} · ≈ {{ fmtG(totalG) }} CO₂
+        </span>
+        <UButton
+          label="Close"
+          color="neutral"
+          variant="subtle"
+          @click="open = false" />
       </div>
     </template>
   </UModal>
