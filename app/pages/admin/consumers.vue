@@ -39,6 +39,14 @@ function openProfile(c: Customer) {
   profileOpen.value = true
 }
 
+// Appliance-runs modal (opened from the Total carbon saved cell)
+const runsTarget = ref<Customer | null>(null)
+const runsOpen = ref(false)
+function openRuns(c: Customer) {
+  runsTarget.value = c
+  runsOpen.value = true
+}
+
 const { data, status: fetchStatus, refresh } = await useFetch<Customer[]>(
   '/api/admin/users',
   { lazy: true }
@@ -210,7 +218,7 @@ async function confirmToggleStatus() {
                   {{ sortDir === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default w-32">
                 Total carbon saved
               </th>
               <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default w-44 max-w-[11rem]">
@@ -294,7 +302,17 @@ async function confirmToggleStatus() {
 
               <!-- Total carbon saved -->
               <td class="px-4 py-3 border-b border-default">
-                <span class="text-sm font-medium text-success tabular-nums">
+                <button
+                  v-if="customer.savingG > 0"
+                  type="button"
+                  class="inline-flex items-center gap-1 text-[11px] text-success tabular-nums hover:underline"
+                  aria-label="View appliance runs"
+                  @click="openRuns(customer)"
+                >
+                  {{ fmtSaved(customer.savingG) }}
+                  <span class="font-normal text-primary">View details</span>
+                </button>
+                <span v-else class="text-sm text-dimmed tabular-nums">
                   {{ fmtSaved(customer.savingG) }}
                 </span>
               </td>
@@ -409,6 +427,7 @@ async function confirmToggleStatus() {
       </UModal>
 
       <ConsumersProfileModal v-model:open="profileOpen" :user="profileTarget" />
+      <ConsumersRunsModal v-model:open="runsOpen" :user="runsTarget" />
     </template>
   </UDashboardPanel>
 </template>
