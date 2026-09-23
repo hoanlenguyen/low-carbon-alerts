@@ -12,7 +12,7 @@ const schema = z.object({
   count: z.number().int().min(1, 'At least 1').max(100, 'Max 100')
 })
 type Schema = z.output<typeof schema>
-const state = reactive<Partial<Schema>>({ prefix: 'consumer', count: 10 })
+const state = reactive<Partial<Schema>>({ prefix: '', count: 10 })
 
 const generating = ref(false)
 const result = ref<{ userName: string, password: string }[] | null>(null)
@@ -109,7 +109,7 @@ watch(open, (o) => { if (!o) reset() })
         class="space-y-4"
         @submit="onSubmit">
         <UFormField label="Username prefix" name="prefix" hint="e.g. demo → demo001, demo002…">
-          <UInput v-model="state.prefix" placeholder="consumer" class="w-full" />
+          <UInput v-model="state.prefix" class="w-full" />
         </UFormField>
 
         <UFormField label="How many?" name="count" hint="1–100">

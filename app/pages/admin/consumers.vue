@@ -218,7 +218,7 @@ async function confirmToggleStatus() {
                   {{ sortDir === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default">
+              <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default w-32">
                 Total carbon saved
               </th>
               <th class="text-left px-4 py-2.5 text-xs font-medium text-dimmed border-b border-default w-44 max-w-[11rem]">
@@ -305,12 +305,12 @@ async function confirmToggleStatus() {
                 <button
                   v-if="customer.savingG > 0"
                   type="button"
-                  class="inline-flex items-center gap-1 text-sm font-medium text-success tabular-nums hover:underline"
+                  class="inline-flex items-center gap-1 text-[11px] text-success tabular-nums hover:underline"
                   aria-label="View appliance runs"
                   @click="openRuns(customer)"
                 >
                   {{ fmtSaved(customer.savingG) }}
-                  <span class="text-[11px] font-normal text-primary">View details</span>
+                  <span class="font-normal text-primary">View details</span>
                 </button>
                 <span v-else class="text-sm text-dimmed tabular-nums">
                   {{ fmtSaved(customer.savingG) }}
