@@ -74,7 +74,11 @@ const totalG = computed(() => runs.value.reduce((s, r) => s + r.estimatedSavingG
         Loading…
       </div>
 
-      <UAlert v-else-if="error" color="error" variant="subtle" :title="error" />
+      <UAlert
+        v-else-if="error"
+        color="error"
+        variant="subtle"
+        :title="error" />
 
       <div v-else-if="!runs.length" class="py-8 text-center text-sm text-muted">
         No appliance runs logged yet.
@@ -116,7 +120,11 @@ const totalG = computed(() => runs.value.reduce((s, r) => s + r.estimatedSavingG
         <span class="text-xs text-muted tabular-nums">
           {{ runs.length }} run{{ runs.length === 1 ? '' : 's' }} · ≈ {{ fmtG(totalG) }} CO₂
         </span>
-        <UButton label="Close" color="neutral" variant="subtle" @click="open = false" />
+        <UButton
+          label="Close"
+          color="neutral"
+          variant="subtle"
+          @click="open = false" />
       </div>
     </template>
   </UModal>
