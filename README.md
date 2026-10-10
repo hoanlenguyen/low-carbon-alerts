@@ -1,6 +1,10 @@
-# Low Carbon Alerts
+# Hiilivahti (Low Carbon Alerts)
 
-A full-stack web app that tracks Finland's real-time electricity grid carbon intensity and notifies users when clean energy windows open. It helps households shift flexible loads — EV charging, dishwashers, laundry, sauna — to the hours when the grid is greenest, then lets them log what they shifted and see the CO₂ they avoided.
+**Hiilivahti** — Finnish for "carbon watch" (*hiili* = carbon, *vahti* = guard/watch) — is a full-stack web app that tracks Finland's real-time electricity grid carbon intensity and notifies users when clean energy windows open. It helps households shift flexible loads — EV charging, dishwashers, laundry, sauna — to the hours when the grid is greenest, then lets them log what they shifted and see the CO₂ they avoided.
+
+Live at [hiilivahti.fi](https://hiilivahti.fi) · Support: [support@hiilivahti.fi](mailto:support@hiilivahti.fi)
+
+> The repository and internal package are still named `low-carbon-alerts`; **Hiilivahti** is the product name shown to users.
 
 > **Project context.** Built as a University of Oulu **M3S** trainee project. The sections below document the app as it works today; a few items are still in progress (see [Status & roadmap](#status--roadmap)).
 
