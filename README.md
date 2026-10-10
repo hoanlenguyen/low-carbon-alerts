@@ -134,34 +134,7 @@ pnpm db:migrate:local
 pnpm dev
 ```
 
-Secrets go in `.env` (and `.dev.vars` for local Cloudflare bindings) — both are gitignored. Common variables:
-
-```env
-# Auth
-NUXT_SESSION_PASSWORD=            # 32+ char secret for sealing session cookies
-NUXT_OAUTH_GOOGLE_CLIENT_ID=
-NUXT_OAUTH_GOOGLE_CLIENT_SECRET=
-NUXT_SETUP_TOKEN=                 # one-time admin seed token (remove after seeding)
-
-# Automation
-NUXT_CRON_SECRET=                 # shared with the cron worker
-NUXT_AUTOMATION_SECRET=           # bearer secret for external automation (n8n)
-
-# Push (FCM)
-NUXT_FCM_PROJECT_ID=
-NUXT_FCM_SERVICE_ACCOUNT=         # service-account JSON
-NUXT_PUBLIC_FIREBASE_API_KEY=
-NUXT_PUBLIC_FIREBASE_APP_ID=
-# … other NUXT_PUBLIC_FIREBASE_* client keys
-
-# LLM (message copy) — optional
-NUXT_OPENAI_API_KEY=
-NUXT_OPENAI_BASE_URL=
-NUXT_OPENAI_LLM_MODEL=
-
-# Email (Resend) — optional
-NUXT_RESEND_API_KEY=
-```
+Secrets go in `.env` (and `.dev.vars` for local Cloudflare bindings) — both are gitignored. 
 
 The first admin is seeded via `POST /api/auth/seed-admin` (requires `NUXT_SETUP_TOKEN`).
 
